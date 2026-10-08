@@ -1,0 +1,205 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+/* SABA surfaces. Semantic status colors and focus rings come from the Panel. */
+:root {
+    --saba-canvas: #f6f7f8;
+    --saba-surface: #ffffff;
+    --saba-border: #e4e4e7;
+    --saba-ink: #27272a;
+    --saba-muted: #71717a;
+    --saba-primary: #dc2626;
+    --saba-active: #fef2f2;
+}
+
+.fi-body {
+    background: var(--saba-canvas);
+    color: var(--saba-ink);
+}
+
+/* Global width is Width::Full in the Panel; only gutters are adjusted here. */
+.fi-main {
+    padding-inline: 1rem;
+}
+
+@media (min-width: 1024px) {
+    .fi-main {
+        padding-inline: 1.5rem;
+    }
+}
+
+.fi-page {
+    row-gap: 1.5rem;
+}
+
+.fi-header-heading {
+    color: var(--saba-ink);
+    font-size: 1.625rem;
+    font-weight: 650;
+    letter-spacing: -0.035em;
+}
+
+/* Navigation: quiet white rail, soft active state, native mobile drawer. */
+.fi-sidebar {
+    background: var(--saba-surface);
+    border-inline-end: 1px solid var(--saba-border);
+}
+
+.fi-sidebar-nav {
+    padding: 1.5rem 1.25rem;
+}
+
+.fi-sidebar-nav-groups {
+    row-gap: 1.75rem;
+}
+
+.fi-sidebar-group-label {
+    color: var(--saba-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.fi-sidebar-item-btn {
+    min-height: 2.625rem;
+    border-radius: 0.5rem;
+    padding-inline: 0.75rem;
+}
+
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:hover {
+    background: #f4f4f5;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background: var(--saba-active);
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label,
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
+    color: #b91c1c;
+}
+
+/* Topbar keeps the existing search, user menu and logout controls. */
+.fi-topbar {
+    background: var(--saba-surface);
+    border-bottom: 1px solid var(--saba-border);
+    box-shadow: none;
+}
+
+.fi-topbar-start {
+    min-width: 13rem;
+}
+
+.fi-logo {
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* Cards and tables share one restrained surface treatment. */
+.fi-section:not(.fi-section-not-contained):not(.fi-aside),
+.fi-fieldset:not(.fi-fieldset-not-contained),
+.fi-ta-ctn {
+    background: var(--saba-surface);
+    border: 1px solid var(--saba-border);
+    border-radius: 0.625rem;
+    box-shadow: none;
+}
+
+.fi-section-header-heading {
+    color: var(--saba-ink);
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.fi-ta-table {
+    width: 100%;
+}
+
+.fi-ta-table > thead {
+    background: #fafafa;
+}
+
+.fi-ta-header-cell {
+    color: #52525b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding-block: 0.875rem;
+}
+
+.fi-ta-row:hover {
+    background: #fafafa;
+}
+
+.fi-ta-text-item {
+    font-weight: 400;
+}
+
+.fi-ta-content,
+.fi-ta-header-toolbar,
+.fi-pagination {
+    border-color: var(--saba-border);
+}
+
+/* Controls retain Filament's semantic colors and accessible focus states. */
+.fi-btn {
+    border-radius: 0.4375rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+/* Filament 5's automatic contrast palette can select a pale fill. SABA uses
+   an explicit red/white primary button while preserving outlined variants. */
+.fi-btn.fi-color-primary:not(.fi-outlined) {
+    background: var(--saba-primary);
+    color: #ffffff;
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined):not([disabled]):not(.fi-disabled):hover {
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+.fi-btn.fi-color-primary:not(.fi-outlined) > .fi-icon {
+    color: #ffffff;
+}
+
+.fi-input-wrp {
+    border-radius: 0.4375rem;
+}
+
+/* Login: centered native layout, brand logo, subtle red background accent. */
+.fi-simple-layout {
+    background:
+        radial-gradient(ellipse at 15% 0%, #dc262609, transparent 45%),
+        var(--saba-canvas);
+    padding-inline: 1rem;
+}
+
+.fi-simple-main {
+    background: var(--saba-surface);
+    border: 1px solid var(--saba-border);
+    border-radius: 0.75rem;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 4px 24px #27272a05;
+}
+
+.fi-simple-header .fi-logo {
+    width: 13rem;
+    height: auto;
+    margin-bottom: 1.75rem;
+}
+
+.fi-simple-header-heading {
+    color: var(--saba-ink);
+    font-size: 1.375rem;
+    font-weight: 600;
+}
+
+@media (max-width: 639px) {
+    .fi-simple-main {
+        padding: 2rem 1.25rem;
+    }
+}

@@ -1,0 +1,1 @@
+<x-store.layout title="Produtos" :canonical="route('store.products')"><div class="store-container"><x-store.breadcrumb :items="[['label' => 'Produtos']]" /><livewire:store.product-list /></div></x-store.layout>

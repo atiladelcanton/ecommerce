@@ -1,0 +1,8 @@
+@props(['categories', 'availabilities', 'prefix'])
+<div class="space-y-7">
+    <div><label for="{{ $prefix }}-category" class="store-label">Categoria</label><select id="{{ $prefix }}-category" wire:model.live="category" class="store-input"><option value="">Todas as categorias</option>@foreach($categories as $category)<option value="{{ $category->slug }}">{{ $category->name }}</option>@endforeach</select></div>
+    <div><label for="{{ $prefix }}-availability" class="store-label">Disponibilidade</label><select id="{{ $prefix }}-availability" wire:model.live="availability" class="store-input"><option value="">Todas</option>@foreach($availabilities as $item)<option value="{{ $item->value }}">{{ $item->label() }}</option>@endforeach</select></div>
+    <fieldset><legend class="store-label">Preço em reais</legend><div class="grid grid-cols-2 gap-3"><div><label for="{{ $prefix }}-min" class="text-xs text-store-muted">Mínimo</label><input id="{{ $prefix }}-min" wire:model.live.blur="minimum" inputmode="decimal" maxlength="24" placeholder="0,00" class="store-input mt-2"></div><div><label for="{{ $prefix }}-max" class="text-xs text-store-muted">Máximo</label><input id="{{ $prefix }}-max" wire:model.live.blur="maximum" inputmode="decimal" maxlength="24" placeholder="Sem limite" class="store-input mt-2"></div></div>@error('minimum')<p class="text-sm text-store-red mt-2">{{ $message }}</p>@enderror @error('maximum')<p class="text-sm text-store-red mt-2">{{ $message }}</p>@enderror</fieldset>
+    <label class="flex items-center gap-3 text-sm"><input type="checkbox" wire:model.live="promotion" class="size-4 accent-store-red"> Somente em promoção</label>
+    <button type="button" class="store-text-link" wire:click="clearFilters">Limpar filtros</button>
+</div>

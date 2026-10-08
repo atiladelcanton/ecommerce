@@ -1,0 +1,2 @@
+@props(['items' => []])
+<nav aria-label="Caminho de navegação" class="text-xs text-store-muted py-6"><ol class="flex flex-wrap items-center gap-2"><li><a href="{{ route('home') }}">Início</a></li>@foreach($items as $item)<li aria-hidden="true">/</li><li>@if($item['url'] ?? null)<a href="{{ $item['url'] }}">{{ $item['label'] }}</a>@else<span aria-current="page">{{ $item['label'] }}</span>@endif</li>@endforeach</ol></nav>

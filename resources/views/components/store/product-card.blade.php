@@ -1,0 +1,14 @@
+@props(['product'])
+<article class="store-product-card group" data-product-id="{{ $product->id }}">
+    <a href="{{ route('store.product', $product->slug) }}" class="block h-full">
+        <div class="relative aspect-square bg-store-soft overflow-hidden rounded-lg">
+            @if($product->images->first())
+                <img src="{{ Storage::disk('public')->url($product->images->first()->path) }}" alt="{{ $product->images->first()->alt_text ?: $product->name }}" loading="lazy" width="500" height="500" class="size-full object-contain p-5 transition-transform duration-300 motion-safe:group-hover:scale-105">
+            @else
+                <div class="flex h-full flex-col items-center justify-center gap-3 text-store-muted"><x-heroicon-o-photo class="size-10 opacity-40" /><span class="text-xs">Imagem não disponível</span></div>
+            @endif
+            @if($product->has_promotion)<span class="store-discount">-{{ $product->discount_percentage }}%</span>@endif
+        </div>
+        <div class="pt-4"><p class="text-xs text-store-muted">{{ $product->category->name }}</p><h3 class="mt-2 font-medium leading-snug min-h-12">{{ $product->name }}</h3><div class="my-3"><x-store.availability-badge :availability="$product->availability" /></div><x-store.price :product="$product" /></div>
+    </a>
+</article>

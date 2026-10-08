@@ -1,0 +1,2 @@
+@props(['availability'])
+<span @class(['store-availability', 'store-available' => $availability === \App\Domain\Catalog\Enums\ProductAvailability::IMMEDIATE, 'store-on-demand' => $availability === \App\Domain\Catalog\Enums\ProductAvailability::ON_DEMAND, 'store-unavailable' => $availability === \App\Domain\Catalog\Enums\ProductAvailability::UNAVAILABLE])><span aria-hidden="true">●</span> {{ $availability->label() }}</span>
