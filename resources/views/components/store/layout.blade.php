@@ -22,7 +22,7 @@
     @livewireStyles
     @stack('head')
 </head>
-<body class="store-body">
+<body {{ $attributes->class(['store-body']) }}>
     <a href="#conteudo" class="store-skip">Pular para o conteúdo</a>
     <x-store.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" />
     <main id="conteudo">{{ $slot }}</main>

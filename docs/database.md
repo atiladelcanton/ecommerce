@@ -25,15 +25,17 @@ Already present in the starter:
 - categories
 - products
 - product_images
+- product_variants
 
 Relationships:
 
 ```text
 categories 1 --- N products
 products   1 --- N product_images
+products   1 --- N product_variants
 ```
 
-Categories have no image.
+Categories have an optional nullable `image_path` (VARCHAR 255), referencing a relative image path on the Laravel `public` disk under `categories/`. Categories without an image keep the typographic Home card. Replacement/removal retains physical files, following the existing Catalog convention.
 
 Implemented Catalog decisions:
 
@@ -53,6 +55,10 @@ Implemented Catalog decisions:
 - Pricing is derived by `ProductPricing`; discounts are whole percentages rounded down. Promotion must be positive and strictly lower than regular price. Money inputs to Actions must be PHP integers, not floats or numeric strings.
 - `cost_price` is hidden from Product array/JSON serialization; future storefront DTOs must also exclude it.
 - `CatalogSeeder` runs only in local/testing and can be repeated without duplicating records.
+
+Product variants: `product_variants` stores product_id (FK, cascade on product deletion), name, value, nullable sku, nullable unsigned integer stock, is_active (default true), sort_order (default 0) and timestamps. This slice uses only `name = Cor`; prices remain on Product. The unique (product_id, name, value) constraint prevents repeated colors. The (product_id, is_active, sort_order, id) index supports the active ordered selector. No attribute tables or variant pricing are introduced. Only active colors appear on the product detail; a color must be selected before its WhatsApp quote link is enabled.
+
+`CatalogSeeder` delegates to `DemoCatalogSeeder`: eight categories, thirty products and six colors for each of the two inks. Repeated runs preserve existing product data, variants and images. The previous known demo product fixtures are retired; empty obsolete demo categories are removed. No image fixtures are created.
 
 Banner schema: `banners` stores title, required desktop_image, optional mobile_image/link/alt_text, sort_order (default 0), is_active (default true), nullable starts_at/ends_at and timestamps. Indexes: (sort_order, id) and (is_active, starts_at, ends_at). Images are paths on the public disk. DateTimes use the application timezone, America/Sao_Paulo; visibility includes both boundary instants. Updates validate the combined existing/new interval.
 

@@ -3,19 +3,28 @@
 declare(strict_types=1);
 
 namespace App\Actions\Catalog\Storefront;
+
 use App\Domain\Catalog\Models\Banner;
 use App\Domain\Catalog\Models\Category;
+use App\Domain\Catalog\Models\Product;
+
 final class GetHomeDataAction
 {
     public function __construct(private readonly PublicProducts $products) {}
+
     public function execute(): array
     {
+        $promotions = $this->products->query()->onPromotion()->latest()->limit(8)->get();
+        // Eight displayed promotions can overlap with at most eight of these candidates.
+        $featured = $this->products->query()->featured()->latest()->limit(16)->get()
+            ->sortBy(fn (Product $product): int => $promotions->contains('id', $product->id) ? 1 : 0)
+            ->take(8)->values();
+
         return [
             'banners' => Banner::currentlyVisible()->ordered()->get(),
-            'categories' => Category::active()->ordered()->get(['id', 'name', 'slug']),
-            'featured' => $this->products->query()->featured()->latest()->limit(8)->get(),
-            'promotions' => $this->products->query()->onPromotion()->latest()->limit(8)->get(),
-            'recent' => $this->products->query()->latest()->limit(8)->get(),
+            'categories' => Category::active()->ordered()->get(['id', 'name', 'slug', 'image_path']),
+            'featured' => $featured,
+            'promotions' => $promotions,
         ];
     }
 }

@@ -20,14 +20,18 @@ final class ValidateCatalogData
     public function category(array $data, ?Category $category = null): array
     {
         $data = $this->slug($data, $category === null);
+        if (array_key_exists('image_path', $data) && $data['image_path'] === '') {
+            $data['image_path'] = null;
+        }
 
         return Validator::make($data, [
             'name' => [$category ? 'sometimes' : 'required', 'required', 'string', 'max:255'],
             'slug' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('categories')->ignore($category?->id)],
             'description' => ['nullable', 'string'],
+            'image_path' => ['nullable', 'string', 'max:255', 'regex:~\Acategories/[a-z0-9_-]+\.(?:jpe?g|png|webp)\z~i'],
             'sort_order' => ['integer', 'between:-2147483648,2147483647'],
             'is_active' => ['boolean'],
-        ])->validate();
+        ], ['image_path.regex' => 'Selecione uma imagem enviada para esta categoria.'], ['image_path' => 'imagem de destaque'])->validate();
     }
 
     public function product(array $data, ?Product $product = null): array

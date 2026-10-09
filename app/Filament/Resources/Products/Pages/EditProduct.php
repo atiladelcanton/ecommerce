@@ -8,6 +8,7 @@ use App\Actions\Catalog\DeleteProductAction;
 use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Support\CatalogForm;
 use App\Filament\Support\HandlesProductForm;
+use App\Support\Catalog\ProductDescription;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,6 +26,7 @@ final class EditProduct extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $data['cost_price'] = $this->getRecord()->cost_price;
+        $data['description'] = ProductDescription::html($data['description'] ?? null);
 
         return $data;
     }

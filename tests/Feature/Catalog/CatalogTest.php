@@ -269,8 +269,8 @@ final class CatalogTest extends TestCase
     {
         $this->seed(CatalogSeeder::class);
         $this->seed(CatalogSeeder::class);
-        $this->assertDatabaseCount('categories', 6);
-        $this->assertDatabaseCount('products', 6);
+        $this->assertDatabaseCount('categories', 8);
+        $this->assertDatabaseCount('products', 30);
         foreach (Product::all() as $product) {
             $this->assertIsInt($product->final_price);
         }

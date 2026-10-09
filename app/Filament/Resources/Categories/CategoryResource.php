@@ -11,6 +11,7 @@ use App\Filament\Resources\Categories\Pages\EditCategory;
 use App\Filament\Resources\Categories\Pages\ListCategories;
 use App\Filament\Support\CatalogForm;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -18,10 +19,12 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Component;
 
 final class CategoryResource extends Resource
 {
@@ -48,6 +51,11 @@ final class CategoryResource extends Resource
                     TextInput::make('name')->label('Nome')->required()->maxLength(255),
                     TextInput::make('slug')->label('Slug')->maxLength(255)->helperText('Deixe vazio ao criar para gerar a partir do nome.'),
                     Textarea::make('description')->label('Descrição')->columnSpanFull(),
+                    FileUpload::make('image_path')->label('Imagem de destaque')->image()
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->disk('public')->directory('categories')->visibility('public')->maxSize(5120)
+                        ->preventFilePathTampering(allowFilePathUsing: fn (string $file, Component $livewire): bool => in_array($file, $livewire->pendingCategoryPaths, true))
+                        ->helperText('Opcional. JPG, PNG ou WebP, até 5 MB. Exibida na Home.')->columnSpanFull(),
                     TextInput::make('sort_order')->label('Ordem')->integer()->required()->default(0),
                     Toggle::make('is_active')->label('Ativo')->default(true),
                 ]),
@@ -57,6 +65,8 @@ final class CategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
+            ImageColumn::make('image_path')->label('Imagem')->disk('public')->visibility('public')
+                ->imageSize(48)->square()->placeholder('Sem imagem'),
             TextColumn::make('name')->label('Nome')->searchable()->sortable(),
             TextColumn::make('slug')->label('Slug'),
             TextColumn::make('products_count')->label('Quantidade de produtos')->counts('products'),

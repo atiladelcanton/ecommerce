@@ -1,4 +1,4 @@
-.PHONY: setup up down shell test migrate fresh build pint
+make.PHONY: setup up down shell test migrate fresh build pint
 
 setup:
 	./scripts/setup.sh

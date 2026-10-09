@@ -23,7 +23,7 @@
 
     <?php echo $__env->yieldPushContent('head'); ?>
 </head>
-<body class="store-body">
+<body <?php echo e($attributes->class(['store-body'])); ?>>
     <a href="#conteudo" class="store-skip">Pular para o conteúdo</a>
     <?php if (isset($component)) { $__componentOriginalefa10d7f09dd66caefc246aaded599a7 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalefa10d7f09dd66caefc246aaded599a7 = $attributes; } ?>

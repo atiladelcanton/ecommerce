@@ -115,7 +115,7 @@ Todo formulário administrativo deve agrupar semanticamente os campos em `Sectio
 
 ### Agrupamentos de referência
 
-Categoria usa um card **Informações da categoria** com Nome, Slug, Descrição, Ordem e Ativo; duas colunas no desktop, descrição em largura total e uma coluna no mobile.
+Categoria usa um card **Informações da categoria** com Nome, Slug, Descrição, Imagem de destaque opcional, Ordem e Ativo; duas colunas no desktop, descrição e upload em largura total e uma coluna no mobile. O upload tem preview nativo, aceita JPG/PNG/WebP até 5 MB e usa o disco `public`, diretório `categories`, com nomes gerados e proteção contra caminhos arbitrários. A listagem exibe miniatura ou “Sem imagem”. Substituir/remover a associação preserva os arquivos físicos, conforme o padrão do Catalog.
 
 Produto usa os seguintes cards:
 
@@ -151,3 +151,7 @@ Verificação da máscara: `./vendor/bin/sail node --test tests/JavaScript/brazi
 - **Configurações → Configurações da loja** (`/admin/store-settings`): página única com cards Identidade, Contato, Endereço, Redes sociais, SEO e Frete; botão Salvar imediatamente abaixo. Abrir a página não grava dados; o primeiro salvamento cria a configuração.
 - A configuração usa colunas explícitas e restrição de unicidade no banco. Nome da loja é obrigatório; demais campos são opcionais. Telefones preservam o formato informado; preencher WhatsApp com país e DDD.
 - Persistência delegada a CreateBannerAction, UpdateBannerAction, DeleteBannerAction e UpdateStoreSettingsAction. Não há implementação de storefront nem integrações nesta etapa.
+
+## Descrição rica dos produtos
+
+`description` usa o RichEditor nativo, em largura total dentro da Section Informações. A coluna TEXT existente armazena HTML; não há migration, editor externo, anexos ou custom blocks. Ferramentas: H2/H3, negrito, itálico, sublinhado, listas, citação, links e desfazer/refazer. Emojis são texto. `ProductDescription` sanitiza o conteúdo na hidratação/deidratação do formulário e novamente na renderização pública, permitindo apenas texto e estrutura editorial. Scripts, eventos, estilos arbitrários, imagens, iframes, SVG e esquemas de links perigosos não são renderizados. A sanitização usa o componente Symfony já instalado, sem mudar o sanitizador global do Filament.

@@ -5,31 +5,77 @@
         @if($whatsappUrl)<a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="hidden sm:inline">Fale conosco pelo WhatsApp ↗</a>@endif
     </div>
 </div>
-<header class="store-header" x-data>
-    <div class="store-container flex flex-wrap items-center gap-5 py-5 lg:flex-nowrap">
-        <a href="{{ route('home') }}" aria-label="{{ $storeName }} — Início" class="shrink-0"><img src="{{ asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="160" height="47" class="w-32 sm:w-40"></a>
-        <nav aria-label="Navegação principal" class="hidden items-center gap-7 text-sm font-medium lg:flex lg:ml-10">
+<header class="store-header" x-data="storeHeader" @keydown.escape="closeCategories()">
+    <div class="store-container store-header-main">
+        <a href="{{ route('home') }}" aria-label="{{ $storeName }} — Início" class="store-header-logo">
+            <img src="{{ asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="192" height="56">
+        </a>
+        <div id="header-search" class="store-header-search" x-show="desktop || searchOpen" x-cloak>
+            <livewire:store.search-autocomplete />
+        </div>
+        <a class="store-header-contact" href="{{ $whatsappUrl ?: route('store.contact') }}" @if($whatsappUrl) target="_blank" rel="noopener noreferrer" @endif>
+            <x-heroicon-o-chat-bubble-oval-left-ellipsis class="size-6 shrink-0" />
+            <span><span class="store-header-contact-caption">Fale com a SABA</span><span>{{ $whatsappUrl ? 'WhatsApp' : 'Contato' }}</span></span>
+        </a>
+        <div class="store-header-mobile-controls">
+            <button type="button" class="store-icon-btn" @click="toggleSearch()" :aria-expanded="searchOpen" aria-controls="header-search" aria-label="Abrir busca"><x-heroicon-o-magnifying-glass class="size-6" /></button>
+            <button type="button" class="store-icon-btn" @click="$refs.menu.showModal()" aria-haspopup="dialog" aria-controls="mobile-menu" aria-label="Abrir menu"><x-heroicon-o-bars-3 class="size-6" /></button>
+        </div>
+    </div>
+    <div class="store-header-navigation">
+        <nav class="store-container store-header-nav" aria-label="Navegação principal">
+            <a class="store-nav-link" href="{{ route('home') }}" @if(request()->routeIs('home')) aria-current="page" @endif>Início</a>
+            <a class="store-nav-link" href="{{ route('store.products') }}" @if(request()->routeIs('store.products')) aria-current="page" @endif>Produtos</a>
+            <div class="store-mega-wrapper" @mouseenter="openCategories()" @mouseleave="categoriesOpen = false" @focusout="if (!$el.contains($event.relatedTarget)) categoriesOpen = false" @click.outside="categoriesOpen = false">
+                <button type="button" class="store-nav-link store-mega-trigger" x-ref="categoriesTrigger" @click="categoriesOpen = !categoriesOpen" :aria-expanded="categoriesOpen" aria-controls="category-mega-menu">
+                    Categorias <x-heroicon-o-chevron-down class="size-4" />
+                </button>
+                <div id="category-mega-menu" class="store-mega-menu" x-show="categoriesOpen" x-cloak>
+                    <div class="store-mega-categories">
+                        <p class="store-mega-label">Categorias</p>
+                        <ul class="store-mega-category-grid">
+                            @forelse($categories as $category)
+                                <li><a href="{{ route('store.products', ['categoria' => $category->slug]) }}">{{ $category->name }}</a></li>
+                            @empty
+                                <li class="store-mega-empty">Nenhuma categoria disponível.</li>
+                            @endforelse
+                        </ul>
+                    </div>
+                    <div class="store-mega-shortcuts">
+                        <p class="store-mega-label">Atalhos</p>
+                        <a href="{{ route('store.products') }}">Todos os produtos <x-heroicon-o-arrow-right class="size-4" /></a>
+                        <a href="{{ route('store.products', ['promocao' => 1]) }}">Promoções <x-heroicon-o-arrow-right class="size-4" /></a>
+                    </div>
+                </div>
+            </div>
+            <a class="store-nav-link" href="{{ route('store.about') }}" @if(request()->routeIs('store.about')) aria-current="page" @endif>Quem Somos</a>
+            <a class="store-nav-link" href="{{ route('store.contact') }}" @if(request()->routeIs('store.contact')) aria-current="page" @endif>Contato</a>
+        </nav>
+    </div>
+    <dialog id="mobile-menu" x-ref="menu" class="store-dialog store-header-drawer" aria-labelledby="mobile-menu-title">
+        <div class="store-drawer-heading">
+            <h2 id="mobile-menu-title">Menu</h2>
+            <button type="button" class="store-icon-btn" @click="$refs.menu.close()" aria-label="Fechar menu"><x-heroicon-o-x-mark class="size-6" /></button>
+        </div>
+        <nav class="store-drawer-nav" aria-label="Navegação mobile">
             <a href="{{ route('home') }}" @if(request()->routeIs('home')) aria-current="page" @endif>Início</a>
             <a href="{{ route('store.products') }}" @if(request()->routeIs('store.products')) aria-current="page" @endif>Produtos</a>
-            <details class="relative">
-                <summary class="cursor-pointer">Categorias</summary>
-                <div class="store-dropdown w-64">
+            <details class="store-drawer-categories">
+                <summary>Categorias <x-heroicon-o-chevron-down class="size-4" /></summary>
+                <ul>
                     @forelse($categories as $category)
-                        <a class="block rounded-md px-3 py-2 hover:bg-store-soft" href="{{ route('store.products', ['categoria' => $category->slug]) }}">{{ $category->name }}</a>
-                    @empty <span class="block p-3 text-store-muted">Nenhuma categoria disponível.</span> @endforelse
-                </div>
+                        <li><a href="{{ route('store.products', ['categoria' => $category->slug]) }}">{{ $category->name }}</a></li>
+                    @empty
+                        <li class="store-mega-empty">Nenhuma categoria disponível.</li>
+                    @endforelse
+                </ul>
+                <a href="{{ route('store.products', ['promocao' => 1]) }}">Promoções</a>
             </details>
-        </nav>
-        <div class="order-last w-full lg:order-none lg:ml-auto lg:max-w-sm"><livewire:store.search-autocomplete /></div>
-        @if($whatsappUrl)<a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="store-icon-btn ml-auto lg:ml-0" aria-label="Falar pelo WhatsApp"><x-heroicon-o-chat-bubble-oval-left-ellipsis class="size-6" /></a>@endif
-        <button type="button" class="store-icon-btn lg:hidden {{ $whatsappUrl ? '' : 'ml-auto' }}" @click="$refs.menu.showModal()" aria-label="Abrir menu"><x-heroicon-o-bars-3 class="size-6" /></button>
-    </div>
-    <dialog x-ref="menu" class="store-dialog" aria-labelledby="mobile-menu-title">
-        <div class="flex items-center justify-between mb-8"><h2 id="mobile-menu-title" class="text-xl font-semibold">Menu</h2><button class="store-icon-btn" @click="$refs.menu.close()" aria-label="Fechar menu"><x-heroicon-o-x-mark class="size-6" /></button></div>
-        <nav class="flex flex-col gap-5" aria-label="Navegação mobile">
-            <a href="{{ route('home') }}">Início</a><a href="{{ route('store.products') }}">Todos os produtos</a>
-            <p class="store-eyebrow mt-4">Categorias</p>
-            @foreach($categories as $category)<a href="{{ route('store.products', ['categoria' => $category->slug]) }}">{{ $category->name }}</a>@endforeach
+            <a href="{{ route('store.about') }}" @if(request()->routeIs('store.about')) aria-current="page" @endif>Quem Somos</a>
+            <a href="{{ route('store.contact') }}" @if(request()->routeIs('store.contact')) aria-current="page" @endif>Contato</a>
+            @if($whatsappUrl)
+                <a class="store-drawer-whatsapp" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer"><x-heroicon-o-chat-bubble-oval-left-ellipsis class="size-5" /> WhatsApp</a>
+            @endif
         </nav>
     </dialog>
 </header>

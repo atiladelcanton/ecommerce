@@ -1,0 +1,1 @@
+<x-store.hero-carousel :banners="$banners" />

@@ -28,10 +28,10 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 <article class="store-product-card group" data-product-id="<?php echo e($product->id); ?>">
-    <a href="<?php echo e(route('store.product', $product->slug)); ?>" class="block h-full">
-        <div class="relative aspect-square bg-store-soft overflow-hidden rounded-lg">
+    <a href="<?php echo e(route('store.product', $product->slug)); ?>" class="store-product-card-link">
+        <div class="store-product-card-image relative aspect-square bg-store-soft overflow-hidden">
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->images->first()): ?>
-                <img src="<?php echo e(Storage::disk('public')->url($product->images->first()->path)); ?>" alt="<?php echo e($product->images->first()->alt_text ?: $product->name); ?>" loading="lazy" width="500" height="500" class="size-full object-contain p-5 transition-transform duration-300 motion-safe:group-hover:scale-105">
+                <img src="<?php echo e(Storage::disk('public')->url($product->images->first()->path)); ?>" alt="<?php echo e($product->images->first()->alt_text ?: $product->name); ?>" loading="lazy" width="500" height="500" class="size-full object-contain transition-transform duration-300 motion-safe:group-hover:scale-105">
             <?php else: ?>
                 <div class="flex h-full flex-col items-center justify-center gap-3 text-store-muted"><?php if (isset($component)) { $__componentOriginal643fe1b47aec0b76658e1a0200b34b2c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal643fe1b47aec0b76658e1a0200b34b2c = $attributes; } ?>
@@ -58,7 +58,7 @@ unset($__defined_vars, $__key, $__value); ?>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->has_promotion): ?><span class="store-discount">-<?php echo e($product->discount_percentage); ?>%</span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
-        <div class="pt-4"><p class="text-xs text-store-muted"><?php echo e($product->category->name); ?></p><h3 class="mt-2 font-medium leading-snug min-h-12"><?php echo e($product->name); ?></h3><div class="my-3"><?php if (isset($component)) { $__componentOriginal333abf93aa73838b921ca17ad4c08e7c = $component; } ?>
+        <div class="store-product-card-body"><p class="text-xs text-store-muted"><?php echo e($product->category->name); ?></p><h3 class="mt-2 font-medium leading-snug min-h-12"><?php echo e($product->name); ?></h3><div class="my-3"><?php if (isset($component)) { $__componentOriginal333abf93aa73838b921ca17ad4c08e7c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal333abf93aa73838b921ca17ad4c08e7c = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.store.availability-badge','data' => ['availability' => $product->availability]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('store.availability-badge'); ?>

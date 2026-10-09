@@ -13,10 +13,12 @@ use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\RelationManagers\ImagesRelationManager;
-use App\Support\BrazilianMoney;
 use App\Filament\Support\CatalogForm;
+use App\Support\BrazilianMoney;
+use App\Support\Catalog\ProductDescription;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -84,7 +86,16 @@ final class ProductResource extends Resource
                 TextInput::make('sku')->label('SKU')->maxLength(255),
                 Select::make('category_id')->label('Categoria')->relationship('category', 'name')->searchable()->required(),
                 Textarea::make('short_description')->label('Descrição curta')->columnSpanFull(),
-                Textarea::make('description')->label('Descrição')->rows(6)->columnSpanFull(),
+                RichEditor::make('description')->label('Descrição')
+                    ->toolbarButtons([
+                        ['h2', 'h3', 'bold', 'italic', 'underline'],
+                        ['bulletList', 'orderedList', 'blockquote', 'link'],
+                        ['undo', 'redo'],
+                    ])
+                    ->formatStateUsing(fn (?string $state): string => ProductDescription::html($state))
+                    ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? ProductDescription::html($state) : null)
+                    ->helperText('Formate o texto e use emojis. Scripts, HTML livre e anexos não são permitidos.')
+                    ->columnSpanFull(),
             ]),
             Section::make('Mídia')->schema([
                 self::uploads(),

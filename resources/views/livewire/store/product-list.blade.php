@@ -12,8 +12,8 @@
             <p wire:loading.delay class="text-sm text-store-muted mb-3" role="status">Atualizando produtos…</p>
             <div wire:loading.class="opacity-50" class="transition-opacity">
                 @if($products->count())
-                    <div class="store-product-grid store-catalog-grid">@foreach($products as $product)<div wire:key="product-{{ $product->id }}"><x-store.product-card :product="$product" /></div>@endforeach</div>
-                    <div class="mt-10 store-pagination">{{ $products->links() }}</div>
+                    <div id="store-products-grid" class="store-product-grid store-catalog-grid">@foreach($products as $product)<div wire:key="product-{{ $product->id }}"><x-store.product-card :product="$product" /></div>@endforeach</div>
+                    <div class="mt-10">{{ $products->links('pagination.storefront') }}</div>
                 @else
                     <div class="py-20 text-center bg-store-soft rounded-xl"><x-heroicon-o-magnifying-glass class="size-10 mx-auto text-store-muted mb-5" /><h2 class="text-xl font-semibold">Nenhum produto encontrado.</h2>@if($search)<p class="text-store-muted mt-3">Nenhum resultado para '{{ $search }}'.</p>@endif<button class="store-button-secondary mt-6" wire:click="clearFilters">Limpar filtros</button></div>
                 @endif

@@ -15,7 +15,9 @@ final class UpdateCategoryAction
     {
         return DB::transaction(function () use ($model, $data): Category {
             $locked = Category::query()->lockForUpdate()->findOrFail($model->id);
-            $locked->update($this->validation->category($data, $locked));
+            // Omitted fields are preserved; an explicit null removes the image association.
+            $validated = $this->validation->category($data, $locked);
+            $locked->update($validated);
 
             return $locked->refresh();
         });

@@ -1,23 +1,36 @@
 @props(['banners'])
 @if($banners->isNotEmpty())
-<section class="store-hero" x-data="storeCarousel({{ $banners->count() }})" @mouseenter="hovered = true" @mouseleave="hovered = false" @focusin="focused = true" @focusout="focused = $el.contains($event.relatedTarget)" aria-roledescription="carousel" aria-label="Destaques da loja">
-    @foreach($banners as $banner)
-        <div x-show="index === {{ $loop->index }}" @if(!$loop->first) x-cloak @endif role="group" aria-roledescription="slide" aria-label="{{ $loop->iteration }} de {{ $banners->count() }}" class="h-full">
-            @if($banner->link)<a href="{{ $banner->link }}" class="block h-full">@endif
-            <picture>
-                @if($banner->mobile_image)<source media="(max-width: 639px)" srcset="{{ Storage::disk('public')->url($banner->mobile_image) }}">@endif
-                <img src="{{ Storage::disk('public')->url($banner->desktop_image) }}" alt="{{ $banner->alt_text ?: $banner->title }}" class="h-full w-full object-cover" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif width="1600" height="600">
-            </picture>
-            @if($banner->link)</a>@endif
-        </div>
-    @endforeach
-    @if($banners->count() > 1)
-        <div class="absolute inset-x-0 bottom-5 flex items-center justify-center gap-3">
-            <button class="store-carousel-control" @click="previous()" aria-label="Banner anterior">←</button>
-            @foreach($banners as $banner)<button class="size-2.5 rounded-full bg-white ring-1 ring-black/10" :class="index === {{ $loop->index }} ? 'opacity-100' : 'opacity-50'" @click="index = {{ $loop->index }}" :aria-pressed="index === {{ $loop->index }}" aria-label="Mostrar banner {{ $loop->iteration }}"></button>@endforeach
-            <button class="store-carousel-control" @click="next()" aria-label="Próximo banner">→</button>
-            <button class="store-carousel-control text-xs" @click="paused = !paused" :aria-label="paused ? 'Reproduzir banners' : 'Pausar banners'" x-text="paused ? '▶' : 'Ⅱ'"></button>
-        </div>
-    @endif
-</section>
+    <section class="store-hero" x-data="storeCarousel({{ $banners->count() }})"
+        :style="{ '--slide-offset': (direction * 20) + 'px' }"
+        @mouseenter="hovered = true" @mouseleave="hovered = false"
+        @focusin="focused = $event.target.matches(':focus-visible')" @focusout="focused = false"
+        @touchstart.passive="touchStart($event)" @touchend.passive="touchEnd($event)" @touchcancel="touchCancel()"
+        @click.capture="if (Date.now() < suppressClickUntil) { $event.preventDefault(); $event.stopPropagation(); }"
+        aria-roledescription="carousel" aria-label="Destaques da loja">
+        @foreach($banners as $banner)
+            <div class="store-hero-slide"
+                @if($loop->first) data-initial-active @else inert @endif
+                :data-initial-active="null"
+                :class="{ 'is-active': index === {{ $loop->index }}, 'is-leaving': previousIndex === {{ $loop->index }} }"
+                aria-hidden="{{ $loop->first ? 'false' : 'true' }}" :aria-hidden="index !== {{ $loop->index }}" :inert="index !== {{ $loop->index }}"
+                role="group" aria-roledescription="slide" aria-label="{{ $loop->iteration }} de {{ $banners->count() }}">
+                @if($banner->link)<a href="{{ $banner->link }}" class="block h-full">@endif
+                <picture>
+                    @if($banner->mobile_image)<source media="(max-width: 639px)" srcset="{{ Storage::disk('public')->url($banner->mobile_image) }}">@endif
+                    <img src="{{ Storage::disk('public')->url($banner->desktop_image) }}" alt="{{ $banner->alt_text ?: $banner->title }}" class="h-full w-full object-contain" @if($loop->first) fetchpriority="high" @else loading="lazy" @endif width="1600" height="600">
+                </picture>
+                @if($banner->link)</a>@endif
+            </div>
+        @endforeach
+        @if($banners->count() > 1)
+            <button type="button" class="store-carousel-control store-carousel-previous" @click="previous()" aria-label="Banner anterior"><x-heroicon-o-chevron-left class="size-4 sm:size-5" aria-hidden="true" /></button>
+            <button type="button" class="store-carousel-control store-carousel-next" @click="next()" aria-label="Próximo banner"><x-heroicon-o-chevron-right class="size-4 sm:size-5" aria-hidden="true" /></button>
+            <div class="store-carousel-indicators" aria-label="Escolher banner">
+                @foreach($banners as $banner)
+                    <button type="button" class="store-carousel-indicator" @click="goTo({{ $loop->index }})" aria-pressed="{{ $loop->first ? 'true' : 'false' }}" :aria-pressed="index === {{ $loop->index }}" aria-label="Ver banner {{ $loop->iteration }}"></button>
+                @endforeach
+            </div>
+            <p class="sr-only" :aria-live="hovered || focused || reducedMotion ? 'polite' : 'off'" aria-atomic="true" x-text="'Banner ' + (index + 1) + ' de ' + count"></p>
+        @endif
+    </section>
 @endif

@@ -125,7 +125,7 @@ Search autocomplete must debounce requests and cap suggestion counts. Do not que
 - Product availability: immediate, made to order, unavailable.
 - Promotional price appears only when valid and lower than regular price.
 - Products can expose a WhatsApp quote button using a store-configured phone number and standardized message.
-- Categories have no image field.
+- Categories have an optional featured image; Home uses a typographic fallback when absent.
 - Home contains rotating hero banners, category navigation, product listings and an automatically shown Promotions section when valid promotional products exist.
 
 ## 8. Payments
