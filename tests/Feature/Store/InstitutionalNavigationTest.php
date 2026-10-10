@@ -57,7 +57,8 @@ final class InstitutionalNavigationTest extends TestCase
         }
         $this->assertSame(1, $xpath->query('//*[@id="category-mega-menu"]//a[@href="'.route('store.products').'"]')->length);
         $this->assertSame(1, $xpath->query('//*[@id="category-mega-menu"]//a[@href="'.route('store.products', ['promocao' => 1]).'"]')->length);
-        $this->assertSame(0, $xpath->query('//header//a[contains(@href,"destaque") or contains(@href,"carrinho") or contains(@href,"conta/")]')->length);
+        $this->assertSame(0, $xpath->query('//header//a[contains(@href,"destaque") or contains(@href,"conta/")]')->length);
+        $this->assertSame(1, $xpath->query('//header//a[@href="'.route('store.cart').'"]')->length);
         $this->assertSame(1, $xpath->query('//header//form[@role="search" and @action="'.route('store.products').'"]')->length);
         $this->assertSame(1, $xpath->query('//header//*[@id="store-search"]')->length);
     }

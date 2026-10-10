@@ -17,6 +17,7 @@
             <x-heroicon-o-chat-bubble-oval-left-ellipsis class="size-6 shrink-0" />
             <span><span class="store-header-contact-caption">Fale com a SABA</span><span>{{ $whatsappUrl ? 'WhatsApp' : 'Contato' }}</span></span>
         </a>
+        <div class="store-header-cart"><livewire:store.cart-badge /></div>
         <div class="store-header-mobile-controls">
             <button type="button" class="store-icon-btn" @click="toggleSearch()" :aria-expanded="searchOpen" aria-controls="header-search" aria-label="Abrir busca"><x-heroicon-o-magnifying-glass class="size-6" /></button>
             <button type="button" class="store-icon-btn" @click="$refs.menu.showModal()" aria-haspopup="dialog" aria-controls="mobile-menu" aria-label="Abrir menu"><x-heroicon-o-bars-3 class="size-6" /></button>

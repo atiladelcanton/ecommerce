@@ -12,7 +12,7 @@
 
 Planned sequence:
 
-1. Shared header: logo, wide existing autocomplete search and configured WhatsApp/contact link; second row with Início, Produtos, Categorias, Quem Somos and Contato. Account/cart links are reserved for when those features exist.
+1. Shared header: logo, wide existing autocomplete search, configured WhatsApp/contact link and cart icon linking to `/carrinho` with a reactive total-unit badge; second row with Início, Produtos, Categorias, Quem Somos and Contato. Account links are reserved for when those features exist.
 2. Rotating hero banners
 3. Compact category navigation: 128px cards, registered image with dark overlay, white name and a small arrow; typographic fallback without an image. Grid: 1/2/4/5 columns on mobile/tablet/desktop/wide desktop.
 4. Up to 8 featured products; prefer products absent from the displayed promotions, filling with overlaps only when necessary.
@@ -36,6 +36,28 @@ Hero-to-category spacing is 56px; subsequent sections use 64px, with 72px before
 - related products
 
 When discounted, show the current promotional price prominently and the original regular price smaller with strike-through styling.
+
+The color selector is shared by the Livewire “Adicionar ao carrinho” action and the WhatsApp quote. Selecting a color is required for products with Cor variants. Successful addition dispatches a global success toast and refreshes the header badge without leaving the product page. Validation failures keep the existing server-side validation and dispatch a warning/error toast.
+
+## Storefront notifications
+
+The public layout includes `components/store/toast-container.blade.php`, powered by the existing Alpine instance and `resources/js/store-toasts.js`. Any Livewire component can dispatch `toast` with `type`, `title`, `message` and optional `actionLabel`/`actionUrl`. Supported types are `success`, `error`, `warning` and `info`; only the icon and discreet progress bar use the type color. Text is rendered with `x-text`; action URLs must belong to the storefront origin.
+
+White cards sit 96px from the top and 24px from the right on desktop, with a 380px width. Mobile uses 12px top/side margins. New notifications enter at the top, with a maximum of three; a fourth replaces the oldest. Each expires after 4 seconds, pausing while hovered or while its controls have keyboard focus. A close button dismisses manually. Enter/exit transitions use 300ms/200ms and a 20px horizontal translation, respecting reduced-motion preferences. Polite live announcements serve success/warning/info; errors use an assertive live region. There are no external notification dependencies or Filament notifications in the storefront.
+
+## Public cart
+
+`/carrinho` is available without login. Desktop shows a full-width product table and, on wide screens, a side summary; mobile presents each table row as a compact product card and stacks the summary below. Rows show the primary photo (or image fallback), catalog name, optional color, current unit price, Livewire minus/quantity/plus control, subtotal and explicit removal.
+
+The summary shows subtotal, “Frete: Calculado no checkout” and total parcial. “Continuar para o checkout” points to `/checkout`. “Continuar comprando” returns to `/produtos`. An empty cart shows “Seu carrinho está vazio.” and “Ver produtos”. Clearing all items uses Livewire confirmation. Controls prevent decrementing below 1 and disable while requests are pending.
+
+## Guest checkout and initial order confirmation
+
+`/checkout` uses a thin Livewire component and the shared public layout. Customer, delivery and demo-payment fields are grouped into bordered white cards, with a responsive two-column field grid. The order summary sits alongside the form on wide screens and stacks below on mobile. Choosing an option updates server-calculated shipping and total. A visible “Pagamento de demonstração” section explains that no charge is made. “Finalizar pedido de teste” disables during submission; field errors and shipping failures are accessible and do not invent a free fallback. Empty checkout uses the existing empty-cart state.
+
+Success redirects to `/pedido/{number}/confirmacao`. The page presents the readable order number, immutable item/price/color snapshots, customer and delivery data, chosen delivery method and approved demonstration payment. Only the originating session can access it; responses use private/no-store cache control. Local/development additionally displays “Este pedido utilizou pagamento simulado.” No account screen, real gateway flow, order admin or real shipping quotation is introduced.
+
+The CEP input uses the existing Alpine mask plugin (`00000-000`) and `wire:model.blur`. Leaving the input triggers lookup only for valid eight-digit CEPs; incomplete values produce a field validation message without an external request. A small “Buscando endereço...” status appears during lookup. Success fills street, neighborhood, city and state, leaving the number unchanged. A useful provider complement fills an empty complement only. All address fields remain editable. Not-found/service-failure messages appear below the CEP input; they do not prevent manually completing checkout. Results are cached for 24 hours; temporary failures are not cached.
 
 ## Search autocomplete
 

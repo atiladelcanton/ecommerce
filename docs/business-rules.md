@@ -102,7 +102,13 @@ Planned fields:
 
 Guest users can create and modify a cart before registration/login.
 
-Persist or merge the guest cart into the customer flow when identification occurs.
+The public cart is stored in the Laravel session under `store.cart.items`. Each line stores only `product_id`, nullable `product_variant_id` and `quantity`. Identical product/variant pairs accumulate quantity; distinct colors stay on separate lines. Quantity must be an integer from 1 to 999. Decreasing at 1 is disabled; removing an item is a separate explicit action. Clearing the cart requires a UI confirmation.
+
+Products with any registered Cor variant require a selected active color belonging to that product, even if all colors are currently inactive. Inactive or unavailable products cannot be added; made-to-order products can. Stock reservation and stock limits are outside this slice.
+
+Names, images, colors and current effective prices come from the catalog. Subtotals use integer cents and current promotional pricing. The badge counts total units, rather than distinct lines. Deleted, inactive, unavailable or invalid-variant lines are removed when reading the cart. The cart does not snapshot or persist an order. Shipping is displayed as “Calculado no checkout”; the checkout button links to `/checkout`.
+
+Persist or merge the guest cart into the customer flow when identification is implemented in a future slice.
 
 ## Orders
 
@@ -121,6 +127,7 @@ Order status and payment status are separate concepts.
 Planned order status:
 
 - pending
+- confirmed (implemented initial demo checkout)
 - processing
 - shipped
 - delivered
@@ -154,7 +161,15 @@ Start with database-backed indexed search appropriate to catalog size. Keep the 
 
 ## Checkout
 
-Flow:
+The implemented `/checkout` does not require an account. Customer name/email/phone/CPF-or-CNPJ and a complete delivery address (complement optional) are stored as order snapshots. Phone, document and CEP formatting is stripped; document accepts 11/14 digits without checksum or external identity verification in this slice. UF must be a Brazilian state code. These guest details do not create a customer account.
+
+Backend catalog prices and variants are reloaded and locked at completion. The shipping provider returns “Entrega padrão” for 4990 cents with a demonstrative 5–8 business-day range, or “Retirada / combinar com a loja” for zero. The selected option ID is validated against the backend quote. Subtotal is the sum of snapshotted line totals, discount is zero, and total is subtotal plus shipping minus discount, all integer cents. Browser-provided prices, totals, names and discount are ignored.
+
+“Finalizar pedido de teste” creates the pending order, immutable product/color/address snapshots, initial history, approved fake payment and confirmed status/history in one transaction. Session cart/token are cleared after success; failure rolls back the records and retains the cart. A unique checkout UUID plus cache lock prevents duplicate orders/payments on double submit. Replaying an old successful token returns its order without clearing a newer cart. Numbers follow `SABA-000001` and are unique.
+
+`/pedido/{number}/confirmacao` shows only stored snapshots and requires the originating session, returning 404 to another visitor. Payment reads “Aprovado — ambiente de demonstração”. The additional “Este pedido utilizou pagamento simulado.” notice appears only in local/development. Real gateways, shipping integration, order admin, accounts, stock reservation and finance entries are not part of this slice.
+
+Future real-integration flow:
 
 1. cart
 2. customer identification/account

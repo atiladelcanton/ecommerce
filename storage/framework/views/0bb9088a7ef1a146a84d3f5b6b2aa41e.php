@@ -91,6 +91,32 @@ unset($__split);
 <?php endif; ?>
             <span><span class="store-header-contact-caption">Fale com a SABA</span><span><?php echo e($whatsappUrl ? 'WhatsApp' : 'Contato'); ?></span></span>
         </a>
+        <div class="store-header-cart"><?php
+$__split = function ($name, $params = []) {
+    return [$name, $params];
+};
+[$__name, $__params] = $__split('store.cart-badge', []);
+
+$__keyOuter = $__key ?? null;
+
+$__key = null;
+$__componentSlots = [];
+
+$__key ??= \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::generateKey('lw-2732652698-1', $__key);
+
+$__html = app('livewire')->mount($__name, $__params, $__key, $__componentSlots);
+
+echo $__html;
+
+unset($__html);
+unset($__key);
+$__key = $__keyOuter;
+unset($__keyOuter);
+unset($__name);
+unset($__params);
+unset($__componentSlots);
+unset($__split);
+?></div>
         <div class="store-header-mobile-controls">
             <button type="button" class="store-icon-btn" @click="toggleSearch()" :aria-expanded="searchOpen" aria-controls="header-search" aria-label="Abrir busca"><?php if (isset($component)) { $__componentOriginal643fe1b47aec0b76658e1a0200b34b2c = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal643fe1b47aec0b76658e1a0200b34b2c = $attributes; } ?>

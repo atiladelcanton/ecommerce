@@ -27,6 +27,7 @@
     <x-store.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" />
     <main id="conteudo">{{ $slot }}</main>
     <x-store.footer :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" />
+    <x-store.toast-container />
     @livewireScriptConfig
 </body>
 </html>

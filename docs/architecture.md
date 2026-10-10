@@ -33,17 +33,31 @@ Categories, products, images and banners.
 ### Customer
 Customer identity, document data, credentials and addresses.
 
+### Address lookup
+
+Checkout address assistance uses `Domain/Address/Contracts/PostalCodeLookup` and the immutable `AddressData` DTO. `Actions/Address/LookupPostalCodeAction` normalizes and validates eight-digit CEPs before any request and caches found/not-found results for 24 hours, separately by configured provider. Failures are not cached. `Infrastructure/Address/ViaCepPostalCodeLookup` uses Laravel HTTP Client over HTTPS with a 4-second timeout and 3-second connection timeout; it maps provider payloads and converts HTTP/connection/malformed-response failures into a handled `PostalCodeLookupFailed` exception.
+
+`config/address.php` defaults to `viacep`. The container binding is the provider selection point; a future BrasilAPI adapter can implement the same contract and be registered there. BrasilAPI is not implemented. The address lookup remains independent of shipping quotation and order/payment persistence. Lookup failures leave manual address entry available.
+
 ### Cart
 Guest/authenticated shopping cart and cart items.
+
+The public cart uses `Domain/Cart/CartItem` for line identity, quantity invariants and integer subtotal arithmetic, `Actions/Cart` for catalog validation and mutations, and `Infrastructure/Cart/SessionCart` for session serialization. Storefront Livewire components call Actions and emit a local `cart-updated` UI event to refresh the badge. Session lines contain IDs and quantity only; public catalog queries provide presentation and effective prices. Customer ownership/merge remains a future slice.
 
 ### Order
 Order creation, immutable line snapshots, status history and fulfillment state.
 
+The guest checkout is orchestrated by `Actions/Order/CreateInitialOrderAction`. It locks catalog rows, reuses Cart pricing/variant validation, validates a backend shipping option and writes order/item/address snapshots, two status-history entries and an approved demo payment in one database transaction. A cache lock and unique checkout token provide idempotency. Only after commit does the originating checkout clear its session cart/token. `GetOrderConfirmationAction` reads snapshots only and restricts access to the originating session hash; no login or customer account is involved.
+
 ### Payment
 Gateway abstraction, payment attempts, external events and webhook processing.
 
+The implemented slice binds `Domain/Payment/Contracts/PaymentGateway` to `Infrastructure/Payments/FakePaymentGateway`. Typed PaymentRequest/PaymentResult DTOs keep the adapter separate from Livewire and order persistence. The fake adapter returns an approved demo result with a deterministic external ID based on the checkout token. Real gateways/webhooks and finance side effects are future slices.
+
 ### Shipping
 Quotation abstraction, selected shipment and tracking data.
+
+`Domain/Shipping/Contracts/ShippingProvider` currently binds to `Infrastructure/Shipping/FakeShippingProvider`. QuoteShippingAction builds typed requests from catalog weight/dimension strings and quantities; the fake returns fixed standard/pickup options. Livewire does not define provider prices. Quote failures disable completion rather than silently selecting free shipping. No real shipment or external provider request is implemented.
 
 ### Finance
 Small cash-flow ledger only. It is not an accounting package.

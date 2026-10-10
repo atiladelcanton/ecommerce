@@ -85,6 +85,7 @@ Support guest/session ownership and customer ownership without duplicating line 
 - orders
 - order_items
 - order_status_histories
+- order_addresses
 
 Indexes:
 
@@ -93,6 +94,15 @@ Indexes:
 - orders.payment_status
 - orders.created_at
 - order_status_histories.order_id
+
+Implemented guest checkout slice:
+
+- `orders`: unique nullable `number` (assigned as `SABA-` plus the database ID padded to at least six digits within the creation transaction), unique UUID `checkout_token`, indexed SHA-256 `checkout_session_hash`, customer name/email/phone/document snapshots, `status` (`pending`/`confirmed`), independent `payment_status`, unsigned BIGINT `subtotal_cents`, `shipping_cents`, `discount_cents` (initially zero), `total_cents`, shipping option ID/name/description snapshots and timestamps. Indexes on status, payment_status and created_at. No customer account is required or created.
+- `order_items`: order FK with cascade, nullable product/variant FKs with null-on-delete so catalog deletion preserves historical items; product_name/product_sku, nullable variant_name/variant_value, regular_unit_price, effective unit_price, quantity and total snapshots. All monetary columns are unsigned BIGINT integer cents. Indexed order FK.
+- `order_addresses`: unique order FK with cascade and postal_code, street, number, nullable complement, neighborhood, city and state snapshots. This is the order's immutable delivery address, independent of future customer address management.
+- `order_status_histories`: order FK, nullable from_status, to_status, description and timestamps; indexed `(order_id, created_at)`. Creation records pending and confirmation records confirmed.
+- `payments`: order FK, gateway, globally unique external_id, status, unsigned BIGINT amount_cents, is_demo and timestamps. No webhook/event table or real payment integration is introduced in this slice.
+- One transaction writes the order, line/address snapshots, payment approval and status history. Session clearing happens only after commit. Cache locking and the unique checkout_token protect repeated submissions; confirmation access requires the originating session.
 
 ### Payment
 
