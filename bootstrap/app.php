@@ -11,7 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Global middleware customizations belong here.
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('admin/*')
+            ? route('filament.admin.auth.login')
+            : route('customer.login'));
+        $middleware->redirectUsersTo(fn ($request) => $request->is('admin/*')
+            ? route('filament.admin.pages.dashboard')
+            : route('customer.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Exception reporting customizations belong here.

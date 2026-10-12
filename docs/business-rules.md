@@ -196,3 +196,16 @@ Entry types:
 Sources/categories may include sales, purchase, freight, expense and other.
 
 A payment approval can create one sale inflow. Idempotency must prevent duplicates.
+
+## Orders, payments and cash flow
+
+- `OrderStatus` and `PaymentStatus` are separate concerns.
+- A successful payment moves a received order to `paid` automatically.
+- Replayed payment approval must not duplicate order history or cash-flow income.
+- Standard delivery requires carrier and tracking code before an order can become `shipped`.
+- Pickup orders use `ready_for_pickup` instead of `shipped` and never require tracking.
+- Delivered and cancelled orders are terminal.
+- Customer tracking reads the same order/status history used by the admin.
+- Every approved payment creates at most one automatic `income` cash-flow entry.
+- Automatic payment entries cannot be edited or deleted from the admin.
+- Manual financial entries must always be positive integer cents and explicitly marked as income or expense.

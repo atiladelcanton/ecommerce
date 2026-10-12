@@ -97,3 +97,27 @@ Use database transactions for order creation, payment approval side effects, ref
 ## Events
 
 Domain/application events are welcome when they decouple real side effects. Do not create events for simple local method calls.
+
+## Customer account
+
+Customer storefront authentication uses a dedicated `customer` guard and `Customer` model. Administrative `User` authentication remains independent. Orders may be checked out as guests; authenticated checkouts store `customer_id`. Guest orders may only be claimed during account creation when the e-mail matches and the protected checkout session hash belongs to the same browser session.
+
+## External providers
+
+Payment and shipping implementations are resolved through `PaymentGateway` and `ShippingProvider` contracts using `config/payments.php` and `config/shipping.php`. The current drivers are `fake`; real providers can be registered without coupling Checkout or Order code to a vendor.
+
+## Admin operational modules (2026-10)
+
+The administration panel now treats orders as an operational workflow rather than a generic editable CRUD. All status changes go through `TransitionOrderStatusAction`; Filament pages never mutate order status directly. Payment approval uses `HandleApprovedPaymentAction`, which synchronizes payment/order state and records the financial income idempotently.
+
+Order workflow:
+
+`pending -> paid -> processing -> shipped -> delivered`
+
+Pickup workflow:
+
+`pending -> paid -> processing -> ready_for_pickup -> delivered`
+
+`cancelled` is a terminal branch available only before dispatch/readiness.
+
+The finance module is intentionally a lightweight cash-flow ledger, not an ERP. Approved payments create immutable automatic income entries keyed by `payment_id`; manual income/expense entries are editable through their Actions.

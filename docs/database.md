@@ -115,11 +115,9 @@ External gateway IDs/events used for idempotency must be uniquely constrained.
 
 - shipments
 
-### Finance
+### Commercial reporting
 
-- cash_flow_entries
-
-Link to order/payment where relevant but keep manual entries possible.
+O MVP não mantém um livro-caixa próprio. Faturamento, ticket médio, status e rankings são derivados de `orders`, `order_items` e `payments`. Um módulo financeiro/ERP só deve ser introduzido se houver requisito explícito para despesas, conciliação e caixa real.
 
 ### Settings
 

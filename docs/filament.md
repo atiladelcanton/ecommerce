@@ -94,7 +94,7 @@ O administrativo fica disponível em `http://localhost:8081/admin`.
 
 - Tema oficial: `resources/css/filament/admin/theme.css`, registrado com `viteTheme()` no `AdminPanelProvider` e como entrada do Vite.
 - Todas as páginas administrativas usam `maxContentWidth(Width::Full)`. O CSS define margens laterais de 24 px a partir de 1024 px e 16 px nas telas menores; tabelas e relation managers herdam a largura da página.
-- Sidebar de 248 px, navegação atual em Painel e Catálogo. Os grupos Vendas, Financeiro e Configurações têm ordem reservada e só aparecem quando houver itens reais.
+- Sidebar de 248 px. A navegação do MVP é organizada em Painel, Catálogo, Vendas e Configurações. O e-commerce não expõe um módulo de fluxo de caixa; indicadores comerciais usam Pedidos e Payments como fonte.
 - Painel de Controle estende o Dashboard nativo apenas para ajustar título e grupo de navegação.
 - Primary: paleta vermelha gerada a partir de `#dc2626`; estado ativo suave `#fef2f2`, texto/ícone ativo `#b91c1c`. Canvas `#f6f7f8`, superfície `#ffffff`, texto `#27272a`, borda `#e4e4e7`.
 - Cores semânticas nativas: Green (sucesso), Amber (atenção), Red (erro), Zinc (neutro).
@@ -111,7 +111,7 @@ Todo formulário administrativo deve agrupar semanticamente os campos em `Sectio
 - O tema compartilhado aplica a mesma superfície às Sections e aos Fieldsets. Preservar o padding e o espaçamento nativos do Filament.
 - Dentro dos cards, usar grid responsivo: uma coluna em mobile e duas, três ou quatro no desktop, conforme os campos. Descrições, editores e uploads ocupam a largura total com `columnSpanFull()`.
 - Botões finais podem ficar fora dos cards, imediatamente abaixo do último card, mantendo as ações nativas de criar, salvar, criar outro e cancelar.
-- A convenção vale também para formulários de ações e para todos os Resources atuais e futuros: Categorias, Produtos, Banners, Clientes, Pedidos, Configurações, Fluxo de Caixa e Usuários.
+- A convenção vale também para formulários de ações e para todos os Resources atuais e futuros: Categorias, Produtos, Banners, Clientes, Pedidos, Configurações e Usuários.
 
 ### Agrupamentos de referência
 
@@ -140,7 +140,7 @@ Todos os valores monetários administrativos usam `BrazilianMoneyInput` (`app/Fi
 - A máscara opera sobre strings; a conversão e os cálculos usam centavos inteiros, sem `float`, `Number` ou `parseFloat`. O banco permanece com suas colunas inteiras existentes.
 - Nas tabelas, usar `BrazilianMoney::display()` para exibir `R$ 1.299,90`, nunca centavos crus ou notação estrangeira.
 - No domínio Catalog, custo aceita zero, venda é obrigatória e maior que zero, e promoção é opcional, positiva e estritamente inferior à venda. Promoção igual ou superior retorna: “O preço promocional deve ser menor que o preço de venda.”
-- Pedidos, fluxo de caixa, frete, descontos e pagamentos deverão reutilizar estes componentes; não criar máscaras ou conversores independentes.
+- Pedidos, frete, descontos e pagamentos deverão reutilizar estes componentes; não criar máscaras ou conversores independentes.
 
 Verificação da máscara: `./vendor/bin/sail node --test tests/JavaScript/brazilian-money-input.test.mjs`. A suíte PHPUnit cobre hidratação, persistência em centavos, listagens, validação e edição repetida.
 

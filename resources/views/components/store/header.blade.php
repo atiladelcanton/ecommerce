@@ -17,6 +17,10 @@
             <x-heroicon-o-chat-bubble-oval-left-ellipsis class="size-6 shrink-0" />
             <span><span class="store-header-contact-caption">Fale com a SABA</span><span>{{ $whatsappUrl ? 'WhatsApp' : 'Contato' }}</span></span>
         </a>
+        <a class="store-header-account" href="{{ auth('customer')->check() ? route('customer.dashboard') : route('customer.login') }}" aria-label="{{ auth('customer')->check() ? 'Minha conta' : 'Entrar na minha conta' }}">
+            <x-heroicon-o-user class="size-6" aria-hidden="true" />
+            <span>{{ auth('customer')->check() ? 'Minha conta' : 'Entrar' }}</span>
+        </a>
         <div class="store-header-cart"><livewire:store.cart-badge /></div>
         <div class="store-header-mobile-controls">
             <button type="button" class="store-icon-btn" @click="toggleSearch()" :aria-expanded="searchOpen" aria-controls="header-search" aria-label="Abrir busca"><x-heroicon-o-magnifying-glass class="size-6" /></button>
@@ -74,6 +78,9 @@
             </details>
             <a href="{{ route('store.about') }}" @if(request()->routeIs('store.about')) aria-current="page" @endif>Quem Somos</a>
             <a href="{{ route('store.contact') }}" @if(request()->routeIs('store.contact')) aria-current="page" @endif>Contato</a>
+            <a href="{{ auth('customer')->check() ? route('customer.dashboard') : route('customer.login') }}">
+                <x-heroicon-o-user class="size-5" /> {{ auth('customer')->check() ? 'Minha conta' : 'Entrar' }}
+            </a>
             @if($whatsappUrl)
                 <a class="store-drawer-whatsapp" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer"><x-heroicon-o-chat-bubble-oval-left-ellipsis class="size-5" /> WhatsApp</a>
             @endif

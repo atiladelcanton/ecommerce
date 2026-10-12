@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Store\CustomerAccountController;
+use App\Http\Controllers\Store\CustomerAddressController;
+use App\Http\Controllers\Store\CustomerAuthController;
 use App\Http\Controllers\Store\HomeController;
 use App\Http\Controllers\Store\InstitutionalController;
 use App\Http\Controllers\Store\OrderConfirmationController;
@@ -14,3 +17,28 @@ Route::get('/pedido/{number}/confirmacao', OrderConfirmationController::class)->
 Route::get('/produto/{slug}', ProductController::class)->name('store.product');
 Route::get('/quem-somos', [InstitutionalController::class, 'about'])->name('store.about');
 Route::get('/contato', [InstitutionalController::class, 'contact'])->name('store.contact');
+
+Route::middleware('guest:customer')->group(function (): void {
+    Route::get('/entrar', [CustomerAuthController::class, 'loginForm'])->name('customer.login');
+    Route::post('/entrar', [CustomerAuthController::class, 'login'])->name('customer.login.store');
+    Route::get('/criar-conta', [CustomerAuthController::class, 'registerForm'])->name('customer.register');
+    Route::post('/criar-conta', [CustomerAuthController::class, 'register'])->name('customer.register.store');
+});
+
+Route::middleware('auth:customer')->prefix('minha-conta')->group(function (): void {
+    Route::get('/', [CustomerAccountController::class, 'dashboard'])->name('customer.dashboard');
+    Route::get('/pedidos', [CustomerAccountController::class, 'orders'])->name('customer.orders');
+    Route::get('/pedidos/{number}', [CustomerAccountController::class, 'order'])->name('customer.order');
+    Route::get('/dados', [CustomerAccountController::class, 'profile'])->name('customer.profile');
+    Route::put('/dados', [CustomerAccountController::class, 'updateProfile'])->name('customer.profile.update');
+    Route::put('/senha', [CustomerAccountController::class, 'updatePassword'])->name('customer.password.update');
+    Route::get('/enderecos', [CustomerAddressController::class, 'index'])->name('customer.addresses');
+    Route::get('/consulta-cep/{postalCode}', [CustomerAddressController::class, 'postalCode'])->where('postalCode', '[0-9\-]+')->name('customer.postal-code');
+    Route::get('/enderecos/novo', [CustomerAddressController::class, 'create'])->name('customer.addresses.create');
+    Route::post('/enderecos', [CustomerAddressController::class, 'store'])->name('customer.addresses.store');
+    Route::get('/enderecos/{address}/editar', [CustomerAddressController::class, 'edit'])->name('customer.addresses.edit');
+    Route::put('/enderecos/{address}', [CustomerAddressController::class, 'update'])->name('customer.addresses.update');
+    Route::delete('/enderecos/{address}', [CustomerAddressController::class, 'destroy'])->name('customer.addresses.destroy');
+    Route::post('/enderecos/{address}/principal', [CustomerAddressController::class, 'makeDefault'])->name('customer.addresses.default');
+    Route::post('/sair', [CustomerAuthController::class, 'logout'])->name('customer.logout');
+});

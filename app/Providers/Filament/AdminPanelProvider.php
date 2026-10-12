@@ -13,6 +13,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -38,8 +39,9 @@ final class AdminPanelProvider extends PanelProvider
             ->simplePageMaxContentWidth(Width::Medium)
             ->sidebarWidth('15.5rem')
             ->collapsibleNavigationGroups(false)
-            ->navigationGroups(['Painel', 'Catálogo', 'Vendas', 'Financeiro', 'Configurações'])
+            ->navigationGroups(['Painel', 'Catálogo', 'Vendas', 'Configurações'])
             ->darkMode(false)
+            ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, fn (): string => view('filament.components.view-store-link')->render())
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([
                 'primary' => Color::hex('#dc2626'),
