@@ -12,6 +12,15 @@ final class CreateProductAction
 
     public function execute(array $data): Product
     {
-        return Product::query()->create($this->validation->product($data))->refresh();
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($data): Product {
+            $variants = $data['variants'] ?? null;
+            unset($data['variants']);
+            $product = Product::query()->create($this->validation->product($data));
+            if ($variants !== null) {
+                app(SyncProductVariantsAction::class)->execute($product, $variants);
+            }
+
+            return $product->refresh();
+        }, 3);
     }
 }

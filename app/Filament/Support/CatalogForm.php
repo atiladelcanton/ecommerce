@@ -13,13 +13,19 @@ use Illuminate\Validation\ValidationException;
 final class CatalogForm
 {
     /** Map domain validation errors to the Filament form's state path. */
-    public static function submit(Closure $operation): mixed
+    public static function submit(Closure $operation, array $statePathAliases = []): mixed
     {
         try {
             return $operation();
         } catch (ValidationException $exception) {
             $errors = [];
             foreach ($exception->errors() as $field => $messages) {
+                foreach ($statePathAliases as $dehydrated => $actual) {
+                    if ($field === $dehydrated || str_starts_with($field, $dehydrated.'.')) {
+                        $field = $actual.substr($field, strlen($dehydrated));
+                        break;
+                    }
+                }
                 $errors['data.'.$field] = $messages;
             }
             throw ValidationException::withMessages($errors);

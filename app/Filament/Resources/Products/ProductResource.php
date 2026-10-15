@@ -119,6 +119,23 @@ final class ProductResource extends Resource
                     }
                 })->color('success')->columnSpanFull(),
             ]),
+            Section::make('Variações')->description('Cadastre cada combinação vendável, como Cor + Embalagem ou Poliéster + Tamanho. Valores vazios herdam o produto. Remover uma linha desativa a variação existente.')->schema([
+                \Filament\Forms\Components\Repeater::make('variants')->label('Combinações')->defaultItems(0)->addActionLabel('Adicionar variação')
+                    ->itemLabel(fn (array $state): string => implode(' / ', array_values($state['attributes'] ?? [])) ?: 'Nova variação')
+                    ->collapsible()->columns(2)->schema([
+                        \Filament\Forms\Components\Hidden::make('id'),
+                        \Filament\Forms\Components\KeyValue::make('attributes')->label('Características')->keyLabel('Característica')->valueLabel('Valor')->addActionLabel('Adicionar característica')->required()->columnSpanFull(),
+                        TextInput::make('sku')->label('SKU da variação')->maxLength(255),
+                        Toggle::make('is_active')->label('Variação ativa')->default(true),
+                        BrazilianMoneyInput::make('price')->label('Preço da variação')->helperText('Vazio: herda o preço do produto.'),
+                        BrazilianMoneyInput::make('promotional_price')->label('Preço promocional da variação'),
+                        TextInput::make('stock')->label('Estoque da variação')->integer()->minValue(0)->helperText('Vazio: compartilha o estoque geral do produto.'),
+                        TextInput::make('weight')->label('Peso da embalagem')->suffix('kg')->numeric()->minValue(0)->step('0.001'),
+                        TextInput::make('height')->label('Altura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                        TextInput::make('width')->label('Largura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                        TextInput::make('length')->label('Comprimento da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                    ]),
+            ]),
             Section::make('Disponibilidade')->columns(['default' => 1, 'lg' => 2])->schema([
                 Select::make('availability')->label('Disponibilidade')->options(self::availabilityOptions())->required()->default(ProductAvailability::IMMEDIATE->value),
                 TextInput::make('stock')->label('Estoque')->integer()->minValue(0),

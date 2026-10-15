@@ -97,11 +97,11 @@ Indexes:
 
 Implemented guest checkout slice:
 
-- `orders`: unique nullable `number` (assigned as `SABA-` plus the database ID padded to at least six digits within the creation transaction), unique UUID `checkout_token`, indexed SHA-256 `checkout_session_hash`, customer name/email/phone/document snapshots, `status` (`pending`/`confirmed`), independent `payment_status`, unsigned BIGINT `subtotal_cents`, `shipping_cents`, `discount_cents` (initially zero), `total_cents`, shipping option ID/name/description snapshots and timestamps. Indexes on status, payment_status and created_at. No customer account is required or created.
+- `orders`: unique order number and checkout capability, optional customer FK plus immutable customer/address snapshots, operational `status`, independent `payment_status`, integer-cent totals, selected shipping option/provider/service snapshots, carrier/tracking, NF-e/DC-e keys and logistic timestamps. The selected quote is persisted in `shipping_quote_snapshot` so label generation does not silently recalculate a historical checkout choice.
 - `order_items`: order FK with cascade, nullable product/variant FKs with null-on-delete so catalog deletion preserves historical items; product_name/product_sku, nullable variant_name/variant_value, regular_unit_price, effective unit_price, quantity and total snapshots. All monetary columns are unsigned BIGINT integer cents. Indexed order FK.
 - `order_addresses`: unique order FK with cascade and postal_code, street, number, nullable complement, neighborhood, city and state snapshots. This is the order's immutable delivery address, independent of future customer address management.
-- `order_status_histories`: order FK, nullable from_status, to_status, description and timestamps; indexed `(order_id, created_at)`. Creation records pending and confirmation records confirmed.
-- `payments`: order FK, gateway, globally unique external_id, status, unsigned BIGINT amount_cents, is_demo and timestamps. No webhook/event table or real payment integration is introduced in this slice.
+- `order_status_histories`: order FK, optional admin user FK, nullable from_status, to_status, description and timestamps; indexed `(order_id, created_at)`. It records both manual admin transitions and automatic payment/shipping transitions.
+- `payments`: order FK, gateway, external ID/status, integer-cent amount, checkout metadata and timestamps. Payment status remains separate from order operational status.
 - One transaction writes the order, line/address snapshots, payment approval and status history. Session clearing happens only after commit. Cache locking and the unique checkout_token protect repeated submissions; confirmation access requires the originating session.
 
 ### Payment
@@ -113,7 +113,11 @@ External gateway IDs/events used for idempotency must be uniquely constrained.
 
 ### Shipping
 
-- shipments
+- `shipping_integrations`: one row per provider, enabled/environment/sort order plus encrypted configuration, credentials and OAuth tokens.
+- `shipments`: order FK, provider/external ID, carrier/service snapshots, independent `ShipmentStatus`, customer/provider prices, tracking/label data, quote metadata and logistic timestamps. `(provider, external_id)` is unique when an external ID exists.
+- `shipment_events`: shipment FK, unique provider event key, event/status/payload/timestamp for idempotent webhook processing.
+
+`orders` keeps the checkout-level selected shipping snapshot, while `shipments` represents the actual purchased/generated labels. An order may have multiple shipments.
 
 ### Commercial reporting
 
@@ -136,3 +140,19 @@ total_cents
 ```
 
 Avoid DECIMAL/float drift in application math.
+
+## Shipping configuration and resumable operations
+
+Incremental shipping migrations add `shipping_carriers`, `shipping_services`, `shipping_agencies` (integration/environment/external identity, local activation and API availability), agency defaults per carrier, integration references on orders/shipments, package snapshots and unique label operation identities. `shipment_events` gains processing timestamps. Each planned fulfillment slot has numbered attempts; cancelling a label does not remove the slot. Store sender IE/CNAE belong to `store_settings`. Existing migrations and monetary/history columns are preserved.
+
+Legacy shipping upgrade adds `orders.shipping_environment` and links existing shipping records to their current integration/environment, without rewriting names, prices or quote snapshots. New orders persist the environment explicitly.
+
+Agency/carrier membership is many-to-many through `shipping_agency_carrier` (composite primary key on agency/carrier IDs, cascading only pivot membership on deletion). The incremental migration backfills legacy associations, existing carrier defaults and API `metadata.companies` within the same integration/environment. Agency primary keys, shipment references and carrier defaults are preserved. Legacy `shipping_carrier_id` / `company_external_id` remain for rollback compatibility; new selection and shipment validation use pivot membership.
+
+## Product combinations, assisted shipping and inventory reservations
+
+Incremental migrations extend `product_variants` with JSON `attributes`, a canonical `combination_key` unique per product, nullable integer-cent `price` / `promotional_price`, and nullable package weight/dimensions. Legacy color IDs and prices remain unchanged; null prices inherit the parent. `order_items` gains immutable attribute and measurement snapshots.
+
+`orders.shipping_pricing_status` distinguishes awaiting_quote, quoted and confirmed; legacy/automatic orders remain null. Shipping/total cents are nullable while freight is unknown. `order_shipping_quotes` stores immutable numbered revisions, admin author, carrier/service/instructions/estimate, integer-cent price, expiry, acceptance and supersession. Order items/prices and addresses are frozen before manual freight is negotiated.
+
+`inventory_reservations` has one unique row per order item, the product/variant stock pool, quantity and lifecycle timestamps (expires, consumed, released, restored). Stock stays physical on the catalog; available stock subtracts unexpired reservations. Only newly created orders participate. Reservation creation, payment consumption and commercial cancellation lock the order and stock pools in a consistent order. Made-to-order products do not consume immediate physical stock.

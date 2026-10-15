@@ -55,9 +55,9 @@ Gateway abstraction, payment attempts, external events and webhook processing.
 The implemented slice binds `Domain/Payment/Contracts/PaymentGateway` to `Infrastructure/Payments/FakePaymentGateway`. Typed PaymentRequest/PaymentResult DTOs keep the adapter separate from Livewire and order persistence. The fake adapter returns an approved demo result with a deterministic external ID based on the checkout token. Real gateways/webhooks and finance side effects are future slices.
 
 ### Shipping
-Quotation abstraction, selected shipment and tracking data.
+Shipping is provider-agnostic and supports multiple enabled delivery integrations simultaneously. `ShippingProviderRegistry` resolves enabled providers from `shipping_integrations`; `QuoteShippingAction` merges normalized quotes and the selected quote is snapshotted into the order.
 
-`Domain/Shipping/Contracts/ShippingProvider` currently binds to `Infrastructure/Shipping/FakeShippingProvider`. QuoteShippingAction builds typed requests from catalog weight/dimension strings and quantities; the fake returns fixed standard/pickup options. Livewire does not define provider prices. Quote failures disable completion rather than silently selecting free shipping. No real shipment or external provider request is implemented.
+Capabilities are split between `ShippingProvider` (quotes), `ShipmentProvider` (cart/purchase/inspection), `ShipmentLabelProvider` (labels/cancellation), and `ShipmentTrackingProvider` (tracking). The initial real adapter is Melhor Envio with OAuth, quote, purchase/generate/print, cancellation, tracking and signed/idempotent webhooks. Local pickup is an independent provider. `Order hasMany Shipments`, so the order workflow is not coupled to the assumption of one label. See `docs/shipping.md`.
 
 ### Finance
 Small cash-flow ledger only. It is not an accounting package.
@@ -77,9 +77,10 @@ Order/Checkout
       -> EfiGateway
 
 Checkout
-   -> ShippingProvider contract
-      -> FakeShippingProvider
-      -> MelhorEnvioShippingProvider
+   -> QuoteShippingAction
+      -> ShippingProviderRegistry (active integrations)
+         -> MelhorEnvioShippingProvider
+         -> LocalPickupProvider
 ```
 
 ## Money
@@ -104,7 +105,7 @@ Customer storefront authentication uses a dedicated `customer` guard and `Custom
 
 ## External providers
 
-Payment and shipping implementations are resolved through `PaymentGateway` and `ShippingProvider` contracts using `config/payments.php` and `config/shipping.php`. The current drivers are `fake`; real providers can be registered without coupling Checkout or Order code to a vendor.
+Payment and shipping implementations are resolved through `PaymentGateway` and `ShippingProvider` contracts using `config/payments.php` and `config/shipping.php`. Payments retain their existing demo driver. Shipping resolves active providers through the Registry, with no automatic fake fallback; tests opt into their own demo fixture.
 
 ## Admin operational modules (2026-10)
 

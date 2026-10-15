@@ -28,6 +28,7 @@ foreach ($attributes->all() as $__key => $__value) {
 
 unset($__defined_vars, $__key, $__value); ?>
 <div class="store-price <?php echo e($large ? 'store-price-large' : ''); ?>">
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->variants->where('is_active', true)->isNotEmpty()): ?><span class="block text-xs text-store-muted">A partir de</span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($product->has_promotion): ?>
         <span class="block text-xs text-store-muted">De <del><?php echo e(\App\Support\BrazilianMoney::display($product->regular_price)); ?></del></span>
         <span class="font-semibold text-store-red"><span class="sr-only">Por </span><?php echo e(\App\Support\BrazilianMoney::display($product->final_price)); ?></span>

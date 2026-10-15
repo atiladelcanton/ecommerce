@@ -417,6 +417,7 @@ a.store-contact-value:hover { color: var(--color-store-red); }
 .store-order-status--pending, .store-payment-status--pending { background: #fff8eb; color: var(--color-store-amber); }
 .store-order-status--paid { background: #f0f8f2; color: var(--color-store-green); }
 .store-order-status--processing { background: #eff6ff; color: #1d4ed8; }
+.store-order-status--ready_for_shipping { background: #ecfeff; color: #0e7490; }
 .store-order-status--ready_for_pickup { background: #f5f3ff; color: #6d28d9; }
 .store-order-status--shipped { background: #f5f3ff; color: #6d28d9; }
 .store-order-status--delivered, .store-payment-status--approved { background: #f0f8f2; color: var(--color-store-green); }

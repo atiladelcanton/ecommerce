@@ -209,3 +209,7 @@ A payment approval can create one sale inflow. Idempotency must prevent duplicat
 - Every approved payment creates at most one automatic `income` cash-flow entry.
 - Automatic payment entries cannot be edited or deleted from the admin.
 - Manual financial entries must always be positive integer cents and explicitly marked as income or expense.
+
+## Combinações e frete assistido (substitui as limitações das fatias iniciais)
+
+Variações não ficam restritas a Cor: são combinações vendáveis com preços e estoque próprios, conforme docs/product-variants.md. O frete é cotado por providers ativos; os valores demonstrativos fixos descritos na fatia inicial não são oferecidos na aplicação. Ausência de entrega automática pode criar um pedido recebido com frete/total indefinidos, pagamento pendente e reserva de 24 horas. O atendimento publica uma cotação revisionada e o cliente confirma pelo link assinado antes de pagar. As regras e limites atuais de pagamento de demonstração estão em docs/shipping.md.

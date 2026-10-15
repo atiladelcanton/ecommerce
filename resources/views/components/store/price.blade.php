@@ -1,5 +1,6 @@
 @props(['product', 'large' => false])
 <div class="store-price {{ $large ? 'store-price-large' : '' }}">
+    @if($product->variants->where('is_active', true)->isNotEmpty())<span class="block text-xs text-store-muted">A partir de</span>@endif
     @if($product->has_promotion)
         <span class="block text-xs text-store-muted">De <del>{{ \App\Support\BrazilianMoney::display($product->regular_price) }}</del></span>
         <span class="font-semibold text-store-red"><span class="sr-only">Por </span>{{ \App\Support\BrazilianMoney::display($product->final_price) }}</span>

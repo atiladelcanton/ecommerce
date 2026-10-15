@@ -22,6 +22,11 @@ trait HandlesProductForm
         // Only reached after Filament has validated and stored the uploaded files.
         $this->pendingImagePaths = $data['new_images'] ?? [];
 
+        $aliases = [];
+        foreach (array_keys($this->data['variants'] ?? []) as $index => $key) {
+            $aliases['variants.'.$index] = 'variants.'.$key;
+        }
+
         return CatalogForm::submit(function () use ($data, $record): Product {
             $paths = $data['new_images'] ?? [];
             unset($data['new_images']);
@@ -36,6 +41,6 @@ trait HandlesProductForm
 
                 return $product;
             });
-        });
+        }, $aliases);
     }
 }

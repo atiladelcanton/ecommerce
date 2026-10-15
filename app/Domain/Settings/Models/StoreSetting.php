@@ -14,7 +14,7 @@ final class StoreSetting extends Model
 
     protected $fillable = [
         'store_name',
-        'legal_name',
+        'legal_name', 'state_register', 'economic_activity_code',
         'cnpj',
         'phone',
         'whatsapp',

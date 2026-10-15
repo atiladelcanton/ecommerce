@@ -1,0 +1,6 @@
+<nav class="mt-6 flex flex-wrap gap-2 rounded-xl border border-store-border bg-white p-2 text-sm" aria-label="Área do cliente">
+    <a class="rounded-lg px-3 py-2 font-medium hover:bg-store-soft {{ request()->routeIs('customer.dashboard') ? 'bg-red-50 text-store-red' : 'text-store-muted' }}" href="{{ route('customer.dashboard') }}">Visão geral</a>
+    <a class="rounded-lg px-3 py-2 font-medium hover:bg-store-soft {{ request()->routeIs('customer.orders','customer.order') ? 'bg-red-50 text-store-red' : 'text-store-muted' }}" href="{{ route('customer.orders') }}">Meus pedidos</a>
+    <a class="rounded-lg px-3 py-2 font-medium hover:bg-store-soft {{ request()->routeIs('customer.addresses*') ? 'bg-red-50 text-store-red' : 'text-store-muted' }}" href="{{ route('customer.addresses') }}">Meus endereços</a>
+    <a class="rounded-lg px-3 py-2 font-medium hover:bg-store-soft {{ request()->routeIs('customer.profile*') ? 'bg-red-50 text-store-red' : 'text-store-muted' }}" href="{{ route('customer.profile') }}">Meus dados</a>
+</nav>

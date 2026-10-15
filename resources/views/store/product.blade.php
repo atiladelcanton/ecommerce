@@ -14,15 +14,7 @@
                 <h1 id="product-title">{{ $product->name }}</h1>
                 <x-store.availability-badge :availability="$product->availability" />
 
-                <div class="product-detail-price">
-                    @if($product->has_promotion)
-                        <p class="product-detail-original">De: <del>{{ \App\Support\BrazilianMoney::display($product->regular_price) }}</del></p>
-                        <p class="product-detail-current product-detail-promotion"><span class="product-detail-price-label">Por:</span> {{ \App\Support\BrazilianMoney::display($product->final_price) }}</p>
-                        <p class="product-detail-savings">Economize {{ $product->discount_percentage }}%</p>
-                    @else
-                        <p class="product-detail-current">{{ \App\Support\BrazilianMoney::display($product->final_price) }}</p>
-                    @endif
-                </div>
+
 
                 @if($product->short_description)
                     <p class="product-detail-summary">{{ $product->short_description }}</p>

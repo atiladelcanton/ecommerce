@@ -121,3 +121,7 @@ Implement hosted checkout, webhook validation, idempotency and payment history. 
 - webhook security review
 - logs/observability
 - backup/deployment checklist
+
+## Incremento aprovado — combinações e frete assistido
+
+A etapa de Shipping inclui normalização da resposta única do Melhor Envio e negociação de frete com conclusão posterior na loja. O catálogo passa a suportar combinações com preço/estoque e medidas próprios; solicitações reservam estoque por 24 horas. O checkout mantém o gateway fake até a fase própria de pagamentos reais. Referência operacional: docs/product-variants.md e docs/shipping.md.

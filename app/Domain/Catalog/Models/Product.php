@@ -93,11 +93,30 @@ final class Product extends Model
 
     public function scopeOnPromotion(Builder $query): Builder
     {
-        return $query->where('promotional_price', '>', 0)->whereColumn('promotional_price', '<', 'price');
+        $available = \App\Domain\Catalog\Queries\ProductOfferQuery::availableVariant();
+
+        return $query->whereRaw("((NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.id) AND products.promotional_price > 0 AND products.promotional_price < products.price) OR EXISTS (SELECT 1 FROM product_variants pv WHERE ".$available." AND (pv.promotional_price > 0 OR (pv.price IS NULL AND products.promotional_price > 0))))");
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(InventoryReservation::class)->where('pool_type', 'product');
     }
 
     public function pricing(): ProductPricing
     {
+        if ($this->relationLoaded('variants')) {
+            $offers = $this->variants->filter(function (ProductVariant $variant): bool {
+                $stock = $variant->stock ?? $this->stock;
+                $reserved = $variant->stock !== null ? (int) $variant->getAttribute('reserved_stock') : (int) $this->getAttribute('reserved_stock');
+
+                return $variant->is_active && ($this->availability !== ProductAvailability::IMMEDIATE || $stock === null || $stock > $reserved);
+            })->map(fn (ProductVariant $variant): ProductPricing => $variant->pricing($this));
+            if ($offers->isNotEmpty()) {
+                return $offers->sortBy(fn (ProductPricing $pricing): int => $pricing->finalPrice())->first();
+            }
+        }
+
         return new ProductPricing($this->price, $this->promotional_price);
     }
 

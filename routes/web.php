@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Shipping\MelhorEnvioOAuthController;
+use App\Http\Controllers\Shipping\MelhorEnvioWebhookController;
+use App\Http\Controllers\Shipping\ShipmentLabelController;
 use App\Http\Controllers\Store\CustomerAccountController;
 use App\Http\Controllers\Store\CustomerAddressController;
 use App\Http\Controllers\Store\CustomerAuthController;
@@ -42,3 +45,16 @@ Route::middleware('auth:customer')->prefix('minha-conta')->group(function (): vo
     Route::post('/enderecos/{address}/principal', [CustomerAddressController::class, 'makeDefault'])->name('customer.addresses.default');
     Route::post('/sair', [CustomerAuthController::class, 'logout'])->name('customer.logout');
 });
+
+Route::middleware('auth:web')->prefix('admin/shipping/melhor-envio')->group(function (): void {
+    Route::get('/connect', [MelhorEnvioOAuthController::class, 'connect'])->name('admin.shipping.melhor-envio.connect');
+    Route::get('/callback', [MelhorEnvioOAuthController::class, 'callback'])->name('admin.shipping.melhor-envio.callback');
+});
+
+Route::post('/webhooks/shipping/melhor-envio', MelhorEnvioWebhookController::class)
+    ->name('webhooks.shipping.melhor-envio');
+
+Route::get('/admin/shipping/labels/{shipment}/{format}', ShipmentLabelController::class)->middleware('auth:web')->name('admin.shipping.labels.download');
+
+Route::get('/pedido/{number}/entrega/{revision}', \App\Http\Controllers\Store\ShippingQuoteCheckoutController::class)
+    ->whereNumber('revision')->middleware(['signed', 'throttle:60,1'])->name('store.order.shipping-quote');

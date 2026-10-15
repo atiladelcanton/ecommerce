@@ -6,7 +6,6 @@ namespace App\Providers;
 
 use App\Domain\Address\Contracts\PostalCodeLookup;
 use App\Domain\Payment\Contracts\PaymentGateway;
-use App\Domain\Shipping\Contracts\ShippingProvider;
 use App\Infrastructure\Address\ViaCepPostalCodeLookup;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
@@ -28,15 +27,7 @@ final class AppServiceProvider extends ServiceProvider
 
             return app($class);
         });
-        $this->app->bind(ShippingProvider::class, function (): ShippingProvider {
-            $driver = (string) config('shipping.default', 'fake');
-            $class = config('shipping.providers.'.$driver);
-            if (! is_string($class) || ! is_a($class, ShippingProvider::class, true)) {
-                throw new InvalidArgumentException('Unsupported shipping provider.');
-            }
 
-            return app($class);
-        });
     }
 
     public function boot(): void

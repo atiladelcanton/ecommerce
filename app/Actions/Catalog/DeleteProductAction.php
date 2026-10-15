@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Catalog;
 
 use App\Domain\Catalog\Models\Product;
+use App\Domain\Catalog\Services\InventoryAvailability;
 use Illuminate\Support\Facades\DB;
 
 final class DeleteProductAction
@@ -13,6 +14,7 @@ final class DeleteProductAction
     {
         DB::transaction(function () use ($model): void {
             $locked = Product::query()->lockForUpdate()->findOrFail($model->id);
+            app(InventoryAvailability::class)->assertCanDelete($locked);
             $locked->delete();
         });
     }

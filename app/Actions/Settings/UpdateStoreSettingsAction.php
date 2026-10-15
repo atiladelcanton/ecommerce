@@ -32,7 +32,7 @@ final class UpdateStoreSettingsAction
             'state' => ['nullable', 'string', 'regex:/^[A-Z]{2}$/'],
             'seo_description' => ['nullable', 'string', 'max:5000'],
         ];
-        foreach (['legal_name', 'street', 'complement', 'neighborhood', 'city', 'seo_title'] as $field) {
+        foreach (['state_register', 'economic_activity_code', 'legal_name', 'street', 'complement', 'neighborhood', 'city', 'seo_title'] as $field) {
             $rules[$field] = ['nullable', 'string', 'max:255'];
         }
         foreach (['instagram_url', 'facebook_url', 'youtube_url'] as $field) {

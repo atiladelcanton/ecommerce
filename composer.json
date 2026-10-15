@@ -60,6 +60,10 @@
       "Composer\\Config::disableProcessTimeout",
       "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fcd34d\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
     ],
+    "ngrok": [
+      "Composer\\Config::disableProcessTimeout",
+      "bash scripts/ngrok.sh --url=https://top-ultimately-mallard.ngrok-free.app"
+    ],
     "test": [
       "@php artisan config:clear --ansi",
       "@php artisan test"

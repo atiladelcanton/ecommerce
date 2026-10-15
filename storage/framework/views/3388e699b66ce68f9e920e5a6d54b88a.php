@@ -1,0 +1,3 @@
+<svg aria-hidden="true" class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
+</svg><?php /**PATH /home/atila/projects/saba-ecommerce-starter/storage/framework/views/9c6d93322d4e1f287c22c767f6e34d4a.blade.php ENDPATH**/ ?>

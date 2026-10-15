@@ -32,12 +32,12 @@ final class ListProductsAction
             }
             if ($price !== null) {
                 if ($price < 0) { throw ValidationException::withMessages([$field => 'Informe um valor maior ou igual a zero.']); }
-                $query->whereRaw(PublicProducts::EFFECTIVE_PRICE.' '.$operator.' ?', [$price]);
+                $query->whereRaw(\App\Domain\Catalog\Queries\ProductOfferQuery::effectivePrice().' '.$operator.' ?', [$price]);
             }
         }
         match ($filters['sort'] ?? '') {
-            'menor-preco' => $query->orderByRaw(PublicProducts::EFFECTIVE_PRICE.' ASC'),
-            'maior-preco' => $query->orderByRaw(PublicProducts::EFFECTIVE_PRICE.' DESC'),
+            'menor-preco' => $query->orderByRaw(\App\Domain\Catalog\Queries\ProductOfferQuery::effectivePrice().' ASC'),
+            'maior-preco' => $query->orderByRaw(\App\Domain\Catalog\Queries\ProductOfferQuery::effectivePrice().' DESC'),
             'nome-az' => $query->orderBy('name'),
             'nome-za' => $query->orderByDesc('name'),
             default => $query->latest(),

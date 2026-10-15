@@ -41,6 +41,8 @@ final class StoreSettings extends Page
             Section::make('Identidade')->columns(['default' => 1, 'lg' => 3])->schema([
                 TextInput::make('store_name')->label('Nome da loja')->required()->maxLength(255),
                 TextInput::make('legal_name')->label('Razão social')->maxLength(255),
+                TextInput::make('state_register')->label('Inscrição Estadual')->maxLength(40),
+                TextInput::make('economic_activity_code')->label('CNAE')->maxLength(20),
                 TextInput::make('cnpj')->label('CNPJ')->maxLength(20),
             ]),
             Section::make('Contato')->columns(['default' => 1, 'lg' => 3])->schema([

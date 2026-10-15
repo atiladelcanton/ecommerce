@@ -1,6 +1,8 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 
 @source '../../../../app/Filament/**/*';
+@source '../../../../app/Livewire/Admin/**/*';
+@source '../../../../resources/views/livewire/admin/**/*';
 @source '../../../../resources/views/filament/**/*';
 
 /* SABA surfaces. Semantic status colors and focus rings come from the Panel. */
@@ -258,6 +260,7 @@
 .saba-kanban-dot { width: .65rem; height: .65rem; border-radius: 9999px; background: #a1a1aa; }
 .saba-kanban-dot--paid, .saba-kanban-dot--delivered { background: #16a34a; }
 .saba-kanban-dot--processing { background: #f59e0b; }
+.saba-kanban-dot--ready_for_shipping { background: #0ea5e9; }
 .saba-kanban-dot--shipped { background: #2563eb; }
 .saba-kanban-dot--ready_for_pickup { background: #7c3aed; }
 .saba-kanban-dot--cancelled { background: #dc2626; }
