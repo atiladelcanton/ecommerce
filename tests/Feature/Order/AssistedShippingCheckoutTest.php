@@ -21,10 +21,15 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Order\Models\OrderShippingQuote;
+use App\Domain\Payment\Contracts\PaymentGateway;
+use App\Domain\Payment\Data\PaymentRequest;
+use App\Domain\Payment\Data\PaymentResult;
 use App\Domain\Payment\Enums\PaymentStatus;
+use App\Domain\Shipping\Contracts\ShippingProvider;
 use App\Domain\Shipping\Enums\ShippingPricingStatus;
 use App\Domain\Shipping\Models\ShippingIntegration;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
+use App\Infrastructure\Shipping\FakeShippingProvider;
 use App\Livewire\Store\CheckoutPage;
 use App\Livewire\Store\ShippingQuoteCheckout;
 use App\Models\User;
@@ -33,6 +38,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Tests\Support\DemoShippingAdapter;
 use Tests\TestCase;
 
 final class AssistedShippingCheckoutTest extends TestCase
@@ -132,6 +138,31 @@ final class AssistedShippingCheckoutTest extends TestCase
         $this->assertDatabaseCount('payments', 1);
     }
 
+    public function test_gateway_failure_rolls_back_stock_consumption_and_quote_acceptance(): void
+    {
+        [$product, $order] = $this->request();
+        $quote = $this->publish($order);
+        $link = app(GetOrderShippingQuoteLinkAction::class)->execute($quote);
+        $this->app->instance(PaymentGateway::class, new class implements PaymentGateway
+        {
+            public function createPayment(PaymentRequest $request): PaymentResult
+            {
+                return new PaymentResult('fake', 'rejected-test', PaymentStatus::FAILED, true);
+            }
+        });
+        try {
+            app(ConfirmQuotedOrderAction::class)->execute($order->number, 1, $link);
+            self::fail('A rejected payment must not consume stock');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('payment', $exception->errors());
+        }
+        $this->assertSame(5, $product->fresh()->stock);
+        $this->assertSame(ShippingPricingStatus::QUOTED, $order->fresh()->shipping_pricing_status);
+        $this->assertNull($quote->fresh()->accepted_at);
+        $this->assertNull(InventoryReservation::query()->sole()->consumed_at);
+        $this->assertDatabaseCount('payments', 0);
+    }
+
     public function test_reservation_expires_without_scheduler_and_payment_rechecks_stock(): void
     {
         [$product, $order] = $this->request();
@@ -198,12 +229,43 @@ final class AssistedShippingCheckoutTest extends TestCase
         $this->publish($order);
     }
 
-    public function test_assisted_checkout_does_not_bypass_available_delivery_and_retains_cart(): void
+    public function test_pickup_alone_does_not_prevent_requesting_a_delivery_quote(): void
     {
-        // Pickup alone remains compatible with the request; a real automatic option cannot be bypassed.
         ShippingIntegration::forProvider('local_pickup')->update(['is_enabled' => true, 'configuration' => ['address' => 'SABA']]);
         [, $order] = $this->request();
         $this->assertSame(ShippingPricingStatus::AWAITING_QUOTE, $order->shipping_pricing_status);
+    }
+
+    public function test_assisted_checkout_does_not_bypass_available_delivery_and_retains_cart(): void
+    {
+        config(['shipping.providers.fake' => DemoShippingAdapter::class]);
+        $this->app->bind(ShippingProvider::class, FakeShippingProvider::class);
+        ShippingIntegration::forProvider('fake')->update(['is_enabled' => true]);
+        app(AddCartItemAction::class)->execute(Product::factory()->create()->id);
+        try {
+            app(CreateInitialOrderAction::class)->requestShippingQuote($this->input(), app(GetCheckoutTokenAction::class)->execute());
+            self::fail('An available delivery must be selected');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('shipping_option', $exception->errors());
+        }
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('inventory_reservations', 0);
+        $this->assertSame(1, app(GetCartAction::class)->execute()['count']);
+    }
+
+    public function test_expired_quote_and_cancelled_paid_order_cannot_be_confirmed(): void
+    {
+        [, $order] = $this->request();
+        $quote = $this->publish($order);
+        $link = app(GetOrderShippingQuoteLinkAction::class)->execute($quote);
+        $this->travel(8)->days();
+        $this->get($link)->assertForbidden();
+        $this->assertDatabaseCount('payments', 0);
+        $this->travelBack();
+        app(ConfirmQuotedOrderAction::class)->execute($order->number, 1, $link);
+        app(TransitionOrderStatusAction::class)->execute($order->fresh(), OrderStatus::CANCELLED);
+        $this->expectException(ValidationException::class);
+        app(ConfirmQuotedOrderAction::class)->execute($order->number, 1, $link);
     }
 
     public function test_admin_quote_action_renders_and_publishes_with_filament_5(): void
@@ -214,7 +276,8 @@ final class AssistedShippingCheckoutTest extends TestCase
         Filament::bootCurrentPanel();
         Livewire::test(ViewOrder::class, ['record' => $order->id])->mountAction('quoteShipping')
             ->fillForm(['carrier_name' => 'Transportadora contratada', 'service_name' => 'Rodoviário', 'price_cents' => '48,90', 'estimated_days' => 5, 'expires_at' => now()->addDays(7)->format('Y-m-d H:i:s')])
-            ->callMountedAction()->assertHasNoErrors()->assertNotified('Cotação publicada');
+            ->callMountedAction()->assertHasNoErrors()->assertNotified('Cotação publicada')
+            ->assertSee('data-quote-link=', false)->assertDontSee('@js($quoteLink)', false);
         $this->assertSame(4890, $order->fresh()->shipping_cents);
     }
 

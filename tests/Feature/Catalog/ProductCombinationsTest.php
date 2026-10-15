@@ -86,6 +86,21 @@ final class ProductCombinationsTest extends TestCase
         app(SyncProductVariantsAction::class)->execute($product, [array_merge($this->row(['Embalagem' => '1 kg']), ['weight' => '1'])]);
     }
 
+    public function test_active_combinations_must_have_the_same_characteristics(): void
+    {
+        $product = Product::factory()->create();
+        try {
+            app(SyncProductVariantsAction::class)->execute($product, [
+                $this->row(['Cor' => 'Preta', 'Embalagem' => '900 ml']),
+                $this->row(['Cor' => 'Branca']),
+            ]);
+            self::fail('An incomplete combination must not be sold');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('variants.1.attributes', $exception->errors());
+        }
+        $this->assertDatabaseCount('product_variants', 0);
+    }
+
     public function test_selection_changes_price_and_rejects_nonexistent_combination(): void
     {
         $product = Product::factory()->create();

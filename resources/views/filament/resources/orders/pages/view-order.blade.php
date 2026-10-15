@@ -6,8 +6,8 @@
             <p class="text-sm text-gray-600">A solicitação reserva estoque por 24 horas. Depois desse prazo, a compra depende de uma nova verificação de disponibilidade.</p>
             @if($order->latestShippingQuote && $order->latestShippingQuote->expires_at->isFuture() && ! $order->latestShippingQuote->superseded_at && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
                 @php($quoteLink = app(\App\Actions\Shipping\GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote))
-                <div class="mt-3 flex flex-wrap items-center gap-3" x-data="{ copied: false }">
-                    <x-filament::button color="gray" x-on:click="navigator.clipboard.writeText(@js($quoteLink)).then(() => copied = true)"><span x-text="copied ? 'Link copiado' : 'Copiar link para o cliente'">Copiar link para o cliente</span></x-filament::button>
+                <div class="mt-3 flex flex-wrap items-center gap-3" x-data="{ copied: false }" data-quote-link="{{ $quoteLink }}">
+                    <x-filament::button color="gray" x-on:click="navigator.clipboard.writeText($root.dataset.quoteLink).then(() => copied = true)"><span x-text="copied ? 'Link copiado' : 'Copiar link para o cliente'">Copiar link para o cliente</span></x-filament::button>
                     <a class="text-sm text-primary-600" href="{{ app(\App\Actions\Shipping\GetCustomerQuoteContactLinkAction::class)->execute($order->latestShippingQuote) }}" target="_blank" rel="noopener noreferrer">Compartilhar pelo WhatsApp</a>
                 </div>
             @endif

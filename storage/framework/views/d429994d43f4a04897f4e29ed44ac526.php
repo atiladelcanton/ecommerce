@@ -28,17 +28,17 @@
             <p class="text-sm text-gray-600">A solicitação reserva estoque por 24 horas. Depois desse prazo, a compra depende de uma nova verificação de disponibilidade.</p>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->latestShippingQuote && $order->latestShippingQuote->expires_at->isFuture() && ! $order->latestShippingQuote->superseded_at && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED): ?>
                 <?php ($quoteLink = app(\App\Actions\Shipping\GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote)); ?>
-                <div class="mt-3 flex flex-wrap items-center gap-3" x-data="{ copied: false }">
+                <div class="mt-3 flex flex-wrap items-center gap-3" x-data="{ copied: false }" data-quote-link="<?php echo e($quoteLink); ?>">
                     <?php if (isset($component)) { $__componentOriginal6330f08526bbb3ce2a0da37da512a11f = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal6330f08526bbb3ce2a0da37da512a11f = $attributes; } ?>
-<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'filament::components.button.index','data' => ['color' => 'gray','xOn:click' => 'navigator.clipboard.writeText(@js($quoteLink)).then(() => copied = true)']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'filament::components.button.index','data' => ['color' => 'gray','xOn:click' => 'navigator.clipboard.writeText($root.dataset.quoteLink).then(() => copied = true)']] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
 <?php $component->withName('filament::button'); ?>
 <?php if ($component->shouldRender()): ?>
 <?php $__env->startComponent($component->resolveView(), $component->data()); ?>
 <?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
 <?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
 <?php endif; ?>
-<?php $component->withAttributes(['color' => 'gray','x-on:click' => 'navigator.clipboard.writeText(@js($quoteLink)).then(() => copied = true)']); ?>
+<?php $component->withAttributes(['color' => 'gray','x-on:click' => 'navigator.clipboard.writeText($root.dataset.quoteLink).then(() => copied = true)']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 <span x-text="copied ? 'Link copiado' : 'Copiar link para o cliente'">Copiar link para o cliente</span> <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>

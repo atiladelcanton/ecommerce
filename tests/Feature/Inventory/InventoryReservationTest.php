@@ -115,6 +115,19 @@ final class InventoryReservationTest extends TestCase
         $this->assertSame(12000, $product->variants()->sole()->price);
     }
 
+    public function test_variant_domain_errors_are_mapped_to_the_repeater_item(): void
+    {
+        $product = Product::factory()->create(['price' => 10000]);
+        $this->actingAs(User::factory()->create());
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Filament::bootCurrentPanel();
+        $component = Livewire::test(EditProduct::class, ['record' => $product->id])
+            ->fillForm(['variants' => [['attributes' => ['Poliéster' => '44'], 'price' => '120,00', 'promotional_price' => '130,00', 'is_active' => true]]]);
+        $key = array_key_first($component->get('data.variants'));
+        $component->call('save')->assertHasErrors(['data.variants.'.$key.'.promotional_price']);
+        $this->assertDatabaseCount('product_variants', 0);
+    }
+
     private function input(): array
     {
         return ['name' => 'Cliente', 'email' => 'cliente@example.test', 'phone' => '11999999999', 'document' => '52998224725', 'postal_code' => '13077001', 'street' => 'Rua teste', 'number' => '10', 'neighborhood' => 'Centro', 'city' => 'Campinas', 'state' => 'SP'];

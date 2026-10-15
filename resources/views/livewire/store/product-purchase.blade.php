@@ -4,11 +4,11 @@
         @if($offer->pricing->hasPromotion())
             <p class="product-detail-original">De: <del>{{ \App\Support\BrazilianMoney::display($offer->pricing->regularPrice) }}</del></p>
         @endif
-        <p class="product-detail-current">@if($offer->pricing->hasPromotion())<span class="product-detail-price-label">Por:</span> @endif{{ \App\Support\BrazilianMoney::display($offer->pricing->finalPrice()) }}</p>
+        <p @class(['product-detail-current', 'product-detail-promotion' => $offer->pricing->hasPromotion()])>@if($offer->pricing->hasPromotion())<span class="product-detail-price-label">Por:</span> @endif{{ \App\Support\BrazilianMoney::display($offer->pricing->finalPrice()) }}</p>
         @if($offer->pricing->hasPromotion())<p class="product-detail-savings">Economize {{ $offer->pricing->discountPercentage() }}%</p>@endif
     </div>
     @foreach($fields as $index => $field)
-        <fieldset class="mt-4" @if($field['name'] === 'Cor') data-color-selector @endif>
+        <fieldset class="product-detail-colors" @if($field['name'] === 'Cor') data-color-selector @endif>
             <legend class="text-sm font-semibold">{{ $field['name'] }}</legend>
             @if($field['name'] === 'Cor')
                 <p id="color-help" class="text-sm text-store-muted">Selecione uma cor para adicionar ao carrinho ou solicitar sua cotação.</p>

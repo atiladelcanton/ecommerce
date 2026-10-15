@@ -1,5 +1,49 @@
 # Validação de Meios de Entrega
 
+## Frete assistido e variações — 15/10/2026
+
+Esta revisão mantém o gateway de demonstração e adiciona a conclusão de pedidos com frete negociado, variações combinadas e reserva de estoque. O histórico abaixo descreve a entrega anterior.
+
+- Suíte completa no Sail/SQLite: **382 aprovados, 3 ignorados, 1917 assertions**. Os três ignorados exigem MySQL/pcntl e são executados separadamente.
+- MySQL 8.4 no banco isolado `saba_shipping_test`: **103 aprovados, 406 assertions**, incluindo os três testes de concorrência ignorados no SQLite.
+- `php -l`: **293 arquivos PHP** de aplicação, rotas, migrations e testes sem erros; os últimos testes também foram verificados após sua edição.
+- `./vendor/bin/sail pint --test`: **aprovado globalmente** no estado atual do projeto.
+- `./vendor/bin/sail npm run build`: **aprovado**.
+- **37 classes/traits Filament** carregadas sem erro; **217 classes/interfaces/traits/enums** da aplicação sem duplicidade. Sem `view`/`heading`/`description` estáticas incompatíveis ou método Livewire `transition()`.
+- Rotas de revisão/checkout, migrations aplicadas e comando agendado de expiração conferidos. Checkout e Actions de pedido continuam sem acoplamento ao Melhor Envio.
+- Testes automatizados bloqueiam HTTP sem fake em `Tests\TestCase`; nenhuma API externa foi chamada por essas suítes. Logs de integração registram contexto técnico sem credenciais; segredos persistidos não são reexibidos no formulário.
+
+### Verificação no navegador
+
+Chromium com SQLite exclusivo de teste e HTTP bloqueado salvo respostas fake: seleção de Poliéster + Tamanho, preço por combinação, carrinho, CEP disparando cotação, checkout automático, solicitação sem frete, publicação administrativa e conclusão explícita pelo link assinado. Dois pedidos pagos fake produziram somente dois pagamentos e baixaram cada combinação correta. Também foram conferidos o formulário administrativo, o botão de copiar link e a seleção móvel em 390 px sem overflow horizontal. Nenhum erro de console permaneceu nos fluxos finais. Os processos temporários de teste foram encerrados.
+
+A cotação automática de teste foi R$ 30,48 para a combinação de R$ 180,00 (total R$ 210,48). No fluxo assistido, o pedido permaneceu sem pagamento e com total **A definir** até a publicação do frete de R$ 48,90. O cliente revisou esse total e confirmou o pagamento fake. Reservas não reduzem estoque físico antes da aprovação e não se renovam ao abrir o link.
+
+O diagnóstico manual separado na conta Sandbox identificou que o cálculo de um único serviço retorna um objeto, formato antes descartado. Um item com medidas aceitas retornou cotações; equipamentos maiores continuam sujeitos aos limites reais da transportadora. Não foram compradas etiquetas reais nesta revisão.
+
+### Migrations desta revisão
+
+1. `2026_10_15_000002_extend_product_variant_combinations.php`: reaproveita as variações, preserva IDs e adiciona características/preços/embalagens e snapshots.
+2. `2026_10_15_000003_create_order_shipping_quotes.php`: revisões do frete e totais indefinidos antes da negociação.
+3. `2026_10_15_000004_create_inventory_reservations.php`: reserva por item, consumo, liberação e reposição idempotentes.
+
+As três foram aplicadas no banco local por `sail artisan migrate`, sem recriar tabelas ou alterar migrations antigas. Backfill e reversão foram exercitados em banco de teste. A reversão que tornaria totais obrigatórios recusa pedidos ainda sem frete definido; tratar esses pedidos antes de um downgrade.
+
+### Arquivos e operação
+
+- `app/Actions/Catalog/SyncProductVariantsAction.php`, `ResolveProductOfferAction.php`, `ManageOrderInventoryAction.php` e `app/Domain/Catalog/Services/InventoryAvailability.php`: combinações e estoque.
+- `app/Filament/Resources/Products/ProductResource.php`, `app/Livewire/Store/ProductPurchase.php`: cadastro e seleção.
+- `app/Infrastructure/Shipping/MelhorEnvio/MelhorEnvioShippingProvider.php`, `app/Actions/Shipping/QuoteShippingAction.php`: normalização e isolamento das cotações.
+- `app/Actions/Order/CreateInitialOrderAction.php`, `ConfirmQuotedOrderAction.php`, `PayOrderAction.php`, `app/Actions/Shipping/PublishOrderShippingQuoteAction.php`: solicitação, negociação e conclusão.
+- `app/Livewire/Store/ShippingQuoteCheckout.php`, `app/Filament/Resources/Orders/Pages/ViewOrder.php`, views e rotas correspondentes: revisão protegida e publicação administrativa.
+- `docs/shipping.md`, `docs/product-variants.md`, `docs/database.md`, `docs/business-rules.md`, `docs/roadmap.md`: arquitetura e regras atualizadas.
+
+Em outra instalação, executar `./vendor/bin/sail artisan migrate` e `./vendor/bin/sail npm run build`. Manter `./vendor/bin/sail artisan schedule:work` em desenvolvimento ou o cron Laravel `schedule:run` a cada minuto em produção. O comando `saba:expire-stock-reservations` pode ser executado manualmente. A disponibilidade já ignora reservas vencidas, mesmo sem o scheduler.
+
+Credenciais reais não são necessárias para validar o fluxo de pagamento atual. Cobrança financeira real, compra de etiquetas com saldo e webhooks em produção continuam dependendo da homologação correspondente; esta revisão não implementa um gateway financeiro real.
+
+## Histórico da validação anterior
+
 Validação concluída em 15/10/2026. Nenhuma credencial real de Melhor Envio foi utilizada nos testes. `Tests\TestCase` proíbe chamadas HTTP sem fake.
 
 ## Resultado
