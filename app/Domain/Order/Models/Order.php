@@ -8,7 +8,9 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\Payment;
+use App\Domain\Shipping\Enums\ShippingPricingStatus;
 use App\Domain\Shipping\Models\Shipment;
+use App\Support\BrazilianMoney;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -51,7 +53,7 @@ final class Order extends Model
     protected function casts(): array
     {
         return [
-            'shipping_pricing_status' => \App\Domain\Shipping\Enums\ShippingPricingStatus::class,
+            'shipping_pricing_status' => ShippingPricingStatus::class,
             'status' => OrderStatus::class,
             'payment_status' => PaymentStatus::class,
             'subtotal_cents' => 'integer',
@@ -69,12 +71,12 @@ final class Order extends Model
 
     public function formattedTotal(): string
     {
-        return $this->total_cents === null ? 'A definir' : \App\Support\BrazilianMoney::display($this->total_cents);
+        return $this->total_cents === null ? 'A definir' : BrazilianMoney::display($this->total_cents);
     }
 
     public function formattedShipping(): string
     {
-        return $this->shipping_cents === null ? 'A definir' : \App\Support\BrazilianMoney::display($this->shipping_cents);
+        return $this->shipping_cents === null ? 'A definir' : BrazilianMoney::display($this->shipping_cents);
     }
 
     public function shippingQuotes(): HasMany

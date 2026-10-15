@@ -9,7 +9,6 @@ use App\Actions\Cart\GetCartAction;
 use App\Actions\Catalog\SyncProductVariantsAction;
 use App\Actions\Shipping\QuoteShippingAction;
 use App\Domain\Catalog\Models\Product;
-use App\Domain\Shipping\Models\ShippingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,7 +33,9 @@ final class ShippingQuoteResponseTest extends TestCase
         $product = Product::factory()->create(['weight' => '1', 'height' => '40', 'width' => '30', 'length' => '50']);
         app(AddCartItemAction::class)->execute($product->id);
         $row = $this->row();
-        $response = match ($shape) { 'object' => $row, 'list' => [$row], 'data_object' => ['data' => $row], default => ['data' => [$row]] };
+        $response = match ($shape) {
+            'object' => $row, 'list' => [$row], 'data_object' => ['data' => $row], default => ['data' => [$row]]
+        };
         Http::fake(['*/shipment/calculate' => Http::response($response)]);
         $options = app(QuoteShippingAction::class)->execute(app(GetCartAction::class)->execute(), '13077001');
         $this->assertCount(1, $options);

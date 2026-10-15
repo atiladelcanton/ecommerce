@@ -7,18 +7,23 @@ namespace App\Filament\Resources\Orders\Pages;
 use App\Actions\Order\TransitionOrderStatusAction;
 use App\Actions\Shipping\CancelShipmentAction;
 use App\Actions\Shipping\GenerateShipmentLabelAction;
+use App\Actions\Shipping\GetOrderShippingQuoteLinkAction;
 use App\Actions\Shipping\PrepareReplacementShipmentAction;
+use App\Actions\Shipping\PublishOrderShippingQuoteAction;
 use App\Actions\Shipping\ReconcileShipmentAction;
 use App\Actions\Shipping\RefreshShipmentTrackingAction;
 use App\Domain\Order\Enums\OrderStatus;
+use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Shipping\Enums\ShipmentStatus;
 use App\Domain\Shipping\Models\ShippingAgency;
 use App\Domain\Shipping\OrderShipping;
+use App\Filament\Forms\Components\BrazilianMoneyInput;
 use App\Filament\Pages\StoreSettings;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Support\BrazilianMoney;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -41,20 +46,20 @@ final class ViewOrder extends ViewRecord
         $status = $order->status;
         $mode = OrderShipping::mode($order);
         $actions = [];
-        if ($status === OrderStatus::RECEIVED && $order->shipping_pricing_status !== null && $order->payment_status !== \App\Domain\Payment\Enums\PaymentStatus::APPROVED) {
+        if ($status === OrderStatus::RECEIVED && $order->shipping_pricing_status !== null && $order->payment_status !== PaymentStatus::APPROVED) {
             $actions[] = Action::make('quoteShipping')->label('Informar cotação de entrega')->modalHeading('Cotação de entrega')
                 ->fillForm(fn () => $order->latestShippingQuote?->toArray() ?? ['service_name' => 'Entrega combinada', 'expires_at' => now()->addDays(7)])
                 ->schema([Section::make('Frete negociado')->columns(2)->schema([
                     TextInput::make('carrier_name')->label('Transportadora')->required()->maxLength(255),
                     TextInput::make('service_name')->label('Serviço / descrição')->required()->maxLength(255),
-                    \App\Filament\Forms\Components\BrazilianMoneyInput::make('price_cents')->label('Valor do frete')->required(),
+                    BrazilianMoneyInput::make('price_cents')->label('Valor do frete')->required(),
                     TextInput::make('estimated_days')->label('Prazo estimado (dias úteis)')->integer()->minValue(0)->maxValue(365),
-                    \Filament\Forms\Components\DateTimePicker::make('expires_at')->label('Válida até')->required()->seconds(false),
+                    DateTimePicker::make('expires_at')->label('Válida até')->required()->seconds(false),
                     Textarea::make('instructions')->label('Instruções')->maxLength(2000)->columnSpanFull(),
-                ])])->action(fn (array $data) => $this->perform(fn () => app(\App\Actions\Shipping\PublishOrderShippingQuoteAction::class)->execute($order, $data, (int) auth()->id()), 'Cotação publicada'));
+                ])])->action(fn (array $data) => $this->perform(fn () => app(PublishOrderShippingQuoteAction::class)->execute($order, $data, (int) auth()->id()), 'Cotação publicada'));
         }
         if ($order->latestShippingQuote && $order->latestShippingQuote->expires_at->isFuture() && ! $order->latestShippingQuote->superseded_at && $status === OrderStatus::RECEIVED) {
-            $actions[] = Action::make('reviewShippingQuote')->label('Abrir link do cliente')->url(app(\App\Actions\Shipping\GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote))->openUrlInNewTab();
+            $actions[] = Action::make('reviewShippingQuote')->label('Abrir link do cliente')->url(app(GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote))->openUrlInNewTab();
         }
         if ($status === OrderStatus::PAID) {
             $actions[] = $this->statusAction('processing', 'Iniciar preparação', OrderStatus::PROCESSING);

@@ -12,9 +12,9 @@ use App\Actions\Catalog\UpdateProductAction;
 use App\Actions\Order\CreateInitialOrderAction;
 use App\Actions\Order\GetCheckoutTokenAction;
 use App\Domain\Catalog\Models\Product;
-use App\Domain\Catalog\Services\InventoryAvailability;
 use App\Domain\Shipping\Models\ShippingIntegration;
 use App\Filament\Resources\Products\Pages\EditProduct;
+use App\Infrastructure\Cart\SessionCart;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +46,7 @@ final class InventoryReservationTest extends TestCase
         app(AddCartItemAction::class)->execute($product->id, quantity: 2);
         app(CreateInitialOrderAction::class)->requestShippingQuote($this->input(), app(GetCheckoutTokenAction::class)->execute());
         // Simulate another session that already had the same item before the reservation.
-        session()->put(\App\Infrastructure\Cart\SessionCart::SESSION_KEY, [$product->id.':none' => ['product_id' => $product->id, 'product_variant_id' => null, 'quantity' => 1]]);
+        session()->put(SessionCart::SESSION_KEY, [$product->id.':none' => ['product_id' => $product->id, 'product_variant_id' => null, 'quantity' => 1]]);
         $cart = app(GetCartAction::class)->execute();
         $this->assertCount(1, $cart['items']);
         $this->assertNotEmpty($cart['stockError']);

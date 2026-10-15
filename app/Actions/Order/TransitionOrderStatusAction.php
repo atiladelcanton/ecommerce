@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Catalog\ManageOrderInventoryAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
+use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Shipping\Enums\ShipmentStatus;
+use App\Domain\Shipping\Enums\ShippingPricingStatus;
 use App\Domain\Shipping\OrderShipping;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -42,14 +45,14 @@ final class TransitionOrderStatusAction
             if ($to === OrderStatus::CANCELLED && $locked->shipments()->whereNull('cancelled_at')->exists()) {
                 throw ValidationException::withMessages(['status' => 'Cancele ou concilie os envios pendentes antes de cancelar comercialmente o pedido.']);
             }
-            if ($to !== OrderStatus::CANCELLED && $locked->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE) {
+            if ($to !== OrderStatus::CANCELLED && $locked->shipping_pricing_status === ShippingPricingStatus::AWAITING_QUOTE) {
                 throw ValidationException::withMessages(['status' => 'Defina e confirme o frete antes de avançar este pedido.']);
             }
-            if ($to === OrderStatus::PAID && $locked->shipping_pricing_status !== null && $locked->payment_status !== \App\Domain\Payment\Enums\PaymentStatus::APPROVED) {
+            if ($to === OrderStatus::PAID && $locked->shipping_pricing_status !== null && $locked->payment_status !== PaymentStatus::APPROVED) {
                 throw ValidationException::withMessages(['status' => 'O cliente precisa confirmar o frete e o pagamento.']);
             }
             if ($to === OrderStatus::CANCELLED) {
-                app(\App\Actions\Catalog\ManageOrderInventoryAction::class)->cancel($locked);
+                app(ManageOrderInventoryAction::class)->cancel($locked);
             }
             $mode = OrderShipping::mode($locked);
             if ($contingency && ! filled($description)) {

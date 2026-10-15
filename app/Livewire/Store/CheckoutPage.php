@@ -24,9 +24,13 @@ final class CheckoutPage extends Component
     public string $checkoutToken;
 
     public ?string $postalCodeMessage = null;
+
     public string $addressChoice = 'new';
+
     public array $savedAddresses = [];
+
     public bool $saveNewAddress = false;
+
     public bool $makeDefaultAddress = false;
 
     public array $form = [
@@ -39,7 +43,9 @@ final class CheckoutPage extends Component
     {
         $this->checkoutToken = $token->execute();
         $customer = $auth->guard('customer')->user();
-        if (! $customer) return;
+        if (! $customer) {
+            return;
+        }
 
         $this->form['name'] = $customer->name;
         $this->form['email'] = $customer->email;
@@ -74,30 +80,41 @@ final class CheckoutPage extends Component
                 $this->form[$field] = '';
             }
             $this->postalCodeMessage = null;
+
             return;
         }
 
-        if (! str_starts_with($value, 'saved:')) return;
+        if (! str_starts_with($value, 'saved:')) {
+            return;
+        }
         $id = (int) substr($value, 6);
         $customer = auth('customer')->user();
-        if (! $customer) return;
+        if (! $customer) {
+            return;
+        }
         $address = $customer->addresses()->whereKey($id)->first();
-        if ($address) $this->fillAddress($address);
+        if ($address) {
+            $this->fillAddress($address);
+        }
     }
 
     public function updated(string $property): void
     {
-        if ($property !== 'form.postal_code') return;
+        if ($property !== 'form.postal_code') {
+            return;
+        }
         $this->postalCodeMessage = null;
         $this->resetValidation('postal_code');
         try {
             $address = app(LookupPostalCodeAction::class)->execute(is_string($this->form['postal_code'] ?? null) ? $this->form['postal_code'] : '');
         } catch (PostalCodeLookupFailed) {
             $this->postalCodeMessage = 'Não foi possível consultar o CEP agora. Você pode preencher o endereço manualmente.';
+
             return;
         }
         if (! $address) {
             $this->postalCodeMessage = 'CEP não encontrado. Preencha o endereço manualmente.';
+
             return;
         }
         $this->form['street'] = $address->street;
@@ -133,7 +150,9 @@ final class CheckoutPage extends Component
             if (str_starts_with($this->addressChoice, 'saved:')) {
                 $id = (int) substr($this->addressChoice, 6);
                 $saved = $customer->addresses()->whereKey($id)->first();
-                if (! $saved) throw ValidationException::withMessages(['address' => 'Selecione um endereço válido.']);
+                if (! $saved) {
+                    throw ValidationException::withMessages(['address' => 'Selecione um endereço válido.']);
+                }
                 $this->fillAddress($saved);
             }
         }

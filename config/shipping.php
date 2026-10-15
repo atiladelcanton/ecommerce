@@ -3,13 +3,14 @@
 declare(strict_types=1);
 
 use App\Infrastructure\Shipping\LocalPickupProvider;
+use App\Infrastructure\Shipping\ManualShippingProvider;
 use App\Infrastructure\Shipping\MelhorEnvio\MelhorEnvioShippingProvider;
 
 return [
     'default' => env('SHIPPING_PROVIDER'),
 
     'providers' => [
-        'manual' => \App\Infrastructure\Shipping\ManualShippingProvider::class,
+        'manual' => ManualShippingProvider::class,
         'melhor_envio' => MelhorEnvioShippingProvider::class,
         'local_pickup' => LocalPickupProvider::class,
     ],

@@ -17,6 +17,7 @@ final class CustomerAccountController
     {
         $customer = $request->user('customer');
         $orders = $customer->orders()->withCount('items')->limit(5)->get();
+
         return view('store.customer.dashboard', ['customer' => $customer, 'orders' => $orders, 'ordersCount' => $customer->orders()->count()]);
     }
 
@@ -24,12 +25,14 @@ final class CustomerAccountController
     {
         $customer = $request->user('customer');
         $orders = $customer->orders()->withCount('items')->paginate(10);
+
         return view('store.customer.orders', compact('customer', 'orders'));
     }
 
     public function order(Request $request, string $number): View
     {
         Order::query()->where('customer_id', $request->user('customer')->id)->where('number', $number)->firstOrFail();
+
         return view('store.customer.order', ['number' => $number]);
     }
 
@@ -41,12 +44,14 @@ final class CustomerAccountController
     public function updateProfile(Request $request, UpdateCustomerProfileAction $action): RedirectResponse
     {
         $action->execute($request->user('customer'), $request->all());
+
         return back()->with('toast', ['type' => 'success', 'title' => 'Dados atualizados', 'message' => 'Seus dados foram salvos.']);
     }
 
     public function updatePassword(Request $request, ChangeCustomerPasswordAction $action): RedirectResponse
     {
         $action->execute($request->user('customer'), $request->all());
+
         return back()->with('toast', ['type' => 'success', 'title' => 'Senha alterada', 'message' => 'Sua nova senha já está ativa.']);
     }
 }

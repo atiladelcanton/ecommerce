@@ -18,8 +18,12 @@ use App\Domain\Shipping\Data\ShippingCapabilities;
 use App\Domain\Shipping\Data\ShippingItem;
 use App\Domain\Shipping\Data\ShippingOption;
 use App\Domain\Shipping\Data\ShippingQuoteRequest;
+use App\Domain\Shipping\Exceptions\PartialShippingQuoteFailure;
 use App\Domain\Shipping\Exceptions\ShippingProviderFailed;
+use App\Domain\Shipping\Exceptions\ShippingQuoteUnavailable;
+use App\Domain\Shipping\Models\ShippingIntegration;
 use App\Domain\Shipping\Models\ShippingService;
+use Illuminate\Support\Facades\Log;
 
 final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, ShipmentProvider, ShipmentTrackingProvider, ShippingCapabilitiesProvider, ShippingProvider
 {
@@ -44,7 +48,7 @@ final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, Shipme
         foreach ($request->items as $item) {
             foreach ([$item->weight, $item->height, $item->width, $item->length] as $measurement) {
                 if (! is_string($measurement) || ! preg_match('/^\d+(?:\.\d+)?$/D', $measurement) || (float) $measurement <= 0) {
-                    throw new \App\Domain\Shipping\Exceptions\ShippingQuoteUnavailable('missing_measurements');
+                    throw new ShippingQuoteUnavailable('missing_measurements');
                 }
             }
         }
@@ -60,20 +64,20 @@ final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, Shipme
                 array_push($options, ...$this->quoteService($request, $integration, $service));
             } catch (\Throwable $exception) {
                 $failed = true;
-                \Illuminate\Support\Facades\Log::warning('Shipping service quote failed', ['provider' => $this->key(), 'endpoint' => '/api/v2/me/shipment/calculate', 'service_id' => $service->external_id, 'exception_type' => $exception::class]);
+                Log::warning('Shipping service quote failed', ['provider' => $this->key(), 'endpoint' => '/api/v2/me/shipment/calculate', 'service_id' => $service->external_id, 'exception_type' => $exception::class]);
             }
         }
         if ($failed && $options !== []) {
-            throw new \App\Domain\Shipping\Exceptions\PartialShippingQuoteFailure($options);
+            throw new PartialShippingQuoteFailure($options);
         }
         if ($options === []) {
-            throw new \App\Domain\Shipping\Exceptions\ShippingQuoteUnavailable($failed || $services->isEmpty() ? 'provider_unavailable' : 'carrier_rejected');
+            throw new ShippingQuoteUnavailable($failed || $services->isEmpty() ? 'provider_unavailable' : 'carrier_rejected');
         }
 
         return $options;
     }
 
-    private function quoteService(ShippingQuoteRequest $request, \App\Domain\Shipping\Models\ShippingIntegration $integration, ShippingService $service): array
+    private function quoteService(ShippingQuoteRequest $request, ShippingIntegration $integration, ShippingService $service): array
     {
         $options = [];
         $settings = $integration->configuration ?? [];

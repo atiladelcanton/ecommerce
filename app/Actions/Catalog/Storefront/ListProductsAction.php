@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Catalog\Storefront;
 
 use App\Domain\Catalog\Enums\ProductAvailability;
+use App\Domain\Catalog\Queries\ProductOfferQuery;
 use App\Support\BrazilianMoney;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,24 +25,30 @@ final class ListProductsAction
         if ($availability = ProductAvailability::tryFrom($filters['availability'] ?? '')) {
             $query->where('availability', $availability);
         }
-        if ($filters['promotion'] ?? false) { $query->onPromotion(); }
+        if ($filters['promotion'] ?? false) {
+            $query->onPromotion();
+        }
         foreach (['minimum' => '>=', 'maximum' => '<='] as $field => $operator) {
-            try { $price = BrazilianMoney::parse($filters[$field] ?? null); }
-            catch (InvalidArgumentException) {
+            try {
+                $price = BrazilianMoney::parse($filters[$field] ?? null);
+            } catch (InvalidArgumentException) {
                 throw ValidationException::withMessages([$field => 'Informe um valor em reais, como 1.299,90.']);
             }
             if ($price !== null) {
-                if ($price < 0) { throw ValidationException::withMessages([$field => 'Informe um valor maior ou igual a zero.']); }
-                $query->whereRaw(\App\Domain\Catalog\Queries\ProductOfferQuery::effectivePrice().' '.$operator.' ?', [$price]);
+                if ($price < 0) {
+                    throw ValidationException::withMessages([$field => 'Informe um valor maior ou igual a zero.']);
+                }
+                $query->whereRaw(ProductOfferQuery::effectivePrice().' '.$operator.' ?', [$price]);
             }
         }
         match ($filters['sort'] ?? '') {
-            'menor-preco' => $query->orderByRaw(\App\Domain\Catalog\Queries\ProductOfferQuery::effectivePrice().' ASC'),
-            'maior-preco' => $query->orderByRaw(\App\Domain\Catalog\Queries\ProductOfferQuery::effectivePrice().' DESC'),
+            'menor-preco' => $query->orderByRaw(ProductOfferQuery::effectivePrice().' ASC'),
+            'maior-preco' => $query->orderByRaw(ProductOfferQuery::effectivePrice().' DESC'),
             'nome-az' => $query->orderBy('name'),
             'nome-za' => $query->orderByDesc('name'),
             default => $query->latest(),
         };
+
         return $query->orderByDesc('id')->paginate(12);
     }
 }

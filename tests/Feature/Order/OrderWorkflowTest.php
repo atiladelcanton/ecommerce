@@ -9,7 +9,6 @@ use App\Actions\Payment\HandleApprovedPaymentAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
-use App\Domain\Payment\Models\Payment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;

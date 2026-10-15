@@ -6,8 +6,8 @@ namespace App\Actions\Order;
 
 use App\Actions\Cart\ClearCartAction;
 use App\Actions\Cart\GetCartAction;
+use App\Actions\Catalog\ManageOrderInventoryAction;
 use App\Actions\Customer\LinkGuestOrdersToCustomerAction;
-use App\Actions\Payment\HandleApprovedPaymentAction;
 use App\Actions\Shipping\QuoteShippingAction;
 use App\Domain\Cart\CartItem;
 use App\Domain\Catalog\Models\Product;
@@ -15,10 +15,9 @@ use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Order\OrderTotals;
-use App\Domain\Payment\Contracts\PaymentGateway;
-use App\Domain\Payment\Data\PaymentRequest;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Shipping\Data\ShippingOption;
+use App\Domain\Shipping\Enums\ShippingPricingStatus;
 use App\Infrastructure\Cart\SessionCart;
 use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -111,7 +110,7 @@ final class CreateInitialOrderAction
                         'status' => OrderStatus::PENDING, 'payment_status' => PaymentStatus::PENDING,
                         'subtotal_cents' => $cart['subtotal'], 'shipping_cents' => $totals?->shipping,
                         'discount_cents' => 0, 'total_cents' => $totals?->total,
-                        'shipping_pricing_status' => $requestFreight ? \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE : null,
+                        'shipping_pricing_status' => $requestFreight ? ShippingPricingStatus::AWAITING_QUOTE : null,
                         'shipping_option_id' => $shipping?->id ?? 'manual:pending',
                         'shipping_provider' => $shipping?->provider ?? 'manual',
                         'shipping_integration_id' => $shipping?->integrationId,
@@ -139,7 +138,7 @@ final class CreateInitialOrderAction
                     $order->statusHistories()->create([
                         'from_status' => null, 'to_status' => OrderStatus::PENDING, 'description' => 'Pedido criado.',
                     ]);
-                    app(\App\Actions\Catalog\ManageOrderInventoryAction::class)->reserve($order);
+                    app(ManageOrderInventoryAction::class)->reserve($order);
                     if (! $requestFreight) {
                         $order = app(PayOrderAction::class)->execute($order);
                     }

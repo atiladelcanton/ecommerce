@@ -18,6 +18,9 @@ use App\Support\BrazilianMoney;
 use App\Support\Catalog\ProductDescription;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\KeyValue;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -120,11 +123,11 @@ final class ProductResource extends Resource
                 })->color('success')->columnSpanFull(),
             ]),
             Section::make('Variações')->description('Cadastre cada combinação vendável, como Cor + Embalagem ou Poliéster + Tamanho. Valores vazios herdam o produto. Remover uma linha desativa a variação existente.')->schema([
-                \Filament\Forms\Components\Repeater::make('variants')->label('Combinações')->defaultItems(0)->addActionLabel('Adicionar variação')
+                Repeater::make('variants')->label('Combinações')->defaultItems(0)->addActionLabel('Adicionar variação')
                     ->itemLabel(fn (array $state): string => implode(' / ', array_values($state['attributes'] ?? [])) ?: 'Nova variação')
                     ->collapsible()->columns(2)->schema([
-                        \Filament\Forms\Components\Hidden::make('id'),
-                        \Filament\Forms\Components\KeyValue::make('attributes')->label('Características')->keyLabel('Característica')->valueLabel('Valor')->addActionLabel('Adicionar característica')->required()->columnSpanFull(),
+                        Hidden::make('id'),
+                        KeyValue::make('attributes')->label('Características')->keyLabel('Característica')->valueLabel('Valor')->addActionLabel('Adicionar característica')->required()->columnSpanFull(),
                         TextInput::make('sku')->label('SKU da variação')->maxLength(255),
                         Toggle::make('is_active')->label('Variação ativa')->default(true),
                         BrazilianMoneyInput::make('price')->label('Preço da variação')->helperText('Vazio: herda o preço do produto.'),

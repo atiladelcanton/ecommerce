@@ -14,6 +14,7 @@ final class UpdateCustomerAddressAction
     public function execute(CustomerAddress $address, array $input): CustomerAddress
     {
         $data = $this->validate->execute($input);
+
         return DB::transaction(function () use ($address, $data): CustomerAddress {
             $address->customer->addresses()->lockForUpdate()->get();
             if ($data['is_default']) {
@@ -23,6 +24,7 @@ final class UpdateCustomerAddressAction
                 $data['is_default'] = true;
             }
             $address->update($data);
+
             return $address->refresh();
         });
     }

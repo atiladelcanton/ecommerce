@@ -14,7 +14,9 @@ final class ValidateCustomerAddressData
     public function execute(array $input): array
     {
         foreach ($input as $key => $value) {
-            if (is_string($value)) $input[$key] = trim($value);
+            if (is_string($value)) {
+                $input[$key] = trim($value);
+            }
         }
         $input['postal_code'] = BrazilianData::digits($input['postal_code'] ?? '');
         $input['state'] = strtoupper((string) ($input['state'] ?? ''));

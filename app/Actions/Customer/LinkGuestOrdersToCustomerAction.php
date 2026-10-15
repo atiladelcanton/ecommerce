@@ -29,6 +29,7 @@ final class LinkGuestOrdersToCustomerAction
 
         if ($pairs->isEmpty()) {
             $this->session->forget(self::SESSION_KEY);
+
             return 0;
         }
 
@@ -51,6 +52,7 @@ final class LinkGuestOrdersToCustomerAction
                     }
                     $count += Order::query()->whereKey($order->id)->whereNull('customer_id')->update(['customer_id' => $customer->id]);
                 });
+
             return $count;
         });
 

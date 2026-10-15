@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Actions\Shipping;
 
+use App\Actions\Catalog\ResolveProductOfferAction;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Settings\Models\StoreSetting;
 use App\Domain\Shipping\Contracts\ShippingProvider;
 use App\Domain\Shipping\Data\ShippingItem;
 use App\Domain\Shipping\Data\ShippingOption;
 use App\Domain\Shipping\Data\ShippingQuoteRequest;
+use App\Domain\Shipping\Exceptions\PartialShippingQuoteFailure;
+use App\Domain\Shipping\Exceptions\ShippingQuoteUnavailable;
 use App\Infrastructure\Shipping\ShippingProviderRegistry;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -45,7 +48,7 @@ final class QuoteShippingAction
                 throw ValidationException::withMessages(['cart' => 'Alguns produtos não estão mais disponíveis. Revise seu carrinho.']);
             }
             $variant = $line['item']->productVariantId ? $product->variants->firstWhere('id', $line['item']->productVariantId) : null;
-            $offer = app(\App\Actions\Catalog\ResolveProductOfferAction::class)->execute($product, $variant);
+            $offer = app(ResolveProductOfferAction::class)->execute($product, $variant);
             $items[] = new ShippingItem(
                 productId: $product->id,
                 quantity: $line['item']->quantity,
@@ -97,20 +100,20 @@ final class QuoteShippingAction
                 foreach ($quoted as $option) {
                     $options[$option->id] = $option;
                 }
-            } catch (\App\Domain\Shipping\Exceptions\PartialShippingQuoteFailure $exception) {
+            } catch (PartialShippingQuoteFailure $exception) {
                 $errors[] = $providerKey;
                 foreach ($exception->options as $option) {
                     $options[$option->id] = $option;
                 }
             } catch (Throwable $exception) {
-                if ($exception instanceof \App\Domain\Shipping\Exceptions\ShippingQuoteUnavailable) {
+                if ($exception instanceof ShippingQuoteUnavailable) {
                     $unavailableMessage = $exception->getMessage();
                 }
                 $errors[] = $providerKey;
                 Log::warning('Shipping quote provider failed.', [
                     'provider' => $providerKey,
                     'exception_type' => $exception::class,
-                    'reason' => $exception instanceof \App\Domain\Shipping\Exceptions\ShippingQuoteUnavailable ? $exception->reason : 'provider_unavailable',
+                    'reason' => $exception instanceof ShippingQuoteUnavailable ? $exception->reason : 'provider_unavailable',
                 ]);
             }
         }

@@ -50,7 +50,7 @@
 <?php $component = $__componentOriginal6330f08526bbb3ce2a0da37da512a11f; ?>
 <?php unset($__componentOriginal6330f08526bbb3ce2a0da37da512a11f); ?>
 <?php endif; ?>
-                    <a class="text-sm text-primary-600" href="<?php echo e(\App\Support\Storefront\Links::whatsapp($order->customer_phone, 'Olá! Sua cotação de entrega está disponível. Revise o pedido e conclua a compra: '.$quoteLink)); ?>" target="_blank" rel="noopener noreferrer">Compartilhar pelo WhatsApp</a>
+                    <a class="text-sm text-primary-600" href="<?php echo e(app(\App\Actions\Shipping\GetCustomerQuoteContactLinkAction::class)->execute($order->latestShippingQuote)); ?>" target="_blank" rel="noopener noreferrer">Compartilhar pelo WhatsApp</a>
                 </div>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->shippingQuotes->isNotEmpty()): ?>

@@ -7,7 +7,6 @@ namespace App\Actions\Cart;
 use App\Actions\Catalog\Storefront\PublicProducts;
 use App\Domain\Catalog\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class GetCartProductAction
 {

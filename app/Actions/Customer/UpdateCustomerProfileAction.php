@@ -26,6 +26,7 @@ final class UpdateCustomerProfileAction
             'required' => 'Informe :attribute.',
         ], ['name' => 'o nome', 'email' => 'o e-mail', 'phone' => 'o telefone'])->validate();
         $customer->update($data);
+
         return $customer->refresh();
     }
 }

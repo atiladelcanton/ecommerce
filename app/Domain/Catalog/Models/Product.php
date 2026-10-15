@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Catalog\Models;
 
 use App\Domain\Catalog\Enums\ProductAvailability;
+use App\Domain\Catalog\Queries\ProductOfferQuery;
 use App\Domain\Catalog\ValueObjects\ProductPricing;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -93,9 +94,9 @@ final class Product extends Model
 
     public function scopeOnPromotion(Builder $query): Builder
     {
-        $available = \App\Domain\Catalog\Queries\ProductOfferQuery::availableVariant();
+        $available = ProductOfferQuery::availableVariant();
 
-        return $query->whereRaw("((NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.id) AND products.promotional_price > 0 AND products.promotional_price < products.price) OR EXISTS (SELECT 1 FROM product_variants pv WHERE ".$available." AND (pv.promotional_price > 0 OR (pv.price IS NULL AND products.promotional_price > 0))))");
+        return $query->whereRaw('((NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.id) AND products.promotional_price > 0 AND products.promotional_price < products.price) OR EXISTS (SELECT 1 FROM product_variants pv WHERE '.$available.' AND (pv.promotional_price > 0 OR (pv.price IS NULL AND products.promotional_price > 0))))');
     }
 
     public function reservations(): HasMany

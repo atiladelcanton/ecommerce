@@ -17,6 +17,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -72,7 +73,7 @@ final class InventoryConcurrencyTest extends TestCase
     {
         // This class owns the isolated database. Remove its unfinished fixtures before
         // exercising a down migration that deliberately refuses unknown freight totals.
-        if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+        if (Schema::hasTable('orders')) {
             Order::query()->whereNull('total_cents')->delete();
         }
         parent::tearDown();

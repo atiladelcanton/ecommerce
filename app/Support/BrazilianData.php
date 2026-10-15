@@ -34,6 +34,7 @@ final class BrazilianData
     public static function postalCode(?string $value): string
     {
         $digits = substr(self::digits($value), 0, 8);
+
         return strlen($digits) > 5 ? substr($digits, 0, 5).'-'.substr($digits, 5) : $digits;
     }
 }

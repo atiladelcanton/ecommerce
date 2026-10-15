@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Catalog;
 
 use App\Domain\Catalog\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 final class CreateProductAction
 {
@@ -12,7 +13,7 @@ final class CreateProductAction
 
     public function execute(array $data): Product
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($data): Product {
+        return DB::transaction(function () use ($data): Product {
             $variants = $data['variants'] ?? null;
             unset($data['variants']);
             $product = Product::query()->create($this->validation->product($data));

@@ -5402,3 +5402,25 @@ Stack trace:
 [2026-10-15 10:23:45] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"carrier_rejected"} 
 [2026-10-15 10:23:59] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":422,"request_id":""} 
 [2026-10-15 10:24:34] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":422,"request_id":""} 
+[2026-10-15 10:29:33] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-15 10:29:33] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-15 10:29:33] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-15 10:29:33] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-15 10:29:36] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/agencies","status":503,"request_id":""} 
+[2026-10-15 10:29:36] testing.WARNING: Shipping administration operation failed {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503,"request_id":""} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"902","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"provider_unavailable"} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503,"request_id":""} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"902","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"provider_unavailable"} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"missing_measurements"} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/generate","status":422,"request_id":""} 
+[2026-10-15 10:29:37] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/checkout","status":503,"request_id":""} 
+[2026-10-15 10:29:38] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":503,"request_id":""} 
+[2026-10-15 10:29:38] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/generate","status":422,"request_id":""} 
+[2026-10-15 10:29:38] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/services","status":503,"request_id":""} 
+[2026-10-15 10:29:39] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503,"request_id":""} 
+[2026-10-15 10:29:39] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-15 10:29:39] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503,"request_id":""} 
+[2026-10-15 10:29:39] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 

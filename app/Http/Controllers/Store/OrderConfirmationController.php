@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Store;
 
 use App\Actions\Order\GetOrderConfirmationAction;
+use App\Actions\Order\GetOrderShippingContactAction;
 use Illuminate\Http\Response;
 
 final class OrderConfirmationController
@@ -13,7 +14,7 @@ final class OrderConfirmationController
     {
         $order = $action->execute($number);
 
-        return response()->view('store.order-confirmation', ['order' => $order, 'shippingContactUrl' => app(\App\Actions\Order\GetOrderShippingContactAction::class)->execute($order)])
+        return response()->view('store.order-confirmation', ['order' => $order, 'shippingContactUrl' => app(GetOrderShippingContactAction::class)->execute($order)])
             ->header('Cache-Control', 'private, no-store');
     }
 }

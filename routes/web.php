@@ -10,6 +10,7 @@ use App\Http\Controllers\Store\HomeController;
 use App\Http\Controllers\Store\InstitutionalController;
 use App\Http\Controllers\Store\OrderConfirmationController;
 use App\Http\Controllers\Store\ProductController;
+use App\Http\Controllers\Store\ShippingQuoteCheckoutController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -56,5 +57,5 @@ Route::post('/webhooks/shipping/melhor-envio', MelhorEnvioWebhookController::cla
 
 Route::get('/admin/shipping/labels/{shipment}/{format}', ShipmentLabelController::class)->middleware('auth:web')->name('admin.shipping.labels.download');
 
-Route::get('/pedido/{number}/entrega/{revision}', \App\Http\Controllers\Store\ShippingQuoteCheckoutController::class)
+Route::get('/pedido/{number}/entrega/{revision}', ShippingQuoteCheckoutController::class)
     ->whereNumber('revision')->middleware(['signed', 'throttle:60,1'])->name('store.order.shipping-quote');

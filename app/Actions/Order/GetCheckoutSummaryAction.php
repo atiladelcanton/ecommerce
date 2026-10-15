@@ -31,7 +31,7 @@ final class GetCheckoutSummaryAction
         }
 
         $totals = null;
-$totalError = $cart['stockError'] ?? null;
+        $totalError = $cart['stockError'] ?? null;
         try {
             $totals = new OrderTotals($cart['subtotal'], $shipping?->price ?? 0);
         } catch (ValidationException $exception) {

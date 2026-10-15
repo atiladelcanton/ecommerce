@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Store;
 
+use App\Actions\Address\LookupPostalCodeAction;
 use App\Actions\Customer\CreateCustomerAddressAction;
 use App\Actions\Customer\DeleteCustomerAddressAction;
 use App\Actions\Customer\SetDefaultCustomerAddressAction;
 use App\Actions\Customer\UpdateCustomerAddressAction;
 use App\Actions\Order\ValidateCheckoutData;
-use App\Actions\Address\LookupPostalCodeAction;
 use App\Domain\Address\Exceptions\PostalCodeLookupFailed;
-use Illuminate\Http\JsonResponse;
 use App\Domain\Customer\Models\CustomerAddress;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -38,12 +38,14 @@ final class CustomerAddressController
     public function store(Request $request, CreateCustomerAddressAction $action): RedirectResponse
     {
         $action->execute($request->user('customer'), $request->all());
+
         return redirect()->route('customer.addresses')->with('toast', ['type' => 'success', 'title' => 'Endereço salvo', 'message' => 'Seu novo endereço foi cadastrado.']);
     }
 
     public function edit(Request $request, CustomerAddress $address): View
     {
         $this->authorizeAddress($request, $address);
+
         return view('store.customer.addresses.form', ['address' => $address, 'states' => ValidateCheckoutData::STATES]);
     }
 
@@ -51,6 +53,7 @@ final class CustomerAddressController
     {
         $this->authorizeAddress($request, $address);
         $action->execute($address, $request->all());
+
         return redirect()->route('customer.addresses')->with('toast', ['type' => 'success', 'title' => 'Endereço atualizado', 'message' => 'As alterações foram salvas.']);
     }
 
@@ -58,6 +61,7 @@ final class CustomerAddressController
     {
         $this->authorizeAddress($request, $address);
         $action->execute($address);
+
         return redirect()->route('customer.addresses')->with('toast', ['type' => 'success', 'title' => 'Endereço removido', 'message' => 'O endereço foi removido da sua conta.']);
     }
 
@@ -65,9 +69,9 @@ final class CustomerAddressController
     {
         $this->authorizeAddress($request, $address);
         $action->execute($address);
+
         return redirect()->route('customer.addresses')->with('toast', ['type' => 'success', 'title' => 'Endereço principal alterado', 'message' => 'Este endereço será usado por padrão no checkout.']);
     }
-
 
     public function postalCode(string $postalCode, LookupPostalCodeAction $lookup): JsonResponse
     {
@@ -76,7 +80,10 @@ final class CustomerAddressController
         } catch (PostalCodeLookupFailed) {
             return response()->json(['message' => 'Não foi possível consultar o CEP agora.'], 503);
         }
-        if (! $address) return response()->json(['message' => 'CEP não encontrado.'], 404);
+        if (! $address) {
+            return response()->json(['message' => 'CEP não encontrado.'], 404);
+        }
+
         return response()->json([
             'postal_code' => $address->postalCode,
             'street' => $address->street,

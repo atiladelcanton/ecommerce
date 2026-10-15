@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Cart;
 
+use App\Actions\Catalog\ResolveProductOfferAction;
 use App\Domain\Cart\CartItem;
+use App\Domain\Catalog\Services\InventoryAvailability;
 use App\Infrastructure\Cart\SessionCart;
 use Illuminate\Validation\ValidationException;
 
@@ -47,7 +49,7 @@ final class GetCartAction
                 continue;
             }
 
-            $offer = app(\App\Actions\Catalog\ResolveProductOfferAction::class)->execute($product, $variant);
+            $offer = app(ResolveProductOfferAction::class)->execute($product, $variant);
             $unitPrice = $offer->pricing->finalPrice();
             $lineSubtotal = $item->subtotal($unitPrice);
             if ($subtotal > PHP_INT_MAX - $lineSubtotal) {
@@ -61,7 +63,7 @@ final class GetCartAction
         $pools = [];
         $stockError = null;
         foreach ($items as $line) {
-            $inventory = app(\App\Domain\Catalog\Services\InventoryAvailability::class);
+            $inventory = app(InventoryAvailability::class);
             $pool = $inventory->pool($line['product'], $line['variant']);
             if ($pool) {
                 $poolKey = $pool::class.':'.$pool->id;

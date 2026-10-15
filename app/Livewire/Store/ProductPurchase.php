@@ -6,6 +6,7 @@ namespace App\Livewire\Store;
 
 use App\Actions\Cart\AddCartItemAction;
 use App\Actions\Cart\GetCartProductAction;
+use App\Actions\Catalog\Storefront\GetProductPurchaseDataAction;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -34,7 +35,7 @@ final class ProductPurchase extends Component
     public function add(AddCartItemAction $action): void
     {
         if ($this->selectedAttributes !== []) {
-            $data = app(\App\Actions\Catalog\Storefront\GetProductPurchaseDataAction::class)->execute(app(GetCartProductAction::class)->execute($this->productId), $this->selectedAttributes);
+            $data = app(GetProductPurchaseDataAction::class)->execute(app(GetCartProductAction::class)->execute($this->productId), $this->selectedAttributes);
             $this->productVariantId = $data['selectedVariant']?->id;
         }
         $this->added = false;
@@ -84,7 +85,7 @@ final class ProductPurchase extends Component
             }
         }
         $this->previousAttributes = $this->selectedAttributes;
-        $data = app(\App\Actions\Catalog\Storefront\GetProductPurchaseDataAction::class)->execute(app(GetCartProductAction::class)->execute($this->productId), $this->selectedAttributes);
+        $data = app(GetProductPurchaseDataAction::class)->execute(app(GetCartProductAction::class)->execute($this->productId), $this->selectedAttributes);
         $this->productVariantId = $data['selectedVariant']?->id;
         $this->resetValidation();
     }
@@ -93,6 +94,6 @@ final class ProductPurchase extends Component
     {
         $product = app(GetCartProductAction::class)->execute($this->productId);
 
-        return view('livewire.store.product-purchase', array_merge(['product' => $product], app(\App\Actions\Catalog\Storefront\GetProductPurchaseDataAction::class)->execute($product, $this->selectedAttributes, $this->productVariantId)));
+        return view('livewire.store.product-purchase', array_merge(['product' => $product], app(GetProductPurchaseDataAction::class)->execute($product, $this->selectedAttributes, $this->productVariantId)));
     }
 }

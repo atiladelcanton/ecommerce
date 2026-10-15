@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Catalog;
 
+use App\Domain\Catalog\Exceptions\InvalidProductPrice;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Services\InventoryAvailability;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class UpdateProductAction
 {
@@ -32,8 +34,8 @@ final class UpdateProductAction
                 foreach ($locked->variants()->get() as $variant) {
                     try {
                         $variant->pricing($locked);
-                    } catch (\App\Domain\Catalog\Exceptions\InvalidProductPrice $exception) {
-                        throw \Illuminate\Validation\ValidationException::withMessages(['price' => 'Revise as promoções das variações antes de alterar o preço base.']);
+                    } catch (InvalidProductPrice $exception) {
+                        throw ValidationException::withMessages(['price' => 'Revise as promoções das variações antes de alterar o preço base.']);
                     }
                 }
             }

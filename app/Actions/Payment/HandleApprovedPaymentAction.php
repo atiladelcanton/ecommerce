@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Payment;
 
+use App\Actions\Catalog\ManageOrderInventoryAction;
 use App\Actions\Order\TransitionOrderStatusAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\Payment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class HandleApprovedPaymentAction
 {
@@ -26,12 +28,12 @@ final class HandleApprovedPaymentAction
             $lockedOrder = Order::query()->lockForUpdate()->findOrFail($order->id);
 
             if ($lockedPayment->order_id !== $lockedOrder->id) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['payment' => 'O pagamento não pertence a este pedido.']);
+                throw ValidationException::withMessages(['payment' => 'O pagamento não pertence a este pedido.']);
             }
             if ($lockedOrder->total_cents === null || $lockedOrder->shipping_cents === null) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['payment' => 'Defina o frete antes de aprovar o pagamento.']);
+                throw ValidationException::withMessages(['payment' => 'Defina o frete antes de aprovar o pagamento.']);
             }
-            app(\App\Actions\Catalog\ManageOrderInventoryAction::class)->consume($lockedOrder);
+            app(ManageOrderInventoryAction::class)->consume($lockedOrder);
             if ($lockedPayment->status !== PaymentStatus::APPROVED) {
                 $lockedPayment->update(['status' => PaymentStatus::APPROVED]);
             }
@@ -46,7 +48,6 @@ final class HandleApprovedPaymentAction
                     description: 'Pagamento aprovado automaticamente.',
                 );
             }
-
 
             return $lockedOrder->refresh();
         }, 3);
