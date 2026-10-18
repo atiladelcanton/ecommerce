@@ -1,5 +1,5 @@
 <div x-data class="pb-16">
-    <div class="store-section-heading mt-4"><div><p class="store-eyebrow">Catálogo SABA</p><h1 class="store-title mt-2">Produtos</h1></div></div>
+    <div class="store-section-heading mt-4"><div><p class="store-eyebrow">Catálogo</p><h1 class="store-title mt-2">Produtos</h1></div></div>
     <div class="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside class="hidden lg:block"><h2 class="font-semibold mb-6">Filtrar produtos</h2><x-store.filters :categories="$categories" :availabilities="$availabilities" prefix="desktop" /></aside>
         <div class="min-w-0">

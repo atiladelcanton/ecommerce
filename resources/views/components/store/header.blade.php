@@ -1,7 +1,7 @@
 @props(['categories', 'whatsappUrl', 'storeName'])
 <div class="store-announcement">
     <div class="store-container flex items-center justify-between gap-4 py-2">
-        <span>Máquinas e equipamentos para serigrafia</span>
+        <span>Equipamentos, insumos e acessórios para serigrafia</span>
         @if($whatsappUrl)<a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="hidden sm:inline">Fale conosco pelo WhatsApp ↗</a>@endif
     </div>
 </div>

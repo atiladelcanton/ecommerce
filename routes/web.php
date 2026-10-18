@@ -3,6 +3,7 @@
 use App\Http\Controllers\Shipping\MelhorEnvioOAuthController;
 use App\Http\Controllers\Shipping\MelhorEnvioWebhookController;
 use App\Http\Controllers\Shipping\ShipmentLabelController;
+use App\Http\Controllers\Shipping\ShipmentLabelFileController;
 use App\Http\Controllers\Store\CustomerAccountController;
 use App\Http\Controllers\Store\CustomerAddressController;
 use App\Http\Controllers\Store\CustomerAuthController;
@@ -55,7 +56,8 @@ Route::middleware('auth:web')->prefix('admin/shipping/melhor-envio')->group(func
 Route::post('/webhooks/shipping/melhor-envio', MelhorEnvioWebhookController::class)
     ->name('webhooks.shipping.melhor-envio');
 
-Route::get('/admin/shipping/labels/{shipment}/{format}', ShipmentLabelController::class)->middleware('auth:web')->name('admin.shipping.labels.download');
+Route::get('/admin/shipping/labels/{shipment}', ShipmentLabelController::class)->middleware('auth:web')->name('admin.shipping.labels.open');
+Route::get('/admin/shipping/labels/{shipment}/file/{format}', ShipmentLabelFileController::class)->middleware('auth:web')->whereIn('format', ['pdf', 'zpl', 'jpeg'])->name('admin.shipping.labels.download');
 
 Route::get('/pedido/{number}/entrega/{revision}', ShippingQuoteCheckoutController::class)
     ->whereNumber('revision')->middleware(['signed', 'throttle:60,1'])->name('store.order.shipping-quote');

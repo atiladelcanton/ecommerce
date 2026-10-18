@@ -100,9 +100,9 @@ final class BannersAndSettingsAdminTest extends TestCase
         $this->assertSame('SP', $settings->state);
         $this->assertSame('+55 (11) 99999-0000', $settings->whatsapp);
         Livewire::test(StoreSettings::class)->assertFormSet(['store_name' => 'SABA', 'state' => 'SP', 'whatsapp' => $settings->whatsapp])
-            ->fillForm(['store_name' => 'SABA Máquinas'])->call('save')->assertHasNoFormErrors();
+            ->fillForm(['store_name' => 'Saba Equipamentos'])->call('save')->assertHasNoFormErrors();
         $this->assertDatabaseCount('store_settings', 1);
-        $this->assertSame('SABA Máquinas', $settings->fresh()->store_name);
+        $this->assertSame('Saba Equipamentos', $settings->fresh()->store_name);
     }
 
     public function test_settings_validation_errors_are_bound_to_form_fields(): void

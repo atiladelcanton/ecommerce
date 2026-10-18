@@ -2,7 +2,7 @@
 
 ## Goal
 
-Keep SABA Máquinas easy to understand, test and evolve while avoiding unnecessary enterprise ceremony.
+Keep Saba Equipamentos easy to understand, test and evolve while avoiding unnecessary enterprise ceremony.
 
 ## Layers
 

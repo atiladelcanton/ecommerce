@@ -18,7 +18,7 @@ final class GetQuotedOrderAction
         $order = Order::query()->with(['items', 'address', 'latestShippingQuote', 'payments'])->where('number', $number)->firstOrFail();
         abort_unless($order->customer_id === null || auth('customer')->id() === $order->customer_id, 403);
         $quote = $order->latestShippingQuote;
-        abort_unless($quote && $quote->revision === $revision && ! $quote->superseded_at && $quote->expires_at->isFuture(), 410, 'Esta cotação foi substituída ou venceu. Solicite um novo link à SABA.');
+        abort_unless($quote && $quote->revision === $revision && ! $quote->superseded_at && $quote->expires_at->isFuture(), 410, 'Esta cotação foi substituída ou venceu. Solicite um novo link à loja.');
 
         return $order;
     }

@@ -37,6 +37,31 @@ final class ProductCombinationsTest extends TestCase
         $this->assertCount(2, $cart['items']);
     }
 
+    public function test_generic_variations_support_nylon_and_clothing_with_optional_price_override(): void
+    {
+        $nylon = Product::factory()->create(['price' => 5000]);
+        app(SyncProductVariantsAction::class)->execute($nylon, [
+            $this->row(['Cor' => 'Amarelo', 'Fios' => '77'], 5000),
+            $this->row(['Cor' => 'Amarelo', 'Fios' => '90'], 6500),
+        ]);
+
+        $base = $nylon->variants()->where('value', 'Amarelo / 77')->firstOrFail();
+        $override = $nylon->variants()->where('value', 'Amarelo / 90')->firstOrFail();
+        $base->update(['price' => null]);
+
+        $this->assertSame(5000, app(ResolveProductOfferAction::class)->execute($nylon, $base->fresh())->pricing->finalPrice());
+        $this->assertSame(6500, app(ResolveProductOfferAction::class)->execute($nylon, $override)->pricing->finalPrice());
+
+        $shirt = Product::factory()->create(['price' => 7990]);
+        app(SyncProductVariantsAction::class)->execute($shirt, [
+            $this->row(['Cor' => 'Preto', 'Tamanho' => 'M'], 7990),
+            $this->row(['Cor' => 'Preto', 'Tamanho' => 'G'], 8990),
+        ]);
+
+        $data = app(GetProductPurchaseDataAction::class)->execute($shirt->fresh());
+        $this->assertSame(['Cor', 'Tamanho'], array_column($data['fields'], 'name'));
+    }
+
     public function test_same_combination_cannot_be_duplicated_by_reordering_or_case(): void
     {
         $product = Product::factory()->create();

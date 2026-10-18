@@ -32,7 +32,7 @@ final class AdminPanelProvider extends PanelProvider
             ->authGuard('web')
             ->path('admin')
             ->login()
-            ->brandName('SABA Equipamentos Serigráficos')
+            ->brandName(config('app.name', 'Saba Equipamentos'))
             ->brandLogo(asset('images/saba-logo.jpeg'))
             ->brandLogoHeight('2.75rem')
             ->favicon(asset('images/saba-logo.jpeg'))

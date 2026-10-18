@@ -102,19 +102,50 @@
         <section class="fi-section xl:col-span-4 p-6">
             <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Logística</p>
             <h2 class="mt-1 text-lg font-semibold text-zinc-900">Envios e etiquetas</h2>
+            @php($currentShipments = \App\Domain\Shipping\OrderShipping::currentShipments($order))
             <div class="mt-5 grid gap-3">
-                @forelse($order->shipments as $shipment)
+                @forelse($currentShipments as $shipmentIndex => $shipment)
                     <div class="rounded-lg border border-zinc-200 p-4 text-sm">
+                        @if($currentShipments->count() > 1)
+                            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Volume {{ $shipmentIndex + 1 }} de {{ $currentShipments->count() }}</p>
+                        @endif
                         <div class="flex items-center justify-between gap-3">
                             <strong>{{ $shipment->carrier_name ?: ucfirst(str_replace('_', ' ', $shipment->provider)) }}</strong>
                             <span class="rounded-full bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-zinc-600">{{ $shipment->status->label() }}</span>
                         </div>
                         @if($shipment->service_name)<p class="mt-2 text-zinc-500">{{ $shipment->service_name }}</p>@endif
-                        @if($shipment->external_id)<p class="mt-1 break-all text-xs text-zinc-400">ID {{ $shipment->external_id }}</p>@endif
+                        @if($order->shipping_document_type)
+                            <p class="mt-2"><span class="text-zinc-500">Documento:</span> <strong>{{ $order->shipping_document_type->label() }}</strong></p>
+                            @if($order->shipping_document_type === \App\Domain\Shipping\Enums\ShipmentDocumentType::INVOICE && $order->invoice_key)
+                                <p class="mt-1 break-all text-xs text-zinc-500">NF-e {{ $order->invoice_key }}</p>
+                            @elseif($order->shipping_document_type === \App\Domain\Shipping\Enums\ShipmentDocumentType::CONTENT_DECLARATION && $order->dce_key)
+                                <p class="mt-1 break-all text-xs text-zinc-500">DC-e externa {{ $order->dce_key }}</p>
+                            @endif
+                        @endif
                         @if($shipment->tracking_code)<p class="mt-2"><span class="text-zinc-500">Rastreio:</span> <strong>{{ $shipment->tracking_code }}</strong></p>@endif
-                        @if($shipment->operation_phase)<p class="mt-2 text-amber-700">Operação pendente de conciliação</p>@endif
-                        @if($shipment->generated_at && !$shipment->cancelled_at)<a class="mt-2 inline-flex font-semibold text-red-600" href="{{ route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => $shipment->label_format ?? 'pdf']) }}">Imprimir etiqueta</a>@endif
-                        @if($shipment->label_url)<a href="{{ $shipment->label_url }}" target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex font-semibold text-red-600 hover:text-red-700">Abrir etiqueta ↗</a>@endif
+
+                        @if($shipment->operation_phase)
+                            <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                                <p class="font-semibold">Não foi possível confirmar a última operação</p>
+                                <p class="mt-1 text-xs leading-5">O envio foi pausado temporariamente para evitar uma cobrança duplicada. Use <strong>Verificar envio</strong> nas ações do pedido.</p>
+                            </div>
+                            <details class="mt-3 text-xs text-zinc-500">
+                                <summary class="cursor-pointer font-medium text-zinc-600">Ver detalhes técnicos</summary>
+                                <dl class="mt-2 grid gap-1 rounded-lg bg-zinc-50 p-3">
+                                    <div><dt class="inline">Provedor:</dt> <dd class="inline">{{ str_replace('_', ' ', $shipment->provider) }}</dd></div>
+                                    @if($shipment->external_id)<div><dt class="inline">Identificador externo:</dt> <dd class="inline break-all">{{ $shipment->external_id }}</dd></div>@endif
+                                    <div><dt class="inline">Etapa pendente:</dt> <dd class="inline">{{ str_replace('_', ' ', $shipment->operation_phase) }}</dd></div>
+                                </dl>
+                            </details>
+                        @endif
+
+                        @if($shipment->generated_at && !$shipment->cancelled_at)
+                            <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                <a class="inline-flex font-semibold text-red-600 hover:text-red-700" href="{{ route('admin.shipping.labels.open', ['shipment' => $shipment]) }}" target="_blank" rel="noopener noreferrer">Abrir / imprimir etiqueta ↗</a>
+                                <a class="inline-flex font-semibold text-zinc-600 hover:text-zinc-900" href="{{ route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => 'pdf']) }}">Baixar PDF</a>
+                            </div>
+                            <p class="mt-2 text-xs leading-5 text-zinc-400">No Sandbox, o Melhor Envio limita o download direto de arquivos a alguns serviços. Se o arquivo não estiver disponível, o sistema abrirá automaticamente a impressão oficial.</p>
+                        @endif
                     </div>
                 @empty
                     <p class="text-sm text-zinc-500">Nenhuma etiqueta gerada para este pedido.</p>

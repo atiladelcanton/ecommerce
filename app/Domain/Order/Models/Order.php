@@ -8,6 +8,7 @@ use App\Domain\Customer\Models\Customer;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\Payment;
+use App\Domain\Shipping\Enums\ShipmentDocumentType;
 use App\Domain\Shipping\Enums\ShippingPricingStatus;
 use App\Domain\Shipping\Models\Shipment;
 use App\Support\BrazilianMoney;
@@ -45,6 +46,7 @@ final class Order extends Model
         'tracking_url',
         'invoice_key',
         'dce_key',
+        'shipping_document_type',
         'ready_for_shipping_at',
         'shipped_at',
         'delivered_at',
@@ -61,6 +63,7 @@ final class Order extends Model
             'discount_cents' => 'integer',
             'total_cents' => 'integer',
             'shipping_quote_snapshot' => 'array',
+            'shipping_document_type' => ShipmentDocumentType::class,
             'ready_for_shipping_at' => 'datetime',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',

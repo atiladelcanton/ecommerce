@@ -1,15 +1,15 @@
-# SABA Máquinas — Agent Instructions
+# Saba Equipamentos — Agent Instructions
 
 This file is the primary instruction set for Codex and other coding agents working in this repository.
 
 ## 1. Product
 
-SABA Máquinas is a focused e-commerce for screen-printing machines and related products. Keep the user experience simple and commercial. Do not turn the application into an ERP, marketplace, CRM, multi-store platform, or generic commerce framework.
+Saba Equipamentos is the current brand, but the application must remain a simple e-commerce for generic physical products: equipment, supplies, apparel and other retail items. Keep the user experience simple and commercial. Do not turn the application into an ERP, marketplace, CRM or multi-store platform.
 
 ## 2. Stack
 
 - Laravel 13
-- PHP 8.4 in Sail
+- PHP 8.3+ in Sail
 - MySQL 8.4
 - Redis
 - Filament 5 for the administrative back office
@@ -32,7 +32,6 @@ Top-level business contexts:
 - Order
 - Payment
 - Shipping
-- Finance
 - Settings
 
 Business logic must not live in:
@@ -56,7 +55,6 @@ app/
     Order/
     Payment/
     Shipping/
-    Finance/
   Domain/
     Catalog/
     Customer/
@@ -64,7 +62,6 @@ app/
     Order/
     Payment/
     Shipping/
-    Finance/
     Settings/
   Infrastructure/
     Payments/

@@ -60,7 +60,7 @@ final class MelhorEnvioConfiguration extends Component implements HasSchemas
             'environment' => $this->environment,
             'client_id' => $integration?->credentials['client_id'] ?? '',
             'client_secret' => '',
-            'application_name' => $configuration['application_name'] ?? 'SABA E-commerce',
+            'application_name' => $configuration['application_name'] ?? (config('app.name', 'Saba Equipamentos').' E-commerce'),
             'technical_email' => $configuration['technical_email'] ?? '',
         ]);
         $this->operationForm->fill(array_replace([

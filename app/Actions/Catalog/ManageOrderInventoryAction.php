@@ -63,7 +63,7 @@ final class ManageOrderInventoryAction
                 }
                 $pool = $row->pool_type === 'variant' ? $variants->get($row->product_variant_id) : $products->get($row->product_id);
                 if (! $pool || ($row->released_at && $row->expires_at->isFuture()) || $this->availability->available($pool, $row->order_item_id) < $row->quantity) {
-                    throw ValidationException::withMessages(['stock' => 'A reserva expirou ou o estoque não está mais disponível. Entre em contato com a SABA.']);
+                    throw ValidationException::withMessages(['stock' => 'A reserva expirou ou o estoque não está mais disponível. Entre em contato com a loja.']);
                 }
                 $pool->decrement('stock', $row->quantity);
                 $row->update(['consumed_at' => now()]);

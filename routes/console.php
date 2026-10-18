@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('saba:about', function (): void {
-    $this->info('SABA Máquinas e-commerce starter');
+    $this->info('Saba Equipamentos e-commerce starter');
 })->purpose('Display project identification');
 
 Artisan::command('saba:expire-stock-reservations', function (): void {

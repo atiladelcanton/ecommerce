@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Shipping\MelhorEnvio;
 
 use App\Domain\Shipping\Contracts\ShipmentLabelProvider;
+use App\Domain\Shipping\Contracts\ShipmentOperationLookupProvider;
 use App\Domain\Shipping\Contracts\ShipmentProvider;
 use App\Domain\Shipping\Contracts\ShipmentTrackingProvider;
 use App\Domain\Shipping\Contracts\ShippingCapabilitiesProvider;
@@ -13,6 +14,7 @@ use App\Domain\Shipping\Data\ApiMoney;
 use App\Domain\Shipping\Data\ShipmentCreateRequest;
 use App\Domain\Shipping\Data\ShipmentCreateResult;
 use App\Domain\Shipping\Data\ShipmentLabelFile;
+use App\Domain\Shipping\Data\ShipmentOperationLookupResult;
 use App\Domain\Shipping\Data\ShipmentTrackingResult;
 use App\Domain\Shipping\Data\ShippingCapabilities;
 use App\Domain\Shipping\Data\ShippingItem;
@@ -25,7 +27,7 @@ use App\Domain\Shipping\Models\ShippingIntegration;
 use App\Domain\Shipping\Models\ShippingService;
 use Illuminate\Support\Facades\Log;
 
-final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, ShipmentProvider, ShipmentTrackingProvider, ShippingCapabilitiesProvider, ShippingProvider
+final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, ShipmentOperationLookupProvider, ShipmentProvider, ShipmentTrackingProvider, ShippingCapabilitiesProvider, ShippingProvider
 {
     public function __construct(private readonly MelhorEnvioClient $client) {}
 
@@ -160,19 +162,30 @@ final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, Shipme
     {
         $metadata = $request->quoteSnapshot['metadata'] ?? [];
         $options = array_merge($metadata['options'] ?? [], [
-            'platform' => 'SABA E-commerce', 'reminder' => 'Pedido '.$request->orderNumber,
+            'platform' => config('app.name', 'Saba Equipamentos'), 'reminder' => 'Pedido '.$request->orderNumber,
             'insurance_value' => new ApiMoney($request->insuranceValueCents),
             'tags' => [['tag' => $request->orderNumber, 'url' => $request->orderUrl], ['tag' => 'saba-operation:'.$request->operationKey, 'url' => null]],
         ]);
-        if ($request->invoiceKey) {
+        // Fiscal data is selected per shipment. For a content declaration the
+        // Melhor Envio API requires options.invoice to be absent; if a DC-e was
+        // previously issued externally, its key may be sent instead.
+        unset($options['invoice'], $options['dce']);
+        if ($request->documentType->isInvoice() && $request->invoiceKey) {
             $options['invoice'] = ['key' => $request->invoiceKey];
         }
-        if ($request->dceKey) {
+        if ($request->documentType->isContentDeclaration() && $request->dceKey) {
             $options['dce'] = ['key' => $request->dceKey];
         }
         $payload = ['service' => (int) $request->serviceExternalId, 'from' => $request->sender, 'to' => $request->recipient,
             'products' => $request->products, 'volumes' => $request->volumes, 'options' => $options];
-        if ($request->agencyExternalId && (($metadata['supports_agency'] ?? false) || ($metadata['agency_required'] ?? false))) {
+        // In OAuth integrations the Melhor Envio API recommends omitting `agency` unless
+        // the selected service explicitly requires it. Keeping an optional posting unit
+        // in SABA is useful operationally, but sending it for services such as Jadlog can
+        // cause /cart validation failures in Sandbox.
+        if ($request->agencyExternalId && ($metadata['agency_required'] ?? false)) {
+            if (! ctype_digit((string) $request->agencyExternalId)) {
+                throw new ShippingProviderFailed('A unidade de postagem selecionada possui um identificador inválido para o Melhor Envio. Atualize as unidades e tente novamente.');
+            }
             $payload['agency'] = (int) $request->agencyExternalId;
         }
         $cart = $this->client->post('/api/v2/me/cart', $payload);
@@ -209,9 +222,26 @@ final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, Shipme
         if (! in_array($format, ['pdf', 'zpl', 'jpeg'], true)) {
             throw new ShippingProviderFailed('Formato de etiqueta inválido.');
         }
-        $response = $this->client->download('/api/v2/me/imprimir/'.$format.'/'.rawurlencode($externalId));
 
-        return new ShipmentLabelFile($response->body(), match ($format) {
+        $response = $this->client->download('/api/v2/me/imprimir/'.$format.'/'.rawurlencode($externalId));
+        $contents = $response->body();
+        $contentType = mb_strtolower(trim((string) $response->header('Content-Type')));
+        $preview = strtolower(ltrim(substr($contents, 0, 160)));
+
+        // Alguns serviços/ambientes do Melhor Envio não oferecem o endpoint de
+        // arquivo direto. Não devemos enviar JSON/HTML ao navegador com extensão
+        // .pdf/.zpl/.jpeg como se fosse uma etiqueta válida.
+        if ($contents === ''
+            || str_contains($contentType, 'application/json')
+            || str_contains($contentType, 'text/html')
+            || str_starts_with($preview, '{')
+            || str_starts_with($preview, '[')
+            || str_starts_with($preview, '<!doctype')
+            || str_starts_with($preview, '<html')) {
+            throw new ShippingProviderFailed('O arquivo direto da etiqueta não está disponível para este serviço. Abra a impressão oficial do Melhor Envio.');
+        }
+
+        return new ShipmentLabelFile($contents, match ($format) {
             'pdf' => 'application/pdf', 'jpeg' => 'image/jpeg', default => 'application/octet-stream'
         }, 'etiqueta-'.preg_replace('/[^a-zA-Z0-9_-]/', '', $externalId).'.'.$format);
     }
@@ -229,11 +259,114 @@ final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, Shipme
         $this->client->post('/api/v2/me/shipment/cancel', ['order' => ['id' => $externalId, 'reason_id' => '2', 'description' => $reason]]);
     }
 
+    public function findByOperation(string $operationKey, string $serviceExternalId): ?ShipmentOperationLookupResult
+    {
+        $response = $this->client->get('/api/v2/me/orders', ['status' => 'Pending']);
+        $rows = $this->orderRows($response);
+        $fallbackIds = [];
+
+        foreach (array_slice($rows, 0, 100) as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $externalId = trim((string) ($row['id'] ?? ''));
+            if ($externalId === '') {
+                continue;
+            }
+
+            $service = (string) ($row['service_id'] ?? $row['service']['id'] ?? '');
+            if ($service !== '' && $service !== $serviceExternalId) {
+                continue;
+            }
+
+            if ($this->hasOperationTag($row['tags'] ?? [], $operationKey)) {
+                $inspection = $this->inspect($externalId);
+                if ($this->inspectionMatches($inspection, $operationKey, $serviceExternalId)) {
+                    return new ShipmentOperationLookupResult($externalId, $inspection->status, $inspection->metadata);
+                }
+
+                continue;
+            }
+
+            // Some list responses omit tags. Keep a small, bounded set of
+            // candidates and verify each one through the official detail
+            // endpoint before accepting it.
+            $fallbackIds[] = $externalId;
+        }
+
+        foreach (array_slice(array_values(array_unique($fallbackIds)), 0, 25) as $externalId) {
+            try {
+                $inspection = $this->inspect($externalId);
+            } catch (ShippingProviderFailed) {
+                continue;
+            }
+
+            if ($this->inspectionMatches($inspection, $operationKey, $serviceExternalId)) {
+                return new ShipmentOperationLookupResult($externalId, $inspection->status, $inspection->metadata);
+            }
+        }
+
+        return null;
+    }
+
     public function inspect(string $externalId): ShipmentTrackingResult
     {
         $row = $this->client->get('/api/v2/me/orders/'.rawurlencode($externalId));
 
-        return new ShipmentTrackingResult(strtolower((string) ($row['status'] ?? 'unknown')), metadata: ['tags' => $row['tags'] ?? [], 'service' => $row['service_id'] ?? $row['service']['id'] ?? null]);
+        return new ShipmentTrackingResult(
+            strtolower((string) ($row['status'] ?? 'unknown')),
+            isset($row['tracking']) && filled($row['tracking']) ? (string) $row['tracking'] : null,
+            isset($row['tracking_url']) && is_string($row['tracking_url']) ? $row['tracking_url'] : null,
+            metadata: [
+                'tags' => $row['tags'] ?? [],
+                'service' => $row['service_id'] ?? $row['service']['id'] ?? null,
+                'protocol' => $row['protocol'] ?? null,
+            ],
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function orderRows(array $response): array
+    {
+        $rows = $response['data'] ?? $response['orders'] ?? $response;
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        if (isset($rows['id'])) {
+            return [$rows];
+        }
+
+        return array_values(array_filter($rows, 'is_array'));
+    }
+
+    private function inspectionMatches(ShipmentTrackingResult $inspection, string $operationKey, string $serviceExternalId): bool
+    {
+        return $this->hasOperationTag($inspection->metadata['tags'] ?? [], $operationKey)
+            && (string) ($inspection->metadata['service'] ?? '') === $serviceExternalId;
+    }
+
+    private function hasOperationTag(mixed $tags, string $operationKey): bool
+    {
+        if (! is_array($tags)) {
+            return false;
+        }
+
+        $expected = 'saba-operation:'.$operationKey;
+
+        foreach ($tags as $tag) {
+            if (is_string($tag) && $tag === $expected) {
+                return true;
+            }
+
+            if (is_array($tag) && (string) ($tag['tag'] ?? '') === $expected) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function track(string $externalId): ShipmentTrackingResult

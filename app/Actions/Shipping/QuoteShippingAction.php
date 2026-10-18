@@ -123,7 +123,7 @@ final class QuoteShippingAction
             return [];
         }
         if ($options === []) {
-            throw ValidationException::withMessages(['shipping_option' => $unavailableMessage ?? 'Frete sob consulta. Entre em contato com a SABA para combinar a entrega.']);
+            throw ValidationException::withMessages(['shipping_option' => $unavailableMessage ?? 'Frete sob consulta. Entre em contato com a loja para combinar a entrega.']);
         }
 
         $resolved = array_values($options);

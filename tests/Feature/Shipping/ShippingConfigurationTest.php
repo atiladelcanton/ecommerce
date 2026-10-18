@@ -187,7 +187,7 @@ final class ShippingConfigurationTest extends TestCase
         $agency = ShippingAgency::query()->sole();
         $agency->update(['company_external_id' => '903']);
         $snapshot = $order->shipping_quote_snapshot;
-        $request = app(BuildShipmentRequestAction::class)->execute($order, $snapshot, $snapshot['packages'], str_repeat('1', 44), null, $agency->id);
+        $request = app(BuildShipmentRequestAction::class)->execute($order, $snapshot, $snapshot['packages'], $this->validInvoiceKey(), null, $agency->id);
         $this->assertNotNull($request);
         Http::assertSentCount(1);
     }

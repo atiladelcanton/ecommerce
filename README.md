@@ -1,6 +1,6 @@
-# SABA Máquinas — E-commerce Starter
+# Saba Equipamentos — E-commerce Starter
 
-Starter técnico para o novo e-commerce da SABA Máquinas.
+Starter técnico para o novo e-commerce da Saba Equipamentos.
 
 ## Stack definida
 

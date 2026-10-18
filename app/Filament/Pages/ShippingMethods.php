@@ -70,7 +70,7 @@ final class ShippingMethods extends Page
     public function configurePickupAction(): Action
     {
         return Action::make('configurePickup')->label('Configurar')->modalHeading('Retirada na loja')
-            ->fillForm(fn () => ShippingIntegration::query()->where('provider', 'local_pickup')->first()?->configuration ?? ['label' => 'Retirada na SABA', 'ready_days' => 1])
+            ->fillForm(fn () => ShippingIntegration::query()->where('provider', 'local_pickup')->first()?->configuration ?? ['label' => 'Retirada na loja', 'ready_days' => 1])
             ->schema([Section::make('Dados para retirada')->schema([
                 TextInput::make('label')->label('Nome exibido')->required()->maxLength(120),
                 Textarea::make('address')->label('Endereço da retirada')->required()->maxLength(2000),

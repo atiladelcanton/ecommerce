@@ -25,7 +25,7 @@ final class StoreSettingsTest extends TestCase
             'zip_code' => '01001-000', 'street' => 'Rua de Demonstração', 'number' => '10', 'complement' => 'Sala 1',
             'neighborhood' => 'Centro', 'city' => 'São Paulo', 'state' => 'sp',
             'instagram_url' => 'https://instagram.com/exemplo', 'facebook_url' => 'https://facebook.com/exemplo',
-            'youtube_url' => 'https://youtube.com/@exemplo', 'seo_title' => 'SABA Máquinas', 'seo_description' => 'Descrição da loja',
+            'youtube_url' => 'https://youtube.com/@exemplo', 'seo_title' => 'Saba Equipamentos', 'seo_description' => 'Descrição da loja',
             'shipping_origin_zip_code' => '01001000',
         ]);
         $this->assertSame(StoreSetting::MAIN_ID, $settings->id);

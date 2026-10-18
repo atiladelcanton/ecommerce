@@ -7,6 +7,7 @@ namespace App\Actions\Catalog\Storefront;
 use App\Domain\Catalog\Models\Banner;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
+use App\Domain\Settings\Models\StoreSetting;
 
 final class GetHomeDataAction
 {
@@ -21,6 +22,7 @@ final class GetHomeDataAction
             ->take(8)->values();
 
         return [
+            'storeName' => StoreSetting::query()->find(StoreSetting::MAIN_ID)?->store_name ?: config('app.name', 'Saba Equipamentos'),
             'banners' => Banner::currentlyVisible()->ordered()->get(),
             'categories' => Category::active()->ordered()->get(['id', 'name', 'slug', 'image_path']),
             'featured' => $featured,

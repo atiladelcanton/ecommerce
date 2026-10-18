@@ -40,7 +40,7 @@ trait ShippingFixtures
 
     private function store(): void
     {
-        StoreSetting::query()->create(['store_name' => 'SABA', 'legal_name' => 'SABA Máquinas', 'cnpj' => '12345678000199', 'state_register' => 'ISENTO', 'phone' => '11999999999', 'email' => 'saba@example.test', 'zip_code' => '01001000', 'street' => 'Rua da loja', 'number' => '123', 'neighborhood' => 'Centro', 'city' => 'São Paulo', 'state' => 'SP']);
+        StoreSetting::query()->create(['store_name' => 'SABA', 'legal_name' => 'Saba Equipamentos', 'cnpj' => '12345678000199', 'state_register' => 'ISENTO', 'phone' => '11999999999', 'email' => 'saba@example.test', 'zip_code' => '01001000', 'street' => 'Rua da loja', 'number' => '123', 'neighborhood' => 'Centro', 'city' => 'São Paulo', 'state' => 'SP']);
     }
 
     private function order(int $packageCount = 1): Order
@@ -82,6 +82,12 @@ trait ShippingFixtures
 
     private function generate(Order $order): Shipment
     {
-        return app(GenerateShipmentLabelAction::class)->execute($order, str_repeat('1', 44));
+        return app(GenerateShipmentLabelAction::class)->execute($order, $this->validInvoiceKey());
+    }
+
+    private function validInvoiceKey(): string
+    {
+        // Syntactically valid NF-e model 55 key used only with Http::fake() in tests.
+        return '35261025256966000115550010000000011000000011';
     }
 }

@@ -66,7 +66,11 @@ final class MelhorEnvioClient
                 }
             }
             if ($failed) {
-                throw new ShippingProviderFailed('O Melhor Envio não confirmou a operação. Concilie o envio antes de continuar.', uncertain: true);
+                $message = $this->responseMessage($data);
+                throw new ShippingProviderFailed(
+                    $message ? 'O Melhor Envio não confirmou a operação: '.$message : 'O Melhor Envio não confirmou a operação. Concilie o envio antes de continuar.',
+                    uncertain: true,
+                );
             }
         }
 
@@ -102,8 +106,19 @@ final class MelhorEnvioClient
             return $this->send($method, $path, $payload, true);
         }
         if (! $response->successful()) {
-            Log::warning('Shipping request rejected', ['provider' => 'melhor_envio', 'endpoint' => $path, 'status' => $response->status(), 'request_id' => $response->header('X-Request-Id')]);
-            throw new ShippingProviderFailed('Não foi possível concluir a operação no Melhor Envio. Verifique a conexão e os dados do envio.', uncertain: $method === 'post' && $response->serverError());
+            $providerMessage = $this->responseMessage($response->json());
+            Log::warning('Shipping request rejected', array_filter([
+                'provider' => 'melhor_envio',
+                'endpoint' => $path,
+                'status' => $response->status(),
+                'request_id' => $response->header('X-Request-Id'),
+                'provider_message' => $providerMessage,
+            ], static fn (mixed $value): bool => $value !== null && $value !== ''));
+
+            throw new ShippingProviderFailed(
+                $this->friendlyFailureMessage($response->status(), $providerMessage),
+                uncertain: $method === 'post' && $response->serverError(),
+            );
         }
 
         return $response;
@@ -122,7 +137,7 @@ final class MelhorEnvioClient
     private function request(ShippingIntegration $integration): PendingRequest
     {
         $config = $integration->configuration ?? [];
-        $name = trim((string) ($config['application_name'] ?? 'SABA E-commerce')) ?: 'SABA E-commerce';
+        $name = trim((string) ($config['application_name'] ?? (config('app.name', 'Saba Equipamentos').' E-commerce'))) ?: 'SABA E-commerce';
         $email = trim((string) ($config['technical_email'] ?? config('mail.from.address'))) ?: 'suporte@saba.local';
 
         return Http::acceptJson()->withHeaders(['User-Agent' => $name.' ('.$email.')'])->connectTimeout(5)->timeout(15);
@@ -170,5 +185,96 @@ final class MelhorEnvioClient
             'connected_at' => $integration->connected_at ?? now(), 'last_tested_at' => now(),
         ])->save();
         Cache::forever('shipping-configuration-revision', (string) Str::uuid());
+    }
+
+    private function friendlyFailureMessage(int $status, ?string $providerMessage): string
+    {
+        if ($status === 401) {
+            return 'A autorização do Melhor Envio expirou ou foi recusada. Reconecte a conta e tente novamente.';
+        }
+        if ($status === 403) {
+            return 'O aplicativo do Melhor Envio não possui permissão para esta operação. Revise os escopos e reconecte a conta.';
+        }
+
+        if ($status === 422) {
+            $normalized = mb_strtolower((string) $providerMessage);
+            if (str_contains($normalized, 'nota fiscal') || str_contains($normalized, 'invoice') || str_contains($normalized, 'nfe') || str_contains($normalized, 'nf-e')) {
+                return 'O Melhor Envio recusou a NF-e. Use uma chave real de NF-e modelo 55; no Sandbox as chaves também são validadas.'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
+            }
+            if (str_contains($normalized, 'agenc') || str_contains($normalized, 'unidade')) {
+                return 'O Melhor Envio recusou a unidade de postagem selecionada. Atualize as unidades da transportadora e tente novamente.'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
+            }
+            if (str_contains($normalized, 'dce') || str_contains($normalized, 'declara')) {
+                return 'O Melhor Envio recusou os dados da declaração de conteúdo/DC-e. Confira os itens declarados e os dados fiscais do remetente.'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
+            }
+            if (str_contains($normalized, 'product') || str_contains($normalized, 'produto') || str_contains($normalized, 'unitary_value')) {
+                return 'O Melhor Envio recusou algum item da declaração do envio. Confira produtos, quantidades e valores.'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
+            }
+            if (str_contains($normalized, 'inscri') || str_contains($normalized, 'state_register')) {
+                return 'O Melhor Envio recusou a Inscrição Estadual do remetente. Revise os dados fiscais em Configurações da loja e o tipo de documento escolhido para o envio.'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
+            }
+            if (str_contains($normalized, 'cep') || str_contains($normalized, 'postal')) {
+                return 'O Melhor Envio recusou algum dado de endereço ou CEP do envio.'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
+            }
+
+            return $providerMessage
+                ? 'O Melhor Envio recusou os dados do envio: '.$providerMessage
+                : 'O Melhor Envio recusou os dados do envio. Revise documento fiscal, remetente, destinatário, produtos, volumes e serviço.';
+        }
+
+        if ($status === 402 || str_contains(mb_strtolower((string) $providerMessage), 'saldo')) {
+            return 'Não há saldo suficiente na carteira do Melhor Envio para comprar esta etiqueta.';
+        }
+
+        if ($responseMessage = $providerMessage) {
+            return 'Não foi possível concluir a operação no Melhor Envio: '.$responseMessage;
+        }
+
+        return 'Não foi possível concluir a operação no Melhor Envio. Verifique a conexão e os dados do envio.';
+    }
+
+    private function responseMessage(mixed $payload): ?string
+    {
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        $messages = [];
+        $collect = function (mixed $value, ?string $key = null, bool $errorContext = false) use (&$collect, &$messages): void {
+            if (count($messages) >= 4) {
+                return;
+            }
+
+            $normalizedKey = mb_strtolower((string) $key);
+            $errorContext = $errorContext || in_array($normalizedKey, ['errors', 'error', 'message', 'detail', 'description', 'error_description'], true)
+                || str_contains($normalizedKey, 'error') || str_contains($normalizedKey, 'message');
+
+            if (is_string($value)) {
+                if (! $errorContext) {
+                    return;
+                }
+                $clean = trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+                if ($clean !== '' && ! in_array($clean, $messages, true)) {
+                    $messages[] = mb_substr($clean, 0, 350);
+                }
+
+                return;
+            }
+            if (! is_array($value)) {
+                return;
+            }
+            foreach ($value as $childKey => $child) {
+                if (is_string($childKey)) {
+                    $childKeyLower = mb_strtolower($childKey);
+                    if (str_contains($childKeyLower, 'token') || str_contains($childKeyLower, 'secret') || str_contains($childKeyLower, 'authorization')) {
+                        continue;
+                    }
+                }
+                $collect($child, is_string($childKey) ? $childKey : $key, $errorContext);
+            }
+        };
+        $collect($payload);
+
+        return $messages === [] ? null : implode(' · ', array_unique($messages));
     }
 }

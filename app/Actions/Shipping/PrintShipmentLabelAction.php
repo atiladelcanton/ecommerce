@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Shipping;
 
 use App\Domain\Shipping\Contracts\ShipmentLabelProvider;
+use App\Domain\Shipping\Enums\ShipmentStatus;
 use App\Domain\Shipping\Exceptions\ShippingProviderFailed;
 use App\Domain\Shipping\Models\Shipment;
 use App\Infrastructure\Shipping\ShippingProviderRegistry;
@@ -18,8 +19,18 @@ final class PrintShipmentLabelAction
     {
         app(AssertShipmentConnectionAction::class)->execute($shipment);
         $provider = $this->providers->get($shipment->provider);
-        if (! $provider instanceof ShipmentLabelProvider || ! $shipment->external_id) {
-            throw ValidationException::withMessages(['shipping' => 'Esta etiqueta não pode ser impressa automaticamente.']);
+
+        if (! $provider instanceof ShipmentLabelProvider
+            || ! $shipment->external_id
+            || ! in_array($shipment->status, [
+                ShipmentStatus::LABEL_GENERATED,
+                ShipmentStatus::POSTED,
+                ShipmentStatus::DELIVERED,
+                ShipmentStatus::PAUSED,
+                ShipmentStatus::SUSPENDED,
+                ShipmentStatus::UNDELIVERED,
+            ], true)) {
+            throw ValidationException::withMessages(['shipping' => 'Esta etiqueta ainda não está disponível para impressão.']);
         }
 
         try {

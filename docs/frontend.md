@@ -2,7 +2,7 @@
 
 ## Principles
 
-- reflect SABA Máquinas branding;
+- reflect Saba Equipamentos branding;
 - commercial and direct, not visually overloaded;
 - responsive first;
 - accessible controls and keyboard-friendly search;

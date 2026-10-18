@@ -38,7 +38,7 @@ final class PublishOrderShippingQuoteAction
             $order->shippingQuotes()->whereNull('superseded_at')->whereNull('accepted_at')->update(['superseded_at' => now()]);
             $quote = $order->shippingQuotes()->create(array_merge($data, ['revision' => ($last?->revision ?? 0) + 1, 'user_id' => $userId]));
             $option = new ShippingOption(id: 'manual:'.$quote->id, name: $quote->service_name, price: $quote->price_cents,
-                description: $quote->estimated_days !== null ? $quote->estimated_days.' dias úteis' : 'Prazo combinado com a SABA',
+                description: $quote->estimated_days !== null ? $quote->estimated_days.' dias úteis' : 'Prazo combinado com a loja',
                 provider: 'manual', carrierName: $quote->carrier_name, estimatedDays: $quote->estimated_days,
                 fulfillmentMode: 'manual', metadata: ['quote_id' => $quote->id, 'revision' => $quote->revision, 'instructions' => $quote->instructions]);
             $order->update([

@@ -1,6 +1,6 @@
 @php
     $pageTitle = $title ? $title.' | '.$storeName : ($settings?->seo_title ?: $storeName);
-    $pageDescription = $description ?: ($settings?->seo_description ?: 'Conheça o catálogo de máquinas e equipamentos para serigrafia da '.$storeName.'.');
+    $pageDescription = $description ?: ($settings?->seo_description ?: 'Conheça o catálogo de produtos da '.$storeName.'.');
 @endphp
 <!DOCTYPE html>
 <html lang="pt-BR">

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Shipping\Data;
 
+use App\Domain\Shipping\Enums\ShipmentDocumentType;
+
 final readonly class ShipmentCreateRequest
 {
     /**
@@ -21,6 +23,7 @@ final readonly class ShipmentCreateRequest
         public array $products,
         public array $volumes,
         public int $insuranceValueCents,
+        public ShipmentDocumentType $documentType,
         public ?string $invoiceKey,
         public ?string $dceKey,
         public array $quoteSnapshot,

@@ -31,7 +31,7 @@ final class LocalPickupProvider implements ShippingCapabilitiesProvider, Shippin
         }
         $config = $integration->configuration ?? [];
         $label = trim((string) ($config['label'] ?? 'Retirada na loja')) ?: 'Retirada na loja';
-        $description = isset($config['ready_days']) ? 'Disponível para retirada em até '.(int) $config['ready_days'].' dia(s) úteis.' : trim((string) ($config['description'] ?? 'Retire seu pedido diretamente com a SABA.'));
+        $description = isset($config['ready_days']) ? 'Disponível para retirada em até '.(int) $config['ready_days'].' dia(s) úteis.' : trim((string) ($config['description'] ?? 'Retire seu pedido diretamente na loja.'));
 
         return [new ShippingOption(
             id: $this->key().':pickup',

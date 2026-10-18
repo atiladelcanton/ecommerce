@@ -2,7 +2,7 @@
   "$schema": "https://getcomposer.org/schema.json",
   "name": "saba/ecommerce",
   "type": "project",
-  "description": "SABA Máquinas - e-commerce starter built with Laravel, Filament, Livewire and Sail.",
+  "description": "Saba Equipamentos - e-commerce starter built with Laravel, Filament, Livewire and Sail.",
   "keywords": [
     "laravel",
     "ecommerce",

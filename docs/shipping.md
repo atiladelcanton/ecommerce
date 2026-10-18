@@ -8,9 +8,9 @@ Contratos:
 
 - `ShippingProvider`: identidade e cotações normalizadas.
 - `ShippingCapabilitiesProvider`: capacidades gerais (retirada, etiquetas, rastreamento e necessidade de CEP).
-- `ShipmentProvider`: criação do carrinho, compra e inspeção para conciliação.
+- `ShipmentProvider`: criação do carrinho, compra e inspeção do envio.
 - `ShipmentLabelProvider`: geração, impressão, consulta de cancelabilidade e cancelamento.
-- `ShipmentTrackingProvider`: reconciliação de rastreamento.
+- `ShipmentTrackingProvider`: atualização de rastreamento.
 
 `ShippingOption` contém integração, provider, IDs externos, nomes, centavos, estimativa, volumes, modo de fulfillment e metadata normalizada. O modo (`automatic`, `manual` ou `pickup`) é salvo no snapshot: a disponibilidade atual do adapter não transforma a natureza de um pedido antigo. `OrderShipping` concentra a interpretação dos registros legados.
 
@@ -47,7 +47,7 @@ Cada transportadora configura serviços exibidos no checkout, serviços com comp
 
 **Atualizar unidades** usa `GET /api/v2/me/shipment/agencies`, com `company`, `country`, `state` e `city`. Unidades ficam em `shipping_agencies` e a seleção padrão pertence à transportadora. O filtro company aceita ID textual ou inteiro; país/UF são normalizados para maiúsculas e cidade é aparada. A transportadora precisa estar sincronizada no ambiente atual. O array oficial `companies` vincula cada agência a todas as transportadoras conhecidas pelo pivot `shipping_agency_carrier`; uma mesma unidade pode atender várias empresas sem perder identidade ou vínculos anteriores. Seleção e preparação do envio validam esse vínculo e o ambiente. Uma agência de outra empresa/ambiente é rejeitada. Uma resposta filtrada não desativa agências fora daquele filtro. Erros de validação são exibidos junto aos campos; falhas HTTP recebem uma mensagem objetiva sem JSON ou credenciais. Listagens incompletas/paginadas exigem refinar os filtros, evitando tratar uma página como catálogo completo.
 
-Metadata do serviço/empresa conserva regras publicadas pela API: `supports_purchase`, `agency_required`, `supports_agency`, `has_grouped_volumes`, `insurance_required` e `additional_services`, quando disponibilizadas. Não existem IDs de empresas/agências embutidos no código. Regras ausentes usam comportamento conservador: operação manual inicialmente, um envio por pacote, sem adicionais não comprovados e seguro mantido quando sua dispensa não é conhecida. Uma unidade escolhida é enviada quando o serviço permite seleção. Não há exigência global de agência para Melhor Envio.
+Metadata do serviço/empresa conserva regras publicadas pela API: `supports_purchase`, `agency_required`, `supports_agency`, `has_grouped_volumes`, `insurance_required` e `additional_services`, quando disponibilizadas. Não existem IDs de empresas/agências embutidos no código. Regras ausentes usam comportamento conservador: operação manual inicialmente, um envio por pacote, sem adicionais não comprovados e seguro mantido quando sua dispensa não é conhecida. Uma unidade escolhida pode ser mantida como preferência operacional, mas só é enviada ao Melhor Envio quando a regra sincronizada do serviço realmente exigir `agency`. Não há exigência global de agência para Melhor Envio.
 
 ## Cotação e snapshot
 
@@ -61,9 +61,9 @@ Sem opção disponível, mostrar **Frete sob consulta**, contato da loja e bloqu
 
 ## Preparação e geração de etiquetas
 
-Em pedido em preparação com pagamento aprovado, **Gerar etiqueta** abre **Preparar envio**. Mostra a contratação, volumes e valor pago; solicita NF-e comercial de 44 dígitos, DC-e externa opcional e unidade quando aplicável.
+Em pedido em preparação com pagamento aprovado, **Gerar etiqueta** abre **Preparar envio**. O operador escolhe individualmente entre **Nota Fiscal (NF-e)** e **Declaração de conteúdo**. NF-e exige chave comercial de 44 dígitos. Na declaração, `options.invoice` não é enviado; os produtos, quantidades e valores vêm automaticamente do snapshot imutável do pedido. Uma chave DC-e só aparece dentro da opção avançada **Já possui uma DC-e emitida externamente?** e permanece opcional. A unidade de postagem aparece somente quando o serviço suportar/exigir.
 
-O remetente vem de `store_settings`: razão/nome, CNPJ, IE, CNAE quando aplicável, telefone, email e endereço. A IE/CNAE anteriormente armazenada na integração é copiada pela migration quando há configuração da loja. Dados obrigatórios ausentes bloqueiam a API com “Complete os dados da loja antes de gerar etiquetas.” e acesso à configuração.
+A escolha é persistida em `orders.shipping_document_type` antes da primeira operação financeira e não pode ser trocada depois que já existe frete remoto. O remetente vem de `store_settings`: razão/nome, CNPJ, IE, CNAE quando aplicável, telefone, email e endereço. No envio comercial a IE é exigida. Na declaração de conteúdo, o adapter não envia uma IE ativa: `from.state_register` fica vazio ou `ISENTO`, conforme a configuração. A interface alerta que declaração só deve ser usada quando o envio puder legalmente ocorrer sem NF-e; a aplicação não tenta substituir regras fiscais da transportadora/SEFAZ.
 
 Fluxo persistido por shipment:
 
@@ -79,7 +79,7 @@ Todos os slots são criados antes da primeira compra. Volumes e produtos vêm do
 
 Cada tentativa possui UUID de operação, constraint única e fase persistida antes da chamada. Travas compartilhadas e transações curtas com `lockForUpdate` impedem concorrência. Chamadas externas ficam fora de transações repetíveis; operações de compra não têm retry genérico.
 
-Depois da compra, falha de geração conserva `purchased`; repetir a ação gera a mesma etiqueta. Resultado incerto de criação/compra conserva a fase em andamento e bloqueia nova compra. **Conciliar envio** consulta `GET /api/v2/me/orders/{id}` e verifica a tag exclusiva `saba-operation:<UUID>` e serviço. Um ID de outra operação é recusado. Sem identificação inequívoca, resolver com o provider antes de prosseguir. Não existe botão para apagar a incerteza e comprar novamente às cegas.
+Depois da compra, falha de geração conserva `purchased`; repetir a ação gera a mesma etiqueta. Resultado incerto de criação/compra conserva a fase em andamento e bloqueia nova compra. Na interface, o usuário vê **Verificar envio**: o sistema usa `GET /api/v2/me/orders` para localizar a operação pela tag exclusiva `saba-operation:<UUID>` quando ainda não existe ID local, confirma o candidato com `GET /api/v2/me/orders/{id}` e valida também o serviço. Se o ID já for conhecido, consulta diretamente os detalhes. Um envio de outra operação é recusado. Uma criação de carrinho confirmada pode retomar o fluxo; uma compra ainda `pending` permanece bloqueada até o Melhor Envio confirmar `released` ou estado posterior. Não existe botão para apagar a incerteza e comprar novamente às cegas. O termo técnico de conciliação permanece apenas no backend.
 
 Quando todas as etiquetas estão geradas, pedido fica **Pronto para envio**, sem antecipar postagem. Serviços manuais permitem marcar o envio sem comprar etiqueta pela API.
 
@@ -103,7 +103,7 @@ Eventos são registrados em `shipment_events` com chave única, ocorrência e pr
 
 O pedido só fica **Enviado** com todos os slots postados, e **Entregue** com todos entregues. O cliente vê os envios individuais, transportadora, serviço, rastreio opcional e últimos eventos. O Kanban conserva as sete colunas principais e mantém cancelados fora do fluxo.
 
-**Sincronizar rastreamento** usa `POST /api/v2/me/shipment/tracking` como reconciliação; webhook continua fonte principal. Ações comuns não marcam manualmente um frete automático como enviado/entregue. A contingência explícita exige confirmação e justificativa auditável.
+**Atualizar rastreamento** usa `POST /api/v2/me/shipment/tracking` como consulta de fallback; webhook continua fonte principal. Ações comuns não marcam manualmente um frete automático como enviado/entregue. A contingência explícita exige confirmação e justificativa auditável.
 
 Nomes públicos do enum: `RECEIVED` e `READY_TO_SHIP`. Valores persistidos `pending` e `ready_for_shipping` e aliases PHP antigos são preservados.
 
@@ -125,7 +125,7 @@ Fluxo: `PAID → PROCESSING → READY_FOR_PICKUP → DELIVERED`. Não cria shipm
 2. Implementar `ShippingProvider` e `ShippingCapabilitiesProvider`; implementar `ShipmentProvider`, `ShipmentLabelProvider` e/ou `ShipmentTrackingProvider` somente para operações suportadas.
 3. Normalizar cotações em `ShippingOption`, usando centavos, identidade externa e volumes necessários à compra.
 4. Configurar catálogo local/credenciais com Actions e criptografia, sem criar condicionais no checkout ou Kanban.
-5. Preservar o protocolo de fases persistidas, conciliação e idempotência. Implementar autenticação/deduplicação dos webhooks conforme documentação própria.
+5. Preservar o protocolo de fases persistidas, verificação segura de operações incertas e idempotência. Implementar autenticação/deduplicação dos webhooks conforme documentação própria.
 6. Adicionar testes com HTTP fake e proibição de chamadas externas; habilitar o card apenas depois do adapter real estar implementado.
 
 O mesmo procedimento vale para Correios. Nenhuma das duas APIs está implementada nesta entrega.
@@ -149,3 +149,11 @@ Situação do frete: `awaiting_quote`, `quoted`, `confirmed`, separada de `Order
 ## Formatos oficiais e Livewire 4
 
 O endpoint de cálculo pode retornar um objeto de serviço único, lista ou envelope `data`. O adapter normaliza esses formatos antes de validar IDs e montar `ShippingOption`. Uma falha isolada de serviço preserva as opções válidas e impede cache de resultado parcial. Rejeições de tamanho/peso e falhas técnicas recebem mensagens próprias sem resposta crua da API. O CEP usa `wire:model.live.blur`, que efetivamente envia a mudança ao servidor na versão instalada do Livewire 4.
+
+## Validação de etiqueta e erros do Melhor Envio
+
+A compra de etiqueta começa em `POST /api/v2/me/cart`. Respostas HTTP 422 são validações de dados, portanto não são tratadas como operação incerta e podem ser corrigidas e reenviadas sem criar uma nova compra. O client extrai apenas mensagens de erro seguras da resposta do provedor, mostra uma mensagem útil no admin e registra `provider`, endpoint, status, request ID e mensagem do provedor. Payloads, tokens e secrets não são registrados.
+
+Para envio comercial, a chave de NF-e é validada localmente quanto a 44 dígitos, modelo 55 e dígito verificador. Isso não substitui a validação do Melhor Envio/SEFAZ: inclusive no Sandbox uma chave apenas inventada, ainda que estruturalmente válida, pode ser recusada. Para testar o fluxo sem possuir NF-e, use **Declaração de conteúdo** somente quando essa modalidade for aplicável ao envio. Nesse fluxo, `products` é sempre enviado corretamente e a DC-e externa é opcional; se ela não existir, `options.dce` também não é enviado.
+
+A unidade de postagem escolhida pode ser mantida no SABA como referência operacional. No payload do Melhor Envio, `agency` só é enviado quando o serviço sincronizado indicar `agency_required`; serviços com unidade apenas opcional não recebem esse parâmetro. Isso evita rejeições do `/cart` em cenários OAuth/Sandbox em que a API não espera agência para o serviço selecionado.

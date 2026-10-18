@@ -43,7 +43,7 @@ final class TransitionOrderStatusAction
             }
 
             if ($to === OrderStatus::CANCELLED && $locked->shipments()->whereNull('cancelled_at')->exists()) {
-                throw ValidationException::withMessages(['status' => 'Cancele ou concilie os envios pendentes antes de cancelar comercialmente o pedido.']);
+                throw ValidationException::withMessages(['status' => 'Cancele ou verifique os envios pendentes antes de cancelar o pedido.']);
             }
             if ($to !== OrderStatus::CANCELLED && $locked->shipping_pricing_status === ShippingPricingStatus::AWAITING_QUOTE) {
                 throw ValidationException::withMessages(['status' => 'Defina e confirme o frete antes de avançar este pedido.']);

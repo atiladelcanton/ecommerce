@@ -4,7 +4,7 @@
         <section class="store-institutional-intro">
             <p class="store-eyebrow">Fale com a SABA</p>
             <h1>Contato</h1>
-            <p>Converse com nossa equipe sobre equipamentos e dúvidas sobre o catálogo.</p>
+            <p>Converse com nossa equipe sobre produtos, pedidos e dúvidas sobre o catálogo.</p>
         </section>
         {{-- Contact channels only. No form, persistence, email submission or simulated success in this slice. --}}
         <div class="store-contact-grid">

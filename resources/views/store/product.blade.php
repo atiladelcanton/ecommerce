@@ -39,7 +39,7 @@
 
         @if($youtubeEmbed)
             <section class="product-detail-section" aria-labelledby="product-video-title">
-                <h2 id="product-video-title">Veja o equipamento em funcionamento</h2>
+                <h2 id="product-video-title">Veja o produto em detalhes</h2>
                 <iframe src="{{ $youtubeEmbed }}" title="Demonstração de {{ $product->name }}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen; picture-in-picture" allowfullscreen class="product-detail-video"></iframe>
             </section>
         @endif

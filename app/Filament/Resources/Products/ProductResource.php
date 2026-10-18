@@ -122,33 +122,49 @@ final class ProductResource extends Resource
                     }
                 })->color('success')->columnSpanFull(),
             ]),
-            Section::make('Variações')->description('Cadastre cada combinação vendável, como Cor + Embalagem ou Poliéster + Tamanho. Valores vazios herdam o produto. Remover uma linha desativa a variação existente.')->schema([
-                Repeater::make('variants')->label('Combinações')->defaultItems(0)->addActionLabel('Adicionar variação')
-                    ->itemLabel(fn (array $state): string => implode(' / ', array_values($state['attributes'] ?? [])) ?: 'Nova variação')
-                    ->collapsible()->columns(2)->schema([
-                        Hidden::make('id'),
-                        KeyValue::make('attributes')->label('Características')->keyLabel('Característica')->valueLabel('Valor')->addActionLabel('Adicionar característica')->required()->columnSpanFull(),
-                        TextInput::make('sku')->label('SKU da variação')->maxLength(255),
-                        Toggle::make('is_active')->label('Variação ativa')->default(true),
-                        BrazilianMoneyInput::make('price')->label('Preço da variação')->helperText('Vazio: herda o preço do produto.'),
-                        BrazilianMoneyInput::make('promotional_price')->label('Preço promocional da variação'),
-                        TextInput::make('stock')->label('Estoque da variação')->integer()->minValue(0)->helperText('Vazio: compartilha o estoque geral do produto.'),
-                        TextInput::make('weight')->label('Peso da embalagem')->suffix('kg')->numeric()->minValue(0)->step('0.001'),
-                        TextInput::make('height')->label('Altura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                        TextInput::make('width')->label('Largura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                        TextInput::make('length')->label('Comprimento da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                    ]),
-            ]),
+            Section::make('Opções e variações')
+                ->description('Opcional. Use quando o cliente precisar escolher combinações. Ex.: Nylon: Cor = Amarelo + Fios = 77; Camiseta: Cor = Preto + Tamanho = M. Cada combinação pode herdar preço, estoque e frete do produto ou ter valores próprios.')
+                ->collapsible()
+                ->collapsed()
+                ->schema([
+                    Repeater::make('variants')->label('Opções de venda')->defaultItems(0)->addActionLabel('Adicionar variação')
+                        ->itemLabel(fn (array $state): string => implode(' / ', array_values($state['attributes'] ?? [])) ?: 'Nova variação')
+                        ->collapsible()->columns(2)->schema([
+                            Hidden::make('id'),
+                            KeyValue::make('attributes')->label('Características da variação')
+                                ->keyLabel('Ex.: Cor, Fios, Tamanho, Metragem')
+                                ->valueLabel('Valor')
+                                ->addActionLabel('Adicionar característica')
+                                ->helperText('Cada linha representa uma combinação vendável. Ex.: Cor = Amarelo + Fios = 77, ou Cor = Preto + Tamanho = M. Não é necessário preencher preço próprio quando a combinação usa o preço geral do produto.')
+                                ->required()->columnSpanFull(),
+                            Toggle::make('is_active')->label('Disponível para venda')->default(true),
+                            TextInput::make('sku')->label('SKU próprio (opcional)')->maxLength(255),
+                            Section::make('Ajustes próprios desta combinação')
+                                ->description('Opcional. Preencha somente o que muda nesta combinação. Campos vazios herdam preço, promoção, estoque e medidas do produto principal.')
+                                ->collapsible()->collapsed()->columns(2)->columnSpanFull()->schema([
+                                    BrazilianMoneyInput::make('price')->label('Preço próprio')->helperText('Vazio: herda o preço do produto.'),
+                                    BrazilianMoneyInput::make('promotional_price')->label('Preço promocional próprio'),
+                                    TextInput::make('stock')->label('Estoque próprio')->integer()->minValue(0)->helperText('Vazio: compartilha o estoque geral do produto.'),
+                                    Text::make('Use medidas próprias somente quando a embalagem física desta combinação mudar. Ex.: pacote com metragem diferente ou embalagem de outro volume.')->columnSpanFull(),
+                                    TextInput::make('weight')->label('Peso embalado')->suffix('kg')->numeric()->minValue(0)->step('0.001'),
+                                    TextInput::make('height')->label('Altura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                                    TextInput::make('width')->label('Largura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                                    TextInput::make('length')->label('Comprimento da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                                ]),
+                        ]),
+                ]),
             Section::make('Disponibilidade')->columns(['default' => 1, 'lg' => 2])->schema([
                 Select::make('availability')->label('Disponibilidade')->options(self::availabilityOptions())->required()->default(ProductAvailability::IMMEDIATE->value),
                 TextInput::make('stock')->label('Estoque')->integer()->minValue(0),
             ]),
-            Section::make('Transporte')->columns(['default' => 1, 'lg' => 4])->schema([
-                TextInput::make('weight')->label('Peso')->suffix('kg')->numeric()->minValue(0)->step('0.001'),
-                TextInput::make('height')->label('Altura')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                TextInput::make('width')->label('Largura')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                TextInput::make('length')->label('Comprimento')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-            ]),
+            Section::make('Dados para entrega')
+                ->description('Informe a embalagem de uma unidade vendável para calcular o frete automático. Estes dados servem para qualquer produto físico, de roupas e insumos a equipamentos.')
+                ->columns(['default' => 1, 'lg' => 4])->schema([
+                    TextInput::make('weight')->label('Peso embalado')->suffix('kg')->numeric()->minValue(0)->step('0.001'),
+                    TextInput::make('height')->label('Altura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                    TextInput::make('width')->label('Largura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                    TextInput::make('length')->label('Comprimento da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
+                ]),
             Section::make('Publicação')->columns(['default' => 1, 'lg' => 3])->schema([
                 Toggle::make('is_active')->label('Ativo')->default(true),
                 Toggle::make('is_featured')->label('Produto em destaque')->default(false),

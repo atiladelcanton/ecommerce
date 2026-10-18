@@ -23,7 +23,7 @@
         </div>
 
         @if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED)
-            <div class="mt-6 rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-store-red-dark">Este pedido foi cancelado. Se precisar de ajuda, entre em contato com a SABA.</div>
+            <div class="mt-6 rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-store-red-dark">Este pedido foi cancelado. Se precisar de ajuda, entre em contato com a loja.</div>
         @else
             <ol class="store-order-progress mt-8" aria-label="Progresso do pedido">
                 @foreach($steps as $step)
@@ -74,7 +74,7 @@
                 @endif
                 @php($shipmentAlert = $order->shipments->sortByDesc('id')->first(fn($shipment) => in_array($shipment->status->value, ['undelivered', 'paused', 'suspended'], true)))
                 @if($shipmentAlert)
-                    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">A transportadora informou uma ocorrência no envio ({{ $shipmentAlert->status->label() }}). A SABA está acompanhando a situação.</div>
+                    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">A transportadora informou uma ocorrência no envio ({{ $shipmentAlert->status->label() }}). A loja está acompanhando a situação.</div>
                 @endif
                 @if(\App\Domain\Shipping\OrderShipping::mode($order) === 'pickup')
                     <p class="mt-3 text-sm text-store-muted">{{ $order->shipping_quote_snapshot['metadata']['address'] ?? '' }}</p>

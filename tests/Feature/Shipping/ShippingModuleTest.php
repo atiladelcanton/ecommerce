@@ -19,6 +19,7 @@ use App\Actions\Shipping\QuoteShippingAction;
 use App\Actions\Shipping\ReconcileShipmentAction;
 use App\Actions\Shipping\SyncMelhorEnvioCatalogAction;
 use App\Actions\Shipping\UpdateShippingIntegrationAction;
+use App\Actions\Shipping\VerifyShipmentAction;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Customer\Models\Customer;
 use App\Domain\Order\Enums\OrderStatus;
@@ -28,6 +29,7 @@ use App\Domain\Settings\Models\StoreSetting;
 use App\Domain\Shipping\Data\ApiMoney;
 use App\Domain\Shipping\Data\ShippingItem;
 use App\Domain\Shipping\Data\ShippingQuoteRequest;
+use App\Domain\Shipping\Enums\ShipmentDocumentType;
 use App\Domain\Shipping\Enums\ShipmentStatus;
 use App\Domain\Shipping\Exceptions\ShippingProviderFailed;
 use App\Domain\Shipping\Models\ShippingAgency;
@@ -216,7 +218,130 @@ final class ShippingModuleTest extends TestCase
         $this->assertSame('Transportadora de teste', $shipment->carrier_name);
         Http::assertSentCount(3);
         $this->assertDatabaseCount('shipments', 1);
-        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/cart') && $request['from']['address'] === 'Rua da loja' && $request['products'][0]['name'] === 'Produto histórico');
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/cart')
+            && $request['from']['address'] === 'Rua da loja'
+            && $request['products'][0]['name'] === 'Produto histórico'
+            && ! isset($request['to']['state_register']));
+    }
+
+    public function test_content_declaration_generates_label_without_invoice_and_declares_order_items(): void
+    {
+        $order = $this->order();
+        StoreSetting::query()->update(['state_register' => '123456789']);
+        $this->api();
+
+        $shipment = app(GenerateShipmentLabelAction::class)->execute(
+            $order,
+            documentType: ShipmentDocumentType::CONTENT_DECLARATION,
+        );
+
+        $fresh = $order->fresh();
+        $this->assertSame(ShipmentStatus::LABEL_GENERATED, $shipment->status);
+        $this->assertSame(ShipmentDocumentType::CONTENT_DECLARATION, $fresh->shipping_document_type);
+        $this->assertNull($fresh->invoice_key);
+        $this->assertNull($fresh->dce_key);
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/api/v2/me/cart')
+            && ! isset($request['options']['invoice'])
+            && ! isset($request['options']['dce'])
+            && ($request['from']['state_register'] ?? null) === ''
+            && ($request['products'][0]['name'] ?? null) === 'Produto histórico'
+            && ($request['products'][0]['quantity'] ?? null) === 1);
+    }
+
+    public function test_content_declaration_can_send_external_dce_key_without_invoice(): void
+    {
+        $order = $this->order();
+        $this->api();
+        $dceKey = str_repeat('7', 44);
+
+        app(GenerateShipmentLabelAction::class)->execute(
+            $order,
+            dceKey: $dceKey,
+            documentType: ShipmentDocumentType::CONTENT_DECLARATION,
+        );
+
+        $fresh = $order->fresh();
+        $this->assertSame($dceKey, $fresh->dce_key);
+        $this->assertNull($fresh->invoice_key);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/api/v2/me/cart')
+            && ! isset($request['options']['invoice'])
+            && ($request['options']['dce']['key'] ?? null) === $dceKey);
+    }
+
+    public function test_invoice_mode_still_requires_a_real_nfe_key_before_external_call(): void
+    {
+        $order = $this->order();
+
+        try {
+            app(GenerateShipmentLabelAction::class)->execute(
+                $order,
+                documentType: ShipmentDocumentType::INVOICE,
+            );
+            self::fail('Expected missing NF-e');
+        } catch (ValidationException $exception) {
+            $this->assertStringContainsString('NF-e', (string) collect($exception->errors())->flatten()->first());
+        }
+
+        Http::assertNothingSent();
+    }
+
+    public function test_cart_validation_error_surfaces_melhor_envio_message_instead_of_generic_failure(): void
+    {
+        $order = $this->order();
+        Http::fake([
+            '*/api/v2/me/cart' => Http::response(['errors' => ['options.invoice.key' => ['A Nota fiscal informada é inválida.']]], 422),
+        ]);
+
+        try {
+            $this->generate($order);
+            self::fail('Expected cart validation failure');
+        } catch (ValidationException $exception) {
+            $message = (string) collect($exception->errors())->flatten()->first();
+            $this->assertStringContainsString('NF-e', $message);
+            $this->assertStringContainsString('Nota fiscal informada é inválida', $message);
+        }
+
+        Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/shipment/checkout'));
+    }
+
+    public function test_optional_jadlog_style_agency_is_not_sent_to_cart_when_service_does_not_require_it(): void
+    {
+        $order = $this->order();
+        $carrier = ShippingCarrier::query()->where('shipping_integration_id', $order->shipping_integration_id)->firstOrFail();
+        $agency = ShippingAgency::query()->create([
+            'shipping_integration_id' => $order->shipping_integration_id,
+            'environment' => 'sandbox',
+            'external_id' => '123',
+            'name' => 'Unidade opcional',
+            'company_external_id' => $carrier->external_id,
+            'is_active' => true,
+        ]);
+        $agency->carriers()->attach($carrier->id);
+        $snapshot = $order->shipping_quote_snapshot;
+        $snapshot['metadata']['supports_agency'] = true;
+        $snapshot['metadata']['agency_required'] = false;
+        $snapshot['metadata']['agency_id'] = $agency->id;
+        $order->update(['shipping_quote_snapshot' => $snapshot]);
+        $this->api();
+
+        app(GenerateShipmentLabelAction::class)->execute($order, $this->validInvoiceKey(), agencyId: $agency->id);
+
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/api/v2/me/cart') && ! isset($request['agency']));
+    }
+
+    public function test_invalid_nfe_model_is_rejected_before_calling_provider(): void
+    {
+        $order = $this->order();
+
+        try {
+            app(GenerateShipmentLabelAction::class)->execute($order, str_repeat('1', 44));
+            self::fail('Expected invalid NF-e');
+        } catch (ValidationException $exception) {
+            $this->assertStringContainsString('modelo 55', (string) collect($exception->errors())->flatten()->first());
+        }
+
+        Http::assertNothingSent();
     }
 
     public function test_generation_failure_after_purchase_resumes_without_new_cart_or_checkout(): void
@@ -349,6 +474,42 @@ final class ShippingModuleTest extends TestCase
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/imprimir/zpl/external-1') && $request->hasHeader('Authorization'));
     }
 
+    public function test_admin_open_label_uses_official_public_print_link(): void
+    {
+        $order = $this->order();
+        $this->api();
+        $shipment = $this->generate($order);
+
+        Http::fake([
+            '*/api/v2/me/shipment/print' => Http::response(['url' => 'https://melhorenvio.test/print/label-1']),
+        ]);
+
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('admin.shipping.labels.open', ['shipment' => $shipment]))
+            ->assertRedirect('https://melhorenvio.test/print/label-1');
+
+        $this->assertSame('https://melhorenvio.test/print/label-1', $shipment->fresh()->label_url);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/api/v2/me/shipment/print'));
+    }
+
+    public function test_direct_label_file_falls_back_to_official_print_when_provider_file_is_unavailable(): void
+    {
+        $order = $this->order();
+        $this->api();
+        $shipment = $this->generate($order);
+
+        Http::fake([
+            '*/api/v2/me/imprimir/pdf/*' => Http::response(['message' => 'Arquivo indisponível neste serviço'], 404),
+            '*/api/v2/me/shipment/print' => Http::response(['url' => 'https://melhorenvio.test/print/fallback']),
+        ]);
+
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => 'pdf']))
+            ->assertRedirect('https://melhorenvio.test/print/fallback');
+    }
+
     public function test_admin_shipping_page_requires_admin_guard_and_does_not_render_secrets(): void
     {
         $this->integration();
@@ -457,6 +618,92 @@ final class ShippingModuleTest extends TestCase
         $this->assertNull($updated->operation_phase);
     }
 
+    public function test_verify_shipment_finds_uncertain_cart_by_operation_tag_and_continues_without_second_cart(): void
+    {
+        $order = $this->order();
+
+        Http::fake([
+            '*/api/v2/me/cart' => Http::response([], 503),
+        ]);
+
+        try {
+            $this->generate($order);
+            self::fail('Expected uncertain cart');
+        } catch (ValidationException) {
+        }
+
+        $shipment = $order->shipments()->sole();
+        $tag = 'saba-operation:'.$shipment->operation_key;
+
+        Http::fake([
+            '*/api/v2/me/cart' => function () {
+                self::fail('Verification must not create a second cart');
+            },
+            '*/api/v2/me/orders*' => Http::response([[
+                'id' => 'recovered-cart',
+                'status' => 'pending',
+                'service_id' => 902,
+                'tags' => [['tag' => $tag]],
+            ]]),
+            '*/api/v2/me/orders/recovered-cart' => Http::response([
+                'id' => 'recovered-cart',
+                'status' => 'pending',
+                'service_id' => 902,
+                'tags' => [['tag' => $tag]],
+            ]),
+            '*/api/v2/me/shipment/checkout' => Http::response(['success' => true]),
+            '*/api/v2/me/shipment/generate' => Http::response(['success' => true]),
+        ]);
+
+        $verified = app(VerifyShipmentAction::class)->execute($shipment);
+
+        $this->assertSame('recovered-cart', $verified->external_id);
+        $this->assertSame(ShipmentStatus::LABEL_GENERATED, $verified->status);
+        $this->assertNull($verified->operation_phase);
+        $this->assertSame(OrderStatus::READY_TO_SHIP, $order->fresh()->status);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/api/v2/me/shipment/checkout'));
+    }
+
+    public function test_verify_shipment_does_not_retry_uncertain_purchase_while_provider_is_still_pending(): void
+    {
+        $order = $this->order();
+
+        Http::fake([
+            '*/api/v2/me/cart' => Http::response(['id' => 'external-pending']),
+            '*/api/v2/me/shipment/checkout' => Http::response([], 503),
+        ]);
+
+        try {
+            $this->generate($order);
+            self::fail('Expected uncertain purchase');
+        } catch (ValidationException) {
+        }
+
+        $shipment = $order->shipments()->sole();
+        $tag = 'saba-operation:'.$shipment->operation_key;
+
+        Http::fake([
+            '*/api/v2/me/shipment/checkout' => function () {
+                self::fail('Verification must not retry an unconfirmed purchase');
+            },
+            '*/api/v2/me/orders/external-pending' => Http::response([
+                'id' => 'external-pending',
+                'status' => 'pending',
+                'service_id' => 902,
+                'tags' => [['tag' => $tag]],
+            ]),
+        ]);
+
+        try {
+            app(VerifyShipmentAction::class)->execute($shipment);
+            self::fail('Expected provider payment to remain pending');
+        } catch (ValidationException $exception) {
+            $this->assertStringContainsString('ainda não confirmou o pagamento', (string) collect($exception->errors())->flatten()->first());
+        }
+
+        $this->assertSame('purchase_in_progress', $shipment->fresh()->operation_phase);
+    }
+
     public function test_reconciliation_rejects_another_operations_external_id(): void
     {
         $order = $this->order();
@@ -476,7 +723,7 @@ final class ShippingModuleTest extends TestCase
         $order = $this->order();
         $agency = ShippingAgency::query()->create(['shipping_integration_id' => $order->shipping_integration_id, 'environment' => 'sandbox', 'external_id' => 'agency-test', 'name' => 'Outra', 'company_external_id' => 'other']);
         try {
-            app(GenerateShipmentLabelAction::class)->execute($order, str_repeat('1', 44), agencyId: $agency->id);
+            app(GenerateShipmentLabelAction::class)->execute($order, $this->validInvoiceKey(), agencyId: $agency->id);
             self::fail('Expected wrong agency');
         } catch (ValidationException) {
         }

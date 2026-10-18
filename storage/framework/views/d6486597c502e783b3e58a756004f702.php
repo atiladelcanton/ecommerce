@@ -154,19 +154,50 @@
         <section class="fi-section xl:col-span-4 p-6">
             <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Logística</p>
             <h2 class="mt-1 text-lg font-semibold text-zinc-900">Envios e etiquetas</h2>
+            <?php ($currentShipments = \App\Domain\Shipping\OrderShipping::currentShipments($order)); ?>
             <div class="mt-5 grid gap-3">
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $order->shipments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shipment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $currentShipments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shipmentIndex => $shipment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                     <div class="rounded-lg border border-zinc-200 p-4 text-sm">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($currentShipments->count() > 1): ?>
+                            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Volume <?php echo e($shipmentIndex + 1); ?> de <?php echo e($currentShipments->count()); ?></p>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         <div class="flex items-center justify-between gap-3">
                             <strong><?php echo e($shipment->carrier_name ?: ucfirst(str_replace('_', ' ', $shipment->provider))); ?></strong>
                             <span class="rounded-full bg-zinc-100 px-2 py-1 text-[11px] font-semibold text-zinc-600"><?php echo e($shipment->status->label()); ?></span>
                         </div>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->service_name): ?><p class="mt-2 text-zinc-500"><?php echo e($shipment->service_name); ?></p><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->external_id): ?><p class="mt-1 break-all text-xs text-zinc-400">ID <?php echo e($shipment->external_id); ?></p><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->shipping_document_type): ?>
+                            <p class="mt-2"><span class="text-zinc-500">Documento:</span> <strong><?php echo e($order->shipping_document_type->label()); ?></strong></p>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->shipping_document_type === \App\Domain\Shipping\Enums\ShipmentDocumentType::INVOICE && $order->invoice_key): ?>
+                                <p class="mt-1 break-all text-xs text-zinc-500">NF-e <?php echo e($order->invoice_key); ?></p>
+                            <?php elseif($order->shipping_document_type === \App\Domain\Shipping\Enums\ShipmentDocumentType::CONTENT_DECLARATION && $order->dce_key): ?>
+                                <p class="mt-1 break-all text-xs text-zinc-500">DC-e externa <?php echo e($order->dce_key); ?></p>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->tracking_code): ?><p class="mt-2"><span class="text-zinc-500">Rastreio:</span> <strong><?php echo e($shipment->tracking_code); ?></strong></p><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->operation_phase): ?><p class="mt-2 text-amber-700">Operação pendente de conciliação</p><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->generated_at && !$shipment->cancelled_at): ?><a class="mt-2 inline-flex font-semibold text-red-600" href="<?php echo e(route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => $shipment->label_format ?? 'pdf'])); ?>">Imprimir etiqueta</a><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->label_url): ?><a href="<?php echo e($shipment->label_url); ?>" target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex font-semibold text-red-600 hover:text-red-700">Abrir etiqueta ↗</a><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->operation_phase): ?>
+                            <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                                <p class="font-semibold">Não foi possível confirmar a última operação</p>
+                                <p class="mt-1 text-xs leading-5">O envio foi pausado temporariamente para evitar uma cobrança duplicada. Use <strong>Verificar envio</strong> nas ações do pedido.</p>
+                            </div>
+                            <details class="mt-3 text-xs text-zinc-500">
+                                <summary class="cursor-pointer font-medium text-zinc-600">Ver detalhes técnicos</summary>
+                                <dl class="mt-2 grid gap-1 rounded-lg bg-zinc-50 p-3">
+                                    <div><dt class="inline">Provedor:</dt> <dd class="inline"><?php echo e(str_replace('_', ' ', $shipment->provider)); ?></dd></div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->external_id): ?><div><dt class="inline">Identificador externo:</dt> <dd class="inline break-all"><?php echo e($shipment->external_id); ?></dd></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    <div><dt class="inline">Etapa pendente:</dt> <dd class="inline"><?php echo e(str_replace('_', ' ', $shipment->operation_phase)); ?></dd></div>
+                                </dl>
+                            </details>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($shipment->generated_at && !$shipment->cancelled_at): ?>
+                            <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                                <a class="inline-flex font-semibold text-red-600 hover:text-red-700" href="<?php echo e(route('admin.shipping.labels.open', ['shipment' => $shipment])); ?>" target="_blank" rel="noopener noreferrer">Abrir / imprimir etiqueta ↗</a>
+                                <a class="inline-flex font-semibold text-zinc-600 hover:text-zinc-900" href="<?php echo e(route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => 'pdf'])); ?>">Baixar PDF</a>
+                            </div>
+                            <p class="mt-2 text-xs leading-5 text-zinc-400">No Sandbox, o Melhor Envio limita o download direto de arquivos a alguns serviços. Se o arquivo não estiver disponível, o sistema abrirá automaticamente a impressão oficial.</p>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </div>
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                     <p class="text-sm text-zinc-500">Nenhuma etiqueta gerada para este pedido.</p>

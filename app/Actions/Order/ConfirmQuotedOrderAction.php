@@ -26,7 +26,7 @@ final class ConfirmQuotedOrderAction
             // Recheck revision and expiry after acquiring the order lock.
             app(GetQuotedOrderAction::class)->execute($number, $revision, $signedUrl);
             if ($order->status === OrderStatus::CANCELLED) {
-                throw ValidationException::withMessages(['payment' => 'Este pedido foi cancelado. Entre em contato com a SABA.']);
+                throw ValidationException::withMessages(['payment' => 'Este pedido foi cancelado. Entre em contato com a loja.']);
             }
             if ($order->payment_status === PaymentStatus::APPROVED) {
                 return $order;
@@ -41,7 +41,7 @@ final class ConfirmQuotedOrderAction
                 $product = $products->get($item->product_id);
                 $variant = $variants->get($item->product_variant_id);
                 if (! $product || ! $product->is_active || $product->availability === ProductAvailability::UNAVAILABLE || ($item->product_variant_id === null && $product->variants()->exists()) || ($item->variant_value !== null && (! $variant || ! $variant->is_active || $variant->characteristics() != $item->variant_attributes_snapshot))) {
-                    throw ValidationException::withMessages(['stock' => 'Um dos itens não está mais disponível nessa configuração. Entre em contato com a SABA.']);
+                    throw ValidationException::withMessages(['stock' => 'Um dos itens não está mais disponível nessa configuração. Entre em contato com a loja.']);
                 }
             }
             app(ManageOrderInventoryAction::class)->reserve($order);

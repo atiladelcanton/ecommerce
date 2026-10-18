@@ -85,7 +85,7 @@
                                     @elseif($status === \App\Domain\Order\Enums\OrderStatus::READY_FOR_SHIPPING)
                                         <p class="w-full text-xs text-zinc-500">{{ $order->shipping_quote_snapshot['carrier_name'] ?? $order->carrier }} · {{ $order->shipping_name }} @if($order->shipping_pricing_status)<span class="block text-xs text-amber-700">{{ $order->shipping_pricing_status->label() }}</span>@endif</p>
                                         @foreach($order->shipments->whereNotNull('generated_at')->whereNull('cancelled_at') as $shipment)
-                                            <a class="saba-kanban-action" href="{{ route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => $shipment->label_format ?? 'pdf']) }}" target="_blank">Etiqueta gerada #{{ $shipment->id }} · Imprimir</a>
+                                            <a class="saba-kanban-action" href="{{ route('admin.shipping.labels.open', ['shipment' => $shipment]) }}" target="_blank">Etiqueta gerada · Abrir / imprimir</a>
                                             @if($shipment->tracking_code)<span class="text-xs text-zinc-500">{{ $shipment->tracking_code }}</span>@endif
                                         @endforeach
                                         <a href="{{ \App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $order]) }}" class="saba-kanban-action">Imprimir etiqueta</a>

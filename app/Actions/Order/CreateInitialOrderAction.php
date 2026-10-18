@@ -121,7 +121,8 @@ final class CreateInitialOrderAction
                         'shipping_quote_snapshot' => $shipping?->snapshot() ?? ['provider' => 'manual', 'fulfillment_mode' => 'manual', 'pricing_status' => 'awaiting_quote'],
                         'carrier' => $shipping?->carrierName,
                     ]);
-                    $order->update(['number' => 'SABA-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT)]);
+                    $prefix = strtoupper(trim((string) config('storefront.order_prefix', 'SABA'))) ?: 'SABA';
+                    $order->update(['number' => $prefix.'-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT)]);
                     foreach ($cart['items'] as $line) {
                         $order->items()->create([
                             'product_id' => $line['item']->productId, 'product_variant_id' => $line['item']->productVariantId,

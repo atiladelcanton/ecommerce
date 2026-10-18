@@ -115,7 +115,7 @@
                             </div>
                         @endif
                         @if($summary['shippingError'] && $summary['shippingContact'])
-                            <a class="store-text-link mt-2 inline-flex" href="https://wa.me/{{ preg_replace('/\D/', '', $summary['shippingContact']) }}?text={{ rawurlencode('Olá! Preciso consultar o frete dos produtos do meu carrinho.') }}" target="_blank" rel="noopener noreferrer">Consultar entrega com a SABA</a>
+                            <a class="store-text-link mt-2 inline-flex" href="https://wa.me/{{ preg_replace('/\D/', '', $summary['shippingContact']) }}?text={{ rawurlencode('Olá! Preciso consultar o frete dos produtos do meu carrinho.') }}" target="_blank" rel="noopener noreferrer">Consultar entrega com a loja</a>
                         @endif
                     </fieldset>
                 </section>

@@ -5485,3 +5485,37 @@ Stack trace:
 [2026-10-15 10:36:30] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
 [2026-10-15 10:36:30] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503,"request_id":""} 
 [2026-10-15 10:36:30] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-18 11:41:00] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":422,"request_id":""} 
+[2026-10-18 12:08:07] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-18 12:08:07] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-18 12:08:07] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-18 12:08:07] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-18 12:08:10] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/agencies","status":503} 
+[2026-10-18 12:08:10] testing.WARNING: Shipping administration operation failed {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-18 12:08:11] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-18 12:08:11] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"902","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-18 12:08:11] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"provider_unavailable"} 
+[2026-10-18 12:08:11] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-18 12:08:11] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"902","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-18 12:08:11] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"provider_unavailable"} 
+[2026-10-18 12:08:12] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"missing_measurements"} 
+[2026-10-18 12:08:12] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":422,"provider_message":"A Nota fiscal informada é inválida."} 
+[2026-10-18 12:08:12] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/generate","status":422} 
+[2026-10-18 12:08:12] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/checkout","status":503} 
+[2026-10-18 12:08:13] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":503} 
+[2026-10-18 12:08:13] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/generate","status":422} 
+[2026-10-18 12:08:13] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/services","status":503} 
+[2026-10-18 12:08:14] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-18 12:08:14] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-18 12:08:14] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-18 12:08:14] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-18 12:09:17] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":500,"provider_message":"Houve um erro ao verificar o valor do pedido: Transportadora não atende este trecho."} 
+[2026-10-18 12:13:42] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":422,"provider_message":"O remetente e o destinatário não podem ser iguais."} 
+[2026-10-18 12:51:53] local.WARNING: Order shipping operation failed {"order_id":6,"exception_type":"InvalidArgumentException"} 
+[2026-10-18 12:52:26] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/imprimir/pdf/a303233b-a3e3-4416-b5af-23c0d63430f9","status":422,"provider_message":"E-PRT-0011: O envio precisa estar gerado para que a impressão seja processada."} 
+[2026-10-18 12:52:34] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/imprimir/pdf/a303233b-a3e3-4416-b5af-23c0d63430f9","status":422,"provider_message":"E-PRT-0011: O envio precisa estar gerado para que a impressão seja processada."} 
+[2026-10-18 12:52:43] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/imprimir/pdf/a303233b-a3e3-4416-b5af-23c0d63430f9","status":422,"provider_message":"E-PRT-0011: O envio precisa estar gerado para que a impressão seja processada."} 
+[2026-10-18 12:52:54] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/imprimir/jpeg/a303233b-a3e3-4416-b5af-23c0d63430f9","status":422,"provider_message":"E-PRT-0011: O envio precisa estar gerado para que a impressão seja processada."} 
+[2026-10-18 12:53:00] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/imprimir/pdf/a303233b-a3e3-4416-b5af-23c0d63430f9","status":422,"provider_message":"E-PRT-0011: O envio precisa estar gerado para que a impressão seja processada."} 
+[2026-10-18 12:53:15] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/imprimir/pdf/a303233b-a3e3-4416-b5af-23c0d63430f9","status":422,"provider_message":"E-PRT-0011: O envio precisa estar gerado para que a impressão seja processada."} 
+[2026-10-18 12:54:45] local.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":422,"provider_message":"O remetente e o destinatário não podem ser iguais."} 

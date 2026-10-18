@@ -22,14 +22,14 @@
     <section class="rounded-xl border border-store-border bg-white p-6">
         <dl class="space-y-3"><div class="flex justify-between"><dt>Produtos</dt><dd>{{ \App\Support\BrazilianMoney::display($order->subtotal_cents) }}</dd></div><div class="flex justify-between"><dt>Frete</dt><dd>{{ $order->formattedShipping() }}</dd></div><div class="flex justify-between border-t border-store-border pt-3 text-lg font-bold"><dt>Total</dt><dd>{{ $order->formattedTotal() }}</dd></div></dl>
         @if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED)
-            <p class="mt-5 text-store-red">Este pedido foi cancelado. Entre em contato com a SABA.</p>
+            <p class="mt-5 text-store-red">Este pedido foi cancelado. Entre em contato com a loja.</p>
         @elseif($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::APPROVED)
             <p class="mt-5 font-semibold text-store-green" role="status">Pagamento aprovado — ambiente de demonstração.</p>
         @elseif($order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
             <p class="mt-5 text-sm text-store-muted">Pagamento de demonstração. Nenhuma cobrança real será realizada.</p>
             <button type="button" wire:click="confirmPayment" wire:loading.attr="disabled" class="store-button mt-5 w-full">Confirmar pedido e pagamento de teste</button>
         @else
-            <p class="mt-5 text-store-red">Este pedido não está disponível para pagamento. Entre em contato com a SABA.</p>
+            <p class="mt-5 text-store-red">Este pedido não está disponível para pagamento. Entre em contato com a loja.</p>
         @endif
     </section>
 </div>
