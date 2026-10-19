@@ -48,6 +48,12 @@ final class OrdersKanban extends Page
 
     public string $trackingUrl = '';
 
+    public bool $showCancelModal = false;
+
+    public ?int $cancelOrderId = null;
+
+    public string $cancellationReason = '';
+
     public static function getNavigationBadge(): ?string
     {
         $count = Order::query()->whereIn('status', [
@@ -122,9 +128,70 @@ final class OrdersKanban extends Page
         }
     }
 
-    public function cancel(int $orderId): void
+    public function openCancelModal(int $orderId): void
     {
-        $this->moveOrder($orderId, OrderStatus::CANCELLED->value);
+        $order = Order::query()->findOrFail($orderId);
+        if (! $order->status->canBeCancelled()) {
+            Notification::make()
+                ->warning()
+                ->title('Cancelamento indisponível')
+                ->body($order->status === OrderStatus::DELIVERED
+                    ? 'Este pedido já foi entregue e não pode mais ser cancelado.'
+                    : 'Este pedido já foi enviado e não pode mais ser cancelado.')
+                ->send();
+
+            return;
+        }
+
+        $this->cancelOrderId = $orderId;
+        $this->cancellationReason = '';
+        $this->resetValidation('cancellationReason');
+        $this->showCancelModal = true;
+    }
+
+    public function closeCancelModal(): void
+    {
+        $this->resetValidation('cancellationReason');
+        $this->reset(['showCancelModal', 'cancelOrderId', 'cancellationReason']);
+    }
+
+    public function confirmCancellation(): void
+    {
+        abort_unless(ShippingMethods::canAccess(), 403);
+
+        $data = $this->validate([
+            'cancelOrderId' => ['required', 'integer', 'exists:orders,id'],
+            'cancellationReason' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'cancellationReason.max' => 'O motivo do cancelamento deve ter no máximo 1.000 caracteres.',
+        ]);
+
+        try {
+            $order = Order::query()->findOrFail((int) $data['cancelOrderId']);
+            if (! $order->status->canBeCancelled()) {
+                $this->closeCancelModal();
+                Notification::make()
+                    ->warning()
+                    ->title('Cancelamento indisponível')
+                    ->body($order->status === OrderStatus::DELIVERED
+                        ? 'Este pedido já foi entregue e não pode mais ser cancelado.'
+                        : 'Este pedido já foi enviado e não pode mais ser cancelado.')
+                    ->send();
+
+                return;
+            }
+
+            app(TransitionOrderStatusAction::class)->execute(
+                $order,
+                OrderStatus::CANCELLED,
+                auth()->id(),
+                cancellationReason: filled($data['cancellationReason'] ?? null) ? trim((string) $data['cancellationReason']) : null,
+            );
+            $this->closeCancelModal();
+            Notification::make()->success()->title('Pedido cancelado')->body('O cancelamento foi registrado.')->send();
+        } catch (ValidationException $exception) {
+            $this->notifyValidation($exception);
+        }
     }
 
     public function openShippingModal(int $orderId): void

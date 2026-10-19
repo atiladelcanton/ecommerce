@@ -156,6 +156,85 @@ final class CatalogAdminTest extends TestCase
         $this->assertNull($product->fresh()->promotional_price);
     }
 
+    public function test_saving_unchanged_product_preserves_shipping_measurements_and_form_state(): void
+    {
+        $product = Product::factory()->create([
+            'weight' => '0.500',
+            'height' => '2.00',
+            'width' => '1.00',
+            'length' => '100.00',
+        ]);
+
+        $component = Livewire::test(EditProduct::class, ['record' => $product->id])
+            ->assertFormSet([
+                'weight' => '0.500',
+                'height' => '2.00',
+                'width' => '1.00',
+                'length' => '100.00',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertFormSet([
+                'weight' => '0.500',
+                'height' => '2.00',
+                'width' => '1.00',
+                'length' => '100.00',
+            ]);
+
+        $fresh = $product->fresh();
+        $this->assertSame('0.500', $fresh->weight);
+        $this->assertSame('2.00', $fresh->height);
+        $this->assertSame('1.00', $fresh->width);
+        $this->assertSame('100.00', $fresh->length);
+
+        $component->call('save')->assertHasNoFormErrors();
+
+        $fresh = $product->fresh();
+        $this->assertSame('0.500', $fresh->weight);
+        $this->assertSame('2.00', $fresh->height);
+        $this->assertSame('1.00', $fresh->width);
+        $this->assertSame('100.00', $fresh->length);
+    }
+
+    public function test_creating_variant_does_not_rehydrate_or_change_product_measurements(): void
+    {
+        $product = Product::factory()->create([
+            'price' => 10000,
+            'weight' => '0.500',
+            'height' => '2.00',
+            'width' => '1.00',
+            'length' => '100.00',
+        ]);
+
+        $component = Livewire::test(EditProduct::class, ['record' => $product->id])
+            ->fillForm([
+                'variants' => [[
+                    'attributes' => ['Cor' => 'Amarelo', 'Fios' => '77'],
+                    'is_active' => true,
+                ]],
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertFormSet([
+                'weight' => '0.500',
+                'height' => '2.00',
+                'width' => '1.00',
+                'length' => '100.00',
+            ]);
+
+        $this->assertDatabaseCount('product_variants', 1);
+        $this->assertNotNull($product->variants()->sole()->id);
+
+        $fresh = $product->fresh();
+        $this->assertSame('0.500', $fresh->weight);
+        $this->assertSame('2.00', $fresh->height);
+        $this->assertSame('1.00', $fresh->width);
+        $this->assertSame('100.00', $fresh->length);
+
+        $component->call('save')->assertHasNoFormErrors();
+        $this->assertDatabaseCount('product_variants', 1);
+    }
+
     public function test_admin_uploads_multiple_images_and_edit_does_not_duplicate_them(): void
     {
         Livewire::test(CreateProduct::class)->fillForm($this->productData([

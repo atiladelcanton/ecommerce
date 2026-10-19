@@ -36,4 +36,28 @@ final class ProductDescriptionTest extends TestCase
         $this->assertSame("Máquina &amp; acessórios<br>\nSegunda linha", ProductDescription::html("Máquina & acessórios\nSegunda linha"));
         $this->assertSame('', ProductDescription::html(null));
     }
+
+    public function test_filament_rich_editor_json_state_is_rendered_safely(): void
+    {
+        $state = [
+            'type' => 'doc',
+            'content' => [
+                [
+                    'type' => 'heading',
+                    'attrs' => ['level' => 2],
+                    'content' => [['type' => 'text', 'text' => 'Nylon 77 fios']],
+                ],
+                [
+                    'type' => 'paragraph',
+                    'content' => [
+                        ['type' => 'text', 'text' => 'Nylon ', 'marks' => [['type' => 'bold']]],
+                        ['type' => 'text', 'text' => 'amarelo'],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->assertSame('<h2>Nylon 77 fios</h2><p><strong>Nylon </strong>amarelo</p>', ProductDescription::html($state));
+        $this->assertSame("Nylon 77 fios\nNylon amarelo", ProductDescription::text($state));
+    }
 }

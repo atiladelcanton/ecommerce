@@ -1,4 +1,4 @@
-<x-store.layout :title="$product->name" :description="Str::limit(strip_tags($product->short_description ?: $product->description ?: $product->name), 160)" :canonical="route('store.product', $product->slug)" :image="$product->images->first() ? Storage::disk('public')->url($product->images->first()->path) : null">
+<x-store.layout :title="$product->seo_title ?: $product->name" :description="$product->seo_description ?: Str::limit(strip_tags($product->short_description ?: $product->description ?: $product->name), 160)" :canonical="route('store.product', $product->slug)" :image="$product->images->first() ? Storage::disk('public')->url($product->images->first()->path) : null">
     @push('head')
         <script type="application/ld+json">{!! json_encode($structuredData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
     @endpush

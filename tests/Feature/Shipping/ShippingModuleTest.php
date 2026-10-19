@@ -216,12 +216,48 @@ final class ShippingModuleTest extends TestCase
         $this->assertSame(OrderStatus::READY_TO_SHIP, $order->fresh()->status);
         $this->assertSame(ShipmentStatus::LABEL_GENERATED, $shipment->status);
         $this->assertSame('Transportadora de teste', $shipment->carrier_name);
-        Http::assertSentCount(3);
+        Http::assertSentCount(4);
         $this->assertDatabaseCount('shipments', 1);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/cart')
             && $request['from']['address'] === 'Rua da loja'
             && $request['products'][0]['name'] === 'Produto histórico'
             && ! isset($request['to']['state_register']));
+    }
+
+    public function test_generate_request_does_not_mark_label_ready_until_provider_confirms_generated(): void
+    {
+        $order = $this->order();
+        $trackingCalls = 0;
+        Http::fake([
+            '*/api/v2/me/cart' => Http::response(['id' => 'external-1', 'price' => '48.90']),
+            '*/api/v2/me/shipment/checkout' => Http::response(['success' => true]),
+            '*/api/v2/me/shipment/generate' => Http::response(['success' => true]),
+            '*/api/v2/me/shipment/tracking' => function () use (&$trackingCalls) {
+                $trackingCalls++;
+
+                return Http::response(['external-1' => [
+                    'status' => $trackingCalls === 1 ? 'released' : 'generated',
+                    'tracking' => null,
+                    'tracking_url' => null,
+                ]]);
+            },
+        ]);
+
+        $first = $this->generate($order);
+        $this->assertSame(ShipmentStatus::PURCHASED, $first->fresh()->status);
+        $this->assertNull($first->fresh()->generated_at);
+        $this->assertNotNull(($first->fresh()->metadata ?? [])['generation_requested_at'] ?? null);
+        $this->assertSame(OrderStatus::PROCESSING, $order->fresh()->status);
+
+        $second = $this->generate($order);
+        $this->assertSame(ShipmentStatus::LABEL_GENERATED, $second->fresh()->status);
+        $this->assertNotNull($second->fresh()->generated_at);
+        $this->assertSame(OrderStatus::READY_TO_SHIP, $order->fresh()->status);
+
+        $generateRequests = collect(Http::recorded())->filter(
+            fn (array $entry): bool => str_ends_with($entry[0]->url(), '/api/v2/me/shipment/generate'),
+        );
+        $this->assertCount(1, $generateRequests);
     }
 
     public function test_content_declaration_generates_label_without_invoice_and_declares_order_items(): void
@@ -247,6 +283,77 @@ final class ShippingModuleTest extends TestCase
             && ($request['from']['state_register'] ?? null) === ''
             && ($request['products'][0]['name'] ?? null) === 'Produto histórico'
             && ($request['products'][0]['quantity'] ?? null) === 1);
+    }
+
+    public function test_content_declaration_above_one_thousand_is_blocked_before_external_purchase(): void
+    {
+        $order = $this->order();
+        $snapshot = $order->shipping_quote_snapshot;
+        $snapshot['packages'][0]['insurance_cents'] = 129990;
+        $snapshot['metadata']['products'][0]['unit_price_cents'] = 129990;
+        $order->update([
+            'subtotal_cents' => 129990,
+            'total_cents' => 134880,
+            'shipping_quote_snapshot' => $snapshot,
+        ]);
+        $order->items()->update([
+            'regular_unit_price' => 129990,
+            'unit_price' => 129990,
+            'total' => 129990,
+        ]);
+
+        try {
+            app(GenerateShipmentLabelAction::class)->execute(
+                $order,
+                documentType: ShipmentDocumentType::CONTENT_DECLARATION,
+            );
+            self::fail('Expected declaration limit validation');
+        } catch (ValidationException $exception) {
+            $message = (string) collect($exception->errors())->flatten()->first();
+            $this->assertStringContainsString('R$ 1.000,00', $message);
+            $this->assertStringContainsString('NF-e', $message);
+            $this->assertStringNotContainsString('outro meio de entrega', $message);
+        }
+
+        Http::assertNothingSent();
+    }
+
+    public function test_blocking_shipping_validation_is_shown_as_persistent_modal_and_can_reopen_label_as_invoice(): void
+    {
+        $order = $this->order();
+        $snapshot = $order->shipping_quote_snapshot;
+        $snapshot['packages'][0]['insurance_cents'] = 129990;
+        $snapshot['metadata']['products'][0]['unit_price_cents'] = 129990;
+        $order->update([
+            'subtotal_cents' => 129990,
+            'total_cents' => 134880,
+            'shipping_quote_snapshot' => $snapshot,
+        ]);
+        $order->items()->update([
+            'regular_unit_price' => 129990,
+            'unit_price' => 129990,
+            'total' => 129990,
+        ]);
+
+        $this->actingAs(User::factory()->create());
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        Filament::bootCurrentPanel();
+
+        Livewire::test(ViewOrder::class, ['record' => $order->id])
+            ->mountAction('generateLabel')
+            ->fillForm(['shipping_document_type' => ShipmentDocumentType::CONTENT_DECLARATION->value])
+            ->callMountedAction()
+            ->assertSet('blockingOperationModalOpen', true)
+            ->assertSet('blockingOperationPrimaryAction', 'generate_invoice')
+            ->assertSee('Não é possível gerar esta etiqueta com declaração de conteúdo')
+            ->assertSee('Gerar com NF-e')
+            ->assertDontSee('outro meio de entrega compatível')
+            ->call('continueBlockingOperation')
+            ->assertSet('blockingOperationModalOpen', false)
+            ->assertActionMounted('generateLabel')
+            ->assertFormSet(['shipping_document_type' => ShipmentDocumentType::INVOICE->value]);
+
+        Http::assertNothingSent();
     }
 
     public function test_content_declaration_can_send_external_dce_key_without_invoice(): void
@@ -491,6 +598,27 @@ final class ShippingModuleTest extends TestCase
 
         $this->assertSame('https://melhorenvio.test/print/label-1', $shipment->fresh()->label_url);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/api/v2/me/shipment/print'));
+    }
+
+    public function test_open_label_falls_back_to_official_preview_when_print_link_is_temporarily_unavailable(): void
+    {
+        $order = $this->order();
+        $this->api();
+        $shipment = $this->generate($order);
+
+        Http::fake([
+            '*/api/v2/me/shipment/tracking' => Http::response(['external-1' => ['status' => 'generated']]),
+            '*/api/v2/me/shipment/print' => Http::response(['message' => 'Impressão ainda indisponível'], 400),
+            '*/api/v2/me/shipment/preview' => Http::response(['url' => 'https://sandbox.melhorenvio.com.br/preview/label-1']),
+        ]);
+
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('admin.shipping.labels.open', ['shipment' => $shipment]))
+            ->assertRedirect('https://sandbox.melhorenvio.com.br/preview/label-1');
+
+        $this->assertSame('https://sandbox.melhorenvio.com.br/preview/label-1', $shipment->fresh()->label_url);
+        $this->assertSame('preview', ($shipment->fresh()->metadata ?? [])['label_link_source'] ?? null);
     }
 
     public function test_direct_label_file_falls_back_to_official_print_when_provider_file_is_unavailable(): void

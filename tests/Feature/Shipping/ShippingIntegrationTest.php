@@ -159,6 +159,94 @@ final class ShippingIntegrationTest extends TestCase
         self::assertSame(1, $order->statusHistories()->where('to_status', OrderStatus::SHIPPED->value)->count());
     }
 
+    public function test_order_can_be_cancelled_even_with_active_shipment_and_reason_is_optional_internal_data(): void
+    {
+        $order = $this->order(OrderStatus::PROCESSING);
+        $shipment = $this->shipment($order, ShipmentStatus::LABEL_GENERATED);
+
+        $updated = app(TransitionOrderStatusAction::class)->execute(
+            $order,
+            OrderStatus::CANCELLED,
+            cancellationReason: 'Cliente desistiu da compra.',
+        );
+
+        self::assertSame(OrderStatus::CANCELLED, $updated->status);
+        self::assertSame('Cliente desistiu da compra.', $updated->cancellation_reason);
+        self::assertNotNull($updated->cancelled_at);
+        self::assertSame(ShipmentStatus::LABEL_GENERATED, $shipment->fresh()->status);
+        self::assertSame('Pedido cancelado.', $updated->statusHistories()->latest('id')->value('description'));
+    }
+
+    public function test_ready_for_shipping_order_can_be_cancelled_without_reason(): void
+    {
+        $order = $this->order(OrderStatus::READY_TO_SHIP);
+
+        $updated = app(TransitionOrderStatusAction::class)->execute($order, OrderStatus::CANCELLED);
+
+        self::assertSame(OrderStatus::CANCELLED, $updated->status);
+        self::assertNull($updated->cancellation_reason);
+        self::assertNotNull($updated->cancelled_at);
+    }
+
+    public function test_ready_for_pickup_order_can_be_cancelled_without_reason(): void
+    {
+        $order = $this->order(OrderStatus::READY_FOR_PICKUP);
+
+        $updated = app(TransitionOrderStatusAction::class)->execute($order, OrderStatus::CANCELLED);
+
+        self::assertSame(OrderStatus::CANCELLED, $updated->status);
+        self::assertNull($updated->cancellation_reason);
+        self::assertNotNull($updated->cancelled_at);
+    }
+
+    public function test_shipped_order_cannot_be_cancelled(): void
+    {
+        $order = $this->order(OrderStatus::SHIPPED);
+
+        try {
+            app(TransitionOrderStatusAction::class)->execute($order, OrderStatus::CANCELLED);
+            self::fail('Expected cancellation to be refused after shipment.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            self::assertSame('Este pedido já foi enviado e não pode mais ser cancelado. Use o fluxo de pós-venda para devolução ou reembolso quando necessário.', $exception->errors()['status'][0]);
+        }
+
+        self::assertSame(OrderStatus::SHIPPED, $order->fresh()->status);
+        self::assertNull($order->fresh()->cancelled_at);
+    }
+
+    public function test_delivered_order_cannot_be_cancelled(): void
+    {
+        $order = $this->order(OrderStatus::DELIVERED);
+
+        try {
+            app(TransitionOrderStatusAction::class)->execute($order, OrderStatus::CANCELLED);
+            self::fail('Expected cancellation to be refused after delivery.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            self::assertSame('Este pedido já foi entregue e não pode mais ser cancelado.', $exception->errors()['status'][0]);
+        }
+
+        self::assertSame(OrderStatus::DELIVERED, $order->fresh()->status);
+        self::assertNull($order->fresh()->cancelled_at);
+    }
+
+
+    public function test_ready_for_shipping_order_cannot_be_cancelled_if_shipment_was_already_posted(): void
+    {
+        $order = $this->order(OrderStatus::READY_TO_SHIP);
+        $shipment = $this->shipment($order, ShipmentStatus::POSTED);
+        $shipment->update(['posted_at' => now()]);
+
+        try {
+            app(TransitionOrderStatusAction::class)->execute($order, OrderStatus::CANCELLED);
+            self::fail('Expected cancellation to be refused after the shipment was posted.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            self::assertSame('Este pedido já foi postado e não pode mais ser cancelado. Use o fluxo de pós-venda para devolução ou reembolso quando necessário.', $exception->errors()['status'][0]);
+        }
+
+        self::assertSame(OrderStatus::READY_TO_SHIP, $order->fresh()->status);
+        self::assertNull($order->fresh()->cancelled_at);
+    }
+
     public function test_generated_label_can_be_cancelled_through_provider(): void
     {
         $this->melhorEnvioIntegration();

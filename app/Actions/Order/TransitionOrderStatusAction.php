@@ -26,8 +26,9 @@ final class TransitionOrderStatusAction
         ?string $trackingUrl = null,
         bool $fromProvider = false,
         bool $contingency = false,
+        ?string $cancellationReason = null,
     ): Order {
-        return DB::transaction(function () use ($order, $to, $userId, $description, $carrier, $trackingCode, $trackingUrl, $fromProvider, $contingency): Order {
+        return DB::transaction(function () use ($order, $to, $userId, $description, $carrier, $trackingCode, $trackingUrl, $fromProvider, $contingency, $cancellationReason): Order {
             /** @var Order $locked */
             $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
             $from = $locked->status;
@@ -36,15 +37,20 @@ final class TransitionOrderStatusAction
                 return $locked->refresh();
             }
 
+            if ($to === OrderStatus::CANCELLED && ! $from->canBeCancelled()) {
+                $message = $from === OrderStatus::DELIVERED
+                    ? 'Este pedido já foi entregue e não pode mais ser cancelado.'
+                    : 'Este pedido já foi enviado e não pode mais ser cancelado. Use o fluxo de pós-venda para devolução ou reembolso quando necessário.';
+
+                throw ValidationException::withMessages(['status' => $message]);
+            }
+
             if (! in_array($to, $from->allowedTransitions(), true)) {
                 throw ValidationException::withMessages([
                     'status' => "Não é possível mover o pedido de {$from->label()} para {$to->label()}.",
                 ]);
             }
 
-            if ($to === OrderStatus::CANCELLED && $locked->shipments()->whereNull('cancelled_at')->exists()) {
-                throw ValidationException::withMessages(['status' => 'Cancele ou verifique os envios pendentes antes de cancelar o pedido.']);
-            }
             if ($to !== OrderStatus::CANCELLED && $locked->shipping_pricing_status === ShippingPricingStatus::AWAITING_QUOTE) {
                 throw ValidationException::withMessages(['status' => 'Defina e confirme o frete antes de avançar este pedido.']);
             }
@@ -52,7 +58,33 @@ final class TransitionOrderStatusAction
                 throw ValidationException::withMessages(['status' => 'O cliente precisa confirmar o frete e o pagamento.']);
             }
             if ($to === OrderStatus::CANCELLED) {
+                $reason = filled($cancellationReason) ? trim((string) $cancellationReason) : null;
+                if ($reason !== null && mb_strlen($reason) > 1000) {
+                    throw ValidationException::withMessages(['cancellation_reason' => 'O motivo do cancelamento deve ter no máximo 1.000 caracteres.']);
+                }
+
+                // Even if the order status is stale because a webhook has not been processed yet,
+                // a shipment already posted/delivered means the goods left the store and the order
+                // must follow a post-sale flow instead of cancellation.
+                $alreadyDispatched = $locked->shipments()
+                    ->where(function ($query): void {
+                        $query
+                            ->whereIn('status', [ShipmentStatus::POSTED->value, ShipmentStatus::DELIVERED->value])
+                            ->orWhereNotNull('posted_at')
+                            ->orWhereNotNull('delivered_at');
+                    })
+                    ->exists();
+
+                if ($alreadyDispatched) {
+                    throw ValidationException::withMessages([
+                        'status' => 'Este pedido já foi postado e não pode mais ser cancelado. Use o fluxo de pós-venda para devolução ou reembolso quando necessário.',
+                    ]);
+                }
+
                 app(ManageOrderInventoryAction::class)->cancel($locked);
+
+                $locked->cancellation_reason = $reason;
+                $locked->cancelled_at = now();
             }
             $mode = OrderShipping::mode($locked);
             if ($contingency && ! filled($description)) {

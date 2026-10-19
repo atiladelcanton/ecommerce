@@ -9,6 +9,7 @@ use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Shipping\Contracts\ShipmentLabelProvider;
 use App\Domain\Shipping\Contracts\ShipmentProvider;
+use App\Domain\Shipping\Contracts\ShipmentTrackingProvider;
 use App\Domain\Shipping\Enums\ShipmentDocumentType;
 use App\Domain\Shipping\Enums\ShipmentStatus;
 use App\Domain\Shipping\Exceptions\ShippingProviderFailed;
@@ -211,14 +212,40 @@ final class GenerateShipmentLabelAction
                     $shipment->refresh();
                 }
                 if ($shipment->status === ShipmentStatus::PURCHASED) {
-                    $this->claim($shipment, 'generate_in_progress', allowResume: true);
-                    $provider->generateLabel($shipment->external_id);
-                    // A webhook may have advanced the shipment while the request was running.
-                    Shipment::query()->whereKey($shipment->id)->where('status', ShipmentStatus::PURCHASED->value)->update([
-                        'status' => ShipmentStatus::LABEL_GENERATED->value,
-                        'generated_at' => now(),
-                        'operation_phase' => null,
-                    ]);
+                    $metadata = $shipment->metadata ?? [];
+                    if (! filled($metadata['generation_requested_at'] ?? null)) {
+                        $this->claim($shipment, 'generate_in_progress', allowResume: true);
+                        $provider->generateLabel($shipment->external_id);
+                        $metadata['generation_requested_at'] = now()->toIso8601String();
+                        Shipment::query()->whereKey($shipment->id)->where('status', ShipmentStatus::PURCHASED->value)->update([
+                            'metadata' => json_encode($metadata, JSON_THROW_ON_ERROR),
+                            'operation_phase' => null,
+                        ]);
+                        $shipment->refresh();
+                    }
+
+                    // O endpoint /generate apenas confirma que a etiqueta foi encaminhada
+                    // para geração. Não podemos marcar como pronta antes de o Melhor Envio
+                    // confirmar o estado generated (via tracking/webhook).
+                    if ($provider instanceof ShipmentTrackingProvider) {
+                        try {
+                            $tracking = $provider->track($shipment->external_id);
+                            app(ProcessShippingWebhookAction::class)->execute(
+                                $shipment->provider,
+                                ['event' => 'order.'.$tracking->status, 'data' => [
+                                    'id' => $shipment->external_id,
+                                    'tracking' => $tracking->trackingCode,
+                                    'tracking_url' => $tracking->trackingUrl,
+                                ]],
+                                'generation-sync:'.hash('sha256', $shipment->external_id.'|'.$tracking->status.'|'.($tracking->trackingCode ?? '')),
+                            );
+                            $shipment->refresh();
+                        } catch (ShippingProviderFailed) {
+                            // A geração já foi aceita. Uma falha na consulta imediata não
+                            // deve disparar uma segunda geração nem transformar o estado em
+                            // falha; o webhook ou uma atualização manual concluirá o fluxo.
+                        }
+                    }
                 }
             } catch (ShippingProviderFailed $exception) {
                 if (! $exception->uncertain || $shipment->operation_phase === 'generate_in_progress') {

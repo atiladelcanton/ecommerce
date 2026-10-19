@@ -8,19 +8,24 @@ use App\Actions\Shipping\PrintShipmentLabelAction;
 use App\Domain\Shipping\Models\Shipment;
 use App\Filament\Pages\ShippingMethods;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 final class ShipmentLabelController extends Controller
 {
-    public function __invoke(Shipment $shipment, PrintShipmentLabelAction $action): RedirectResponse
+    public function __invoke(Request $request, Shipment $shipment, PrintShipmentLabelAction $action): RedirectResponse|View
     {
         abort_unless(ShippingMethods::canAccess(), 403);
 
         try {
             $url = $action->execute($shipment, 'pdf');
         } catch (ValidationException $exception) {
-            return redirect()->back()->with('error', $this->validationMessage($exception, 'Não foi possível abrir a etiqueta. Verifique o envio e tente novamente.'));
+            return view('shipping.label-error', [
+                'message' => $this->validationMessage($exception, 'Não foi possível abrir a etiqueta. Atualize o status do envio e tente novamente.'),
+                'backUrl' => $request->headers->get('referer') ?: url('/admin/orders/'.$shipment->order_id),
+            ]);
         }
 
         return redirect()->away($url);

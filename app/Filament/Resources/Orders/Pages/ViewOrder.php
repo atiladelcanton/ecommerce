@@ -42,6 +42,20 @@ final class ViewOrder extends ViewRecord
 
     protected string $view = 'filament.resources.orders.pages.view-order';
 
+    public bool $blockingOperationModalOpen = false;
+
+    public string $blockingOperationTitle = '';
+
+    public string $blockingOperationMessage = '';
+
+    public ?string $blockingOperationPrimaryAction = null;
+
+    public ?string $blockingOperationPrimaryLabel = null;
+
+    public ?string $blockingOperationPrimaryUrl = null;
+
+    public bool $forceInvoiceDocumentOnNextLabelModal = false;
+
     protected function getHeaderActions(): array
     {
         $order = $this->record;
@@ -50,6 +64,7 @@ final class ViewOrder extends ViewRecord
         $actions = [];
         $currentShipments = OrderShipping::currentShipments($order);
         $hasPendingShippingVerification = $currentShipments->contains(fn ($shipment) => filled($shipment->operation_phase));
+        $waitingForLabelGeneration = $currentShipments->contains(fn ($shipment) => $shipment->status === ShipmentStatus::PURCHASED && filled(($shipment->metadata ?? [])['generation_requested_at'] ?? null));
         if ($status === OrderStatus::RECEIVED && $order->shipping_pricing_status !== null && $order->payment_status !== PaymentStatus::APPROVED) {
             $actions[] = Action::make('quoteShipping')->label('Informar cotação de entrega')->modalHeading('Cotação de entrega')
                 ->fillForm(fn () => $order->latestShippingQuote?->toArray() ?? ['service_name' => 'Entrega combinada', 'expires_at' => now()->addDays(7)])
@@ -71,7 +86,7 @@ final class ViewOrder extends ViewRecord
         if ($status === OrderStatus::PROCESSING && $mode === 'pickup') {
             $actions[] = $this->statusAction('pickup', 'Pronto para retirada', OrderStatus::READY_FOR_PICKUP);
         }
-        if ($status === OrderStatus::PROCESSING && $mode === 'automatic' && ! $hasPendingShippingVerification) {
+        if ($status === OrderStatus::PROCESSING && $mode === 'automatic' && ! $hasPendingShippingVerification && ! $waitingForLabelGeneration) {
             $snapshot = OrderShipping::snapshot($order);
             $actions[] = Action::make('generateLabel')->label('Gerar etiqueta')->modalHeading('Preparar envio')->schema([
                 Section::make('Entrega contratada')->schema([
@@ -85,7 +100,9 @@ final class ViewOrder extends ViewRecord
                             ShipmentDocumentType::INVOICE->value => ShipmentDocumentType::INVOICE->label(),
                             ShipmentDocumentType::CONTENT_DECLARATION->value => ShipmentDocumentType::CONTENT_DECLARATION->label(),
                         ])
-                        ->default($order->shipping_document_type?->value ?? ShipmentDocumentType::INVOICE->value),
+                        ->default(fn (): string => $this->forceInvoiceDocumentOnNextLabelModal
+                            ? ShipmentDocumentType::INVOICE->value
+                            : ($order->shipping_document_type?->value ?? ShipmentDocumentType::INVOICE->value)),
                     Text::make('A declaração de conteúdo é destinada a envios que possam legalmente ser realizados sem Nota Fiscal. Os itens, quantidades e valores serão preenchidos automaticamente a partir deste pedido.')
                         ->color('warning')
                         ->visible(fn (Get $get): bool => $get('shipping_document_type') === ShipmentDocumentType::CONTENT_DECLARATION->value),
@@ -151,20 +168,32 @@ final class ViewOrder extends ViewRecord
                     ->url(route('admin.shipping.labels.open', ['shipment' => $shipment]))
                     ->openUrlInNewTab();
 
-                $actions[] = ActionGroup::make(array_map(
-                    fn ($format) => Action::make('download_'.$shipment->id.'_'.$format)
-                        ->label(strtoupper($format))
-                        ->url(route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => $format])),
-                    ['pdf', 'zpl', 'jpeg'],
-                ))
-                    ->label('Baixar arquivo'.$volumeLabel)
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('gray')
-                    ->button();
+                // O endpoint de arquivo direto possui limitações no Sandbox,
+                // principalmente para serviços dos Correios. Em homologação o fluxo
+                // principal é abrir/imprimir; downloads diretos ficam disponíveis em produção.
+                if ($shipment->environment === 'production') {
+                    $actions[] = ActionGroup::make(array_map(
+                        fn ($format) => Action::make('download_'.$shipment->id.'_'.$format)
+                            ->label(strtoupper($format))
+                            ->url(route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => $format])),
+                        ['pdf', 'zpl', 'jpeg'],
+                    ))
+                        ->label('Baixar arquivo'.$volumeLabel)
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('gray')
+                        ->button();
+                }
             }
             if ($shipment->external_id && $shipment->status !== ShipmentStatus::CANCELLED) {
-                $actions[] = Action::make('tracking_'.$shipment->id)->label('Atualizar rastreamento'.$volumeLabel)->color('gray')
-                    ->action(fn () => $this->perform(fn () => app(RefreshShipmentTrackingAction::class)->execute($shipment), 'Rastreamento atualizado'));
+                $waitingThisLabel = $shipment->status === ShipmentStatus::PURCHASED
+                    && filled(($shipment->metadata ?? [])['generation_requested_at'] ?? null);
+                $actions[] = Action::make('tracking_'.$shipment->id)
+                    ->label(($waitingThisLabel ? 'Atualizar status da etiqueta' : 'Atualizar rastreamento').$volumeLabel)
+                    ->color($waitingThisLabel ? 'warning' : 'gray')
+                    ->action(fn () => $this->perform(
+                        fn () => app(RefreshShipmentTrackingAction::class)->execute($shipment),
+                        $waitingThisLabel ? 'Status da etiqueta atualizado' : 'Rastreamento atualizado',
+                    ));
                 $actions[] = Action::make('cancel_'.$shipment->id)->label('Cancelar etiqueta'.$volumeLabel)->color('danger')->requiresConfirmation()
                     ->schema([Section::make('Cancelar etiqueta')->description('Isso cancela somente o envio logístico. O pedido de venda continuará existindo.')->schema([Textarea::make('reason')->label('Motivo')->required()->maxLength(500)])])
                     ->action(fn (array $data) => $this->perform(fn () => app(CancelShipmentAction::class)->execute($shipment, $data['reason'], auth()->id()), 'Etiqueta cancelada; o pedido foi preservado'));
@@ -195,8 +224,40 @@ final class ViewOrder extends ViewRecord
                 ->schema([Section::make('Intervenção administrativa')->schema([Textarea::make('reason')->label('Justificativa')->required()->minLength(10)->maxLength(1000)])])
                 ->action(fn (array $data) => $this->perform(fn () => app(TransitionOrderStatusAction::class)->execute($order, $target, auth()->id(), $data['reason'], carrier: $order->carrier ?: $order->shipping_quote_snapshot['carrier_name'] ?? null, contingency: true), 'Contingência registrada'));
         }
-        if (in_array($status, [OrderStatus::RECEIVED, OrderStatus::PAID, OrderStatus::PROCESSING], true)) {
-            $actions[] = $this->statusAction('cancelOrder', 'Cancelar pedido', OrderStatus::CANCELLED)->color('danger')->requiresConfirmation();
+        if ($status->canBeCancelled()) {
+            $hasActiveShipment = $order->shipments()->whereNull('cancelled_at')->exists();
+            $cancelDescription = 'O pedido será marcado como cancelado. O motivo é opcional.';
+            if ($order->payment_status === PaymentStatus::APPROVED) {
+                $cancelDescription .= ' O cancelamento não realiza estorno automático do pagamento.';
+            }
+            if ($hasActiveShipment) {
+                $cancelDescription .= ' Existe um envio logístico vinculado; cancelar o pedido não cancela automaticamente a etiqueta ou a postagem.';
+            }
+
+            $actions[] = Action::make('cancelOrder')
+                ->label('Cancelar pedido')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('Cancelar pedido')
+                ->modalDescription($cancelDescription)
+                ->modalSubmitActionLabel('Cancelar pedido')
+                ->schema([
+                    Section::make('Cancelamento')->schema([
+                        Textarea::make('reason')
+                            ->label('Motivo do cancelamento')
+                            ->helperText('Opcional. Esta informação é interna e não será exibida ao cliente.')
+                            ->maxLength(1000),
+                    ]),
+                ])
+                ->action(fn (array $data) => $this->perform(
+                    fn () => app(TransitionOrderStatusAction::class)->execute(
+                        $order,
+                        OrderStatus::CANCELLED,
+                        auth()->id(),
+                        cancellationReason: filled($data['reason'] ?? null) ? trim((string) $data['reason']) : null,
+                    ),
+                    'Pedido cancelado',
+                ));
         }
 
         return $actions;
@@ -207,17 +268,81 @@ final class ViewOrder extends ViewRecord
         return Action::make($name)->label($label)->action(fn () => $this->perform(fn () => app(TransitionOrderStatusAction::class)->execute($this->record, $to, auth()->id()), 'Pedido atualizado'));
     }
 
+    public function dismissBlockingOperationModal(): void
+    {
+        $this->blockingOperationModalOpen = false;
+        $this->blockingOperationTitle = '';
+        $this->blockingOperationMessage = '';
+        $this->blockingOperationPrimaryAction = null;
+        $this->blockingOperationPrimaryLabel = null;
+        $this->blockingOperationPrimaryUrl = null;
+    }
+
+    public function continueBlockingOperation(): void
+    {
+        $action = $this->blockingOperationPrimaryAction;
+
+        $this->dismissBlockingOperationModal();
+
+        if ($action === 'generate_invoice') {
+            $this->forceInvoiceDocumentOnNextLabelModal = true;
+            $this->mountAction('generateLabel');
+        }
+    }
+
+    private function showBlockingValidation(ValidationException $exception, string $fallbackTitle): void
+    {
+        $errors = $exception->errors();
+        $field = array_key_first($errors);
+        $message = (string) collect($errors)->flatten()->first();
+
+        $this->blockingOperationTitle = $fallbackTitle;
+        $this->blockingOperationMessage = $message !== '' ? $message : 'Revise os dados desta operação antes de continuar.';
+        $this->blockingOperationPrimaryAction = null;
+        $this->blockingOperationPrimaryLabel = null;
+        $this->blockingOperationPrimaryUrl = null;
+
+        if (
+            str_contains($this->blockingOperationMessage, 'R$ 1.000,00')
+            && str_contains(mb_strtolower($this->blockingOperationMessage), 'declaração de conteúdo')
+        ) {
+            $this->blockingOperationTitle = 'Não é possível gerar esta etiqueta com declaração de conteúdo';
+            $this->blockingOperationMessage .= "\n\nO pedido e o pagamento não foram alterados.";
+            $this->blockingOperationPrimaryAction = 'generate_invoice';
+            $this->blockingOperationPrimaryLabel = 'Gerar com NF-e';
+        } elseif (str_contains($this->blockingOperationMessage, 'Complete os dados da loja')) {
+            $this->blockingOperationTitle = 'Complete os dados da loja';
+            $this->blockingOperationPrimaryLabel = 'Ir para configurações da loja';
+            $this->blockingOperationPrimaryUrl = StoreSettings::getUrl();
+        } elseif (str_contains($this->blockingOperationMessage, 'Verificar envio')) {
+            $this->blockingOperationTitle = 'Não foi possível confirmar a última operação';
+        }
+
+        $this->blockingOperationModalOpen = true;
+    }
+
+    private function showBlockingFailure(string $title): void
+    {
+        $this->blockingOperationTitle = $title;
+        $this->blockingOperationMessage = 'Tente novamente em alguns instantes. Se o problema continuar, consulte o suporte técnico.';
+        $this->blockingOperationPrimaryAction = null;
+        $this->blockingOperationPrimaryLabel = null;
+        $this->blockingOperationPrimaryUrl = null;
+        $this->blockingOperationModalOpen = true;
+    }
+
     private function perform(callable $operation, string $message, string $errorTitle = 'Não foi possível concluir a operação'): void
     {
         try {
             $operation();
             $this->record = $this->record->refresh();
+            $this->forceInvoiceDocumentOnNextLabelModal = false;
             Notification::make()->success()->title($message)->send();
         } catch (ValidationException $exception) {
-            Notification::make()->danger()->title($errorTitle)->body((string) collect($exception->errors())->flatten()->first())->send();
+            $this->showBlockingValidation($exception, $errorTitle);
         } catch (\Throwable $exception) {
             Log::warning('Order shipping operation failed', ['order_id' => $this->record->id, 'exception_type' => $exception::class]);
-            Notification::make()->danger()->title($errorTitle)->body('Tente novamente em alguns instantes. Se o problema continuar, consulte o suporte técnico.')->send();
+            $this->showBlockingFailure($errorTitle);
         }
     }
 }

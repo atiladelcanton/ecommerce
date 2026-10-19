@@ -20,6 +20,7 @@ final class CustomerFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'phone' => '11999990000',
             'document' => (string) fake()->unique()->numerify('###########'),
+            'birth_date' => null,
             'password' => Hash::make('password'),
             'remember_token' => Str::random(10),
         ];

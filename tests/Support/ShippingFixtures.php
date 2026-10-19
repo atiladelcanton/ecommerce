@@ -77,6 +77,11 @@ trait ShippingFixtures
             },
             '*/api/v2/me/shipment/checkout' => Http::response(['success' => true]),
             '*/api/v2/me/shipment/generate' => $generationStatus === 200 ? Http::response(['success' => true]) : Http::sequence()->push(['success' => false], $generationStatus)->push(['success' => true]),
+            '*/api/v2/me/shipment/tracking' => function ($request) {
+                $id = (string) (($request['orders'] ?? [])[0] ?? 'external-1');
+
+                return Http::response([$id => ['status' => 'generated', 'tracking' => null, 'tracking_url' => null]]);
+            },
         ]);
     }
 

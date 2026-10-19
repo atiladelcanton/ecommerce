@@ -1,6 +1,70 @@
 <x-filament-panels::page>
     @php($order = $this->record->loadMissing(['items', 'address', 'payments', 'statusHistories.user', 'shipments.events']))
 
+    @if($blockingOperationModalOpen)
+        <div
+            class="fixed inset-0 z-[70] flex items-center justify-center bg-zinc-950/45 p-4"
+            role="presentation"
+            x-on:keydown.escape.window="$wire.dismissBlockingOperationModal()"
+        >
+            <section
+                class="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white shadow-2xl"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="blocking-operation-title"
+                aria-describedby="blocking-operation-message"
+            >
+                <div class="flex items-start justify-between gap-4 border-b border-zinc-200 px-6 py-5">
+                    <div class="min-w-0">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-red-600">Ação necessária</p>
+                        <h2 id="blocking-operation-title" class="mt-1 text-lg font-semibold text-zinc-950">
+                            {{ $blockingOperationTitle }}
+                        </h2>
+                    </div>
+                    <button
+                        type="button"
+                        wire:click="dismissBlockingOperationModal"
+                        class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        aria-label="Fechar"
+                    >
+                        <span aria-hidden="true" class="text-2xl leading-none">&times;</span>
+                    </button>
+                </div>
+
+                <div class="px-6 py-5">
+                    <p id="blocking-operation-message" class="whitespace-pre-line text-sm leading-6 text-zinc-700">{{ $blockingOperationMessage }}</p>
+                </div>
+
+                <div class="flex flex-col-reverse gap-3 border-t border-zinc-200 px-6 py-4 sm:flex-row sm:justify-end">
+                    <button
+                        type="button"
+                        wire:click="dismissBlockingOperationModal"
+                        class="inline-flex min-h-10 items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                    >
+                        Voltar ao pedido
+                    </button>
+
+                    @if($blockingOperationPrimaryUrl && $blockingOperationPrimaryLabel)
+                        <a
+                            href="{{ $blockingOperationPrimaryUrl }}"
+                            class="inline-flex min-h-10 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                            {{ $blockingOperationPrimaryLabel }}
+                        </a>
+                    @elseif($blockingOperationPrimaryAction && $blockingOperationPrimaryLabel)
+                        <button
+                            type="button"
+                            wire:click="continueBlockingOperation"
+                            class="inline-flex min-h-10 items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                            {{ $blockingOperationPrimaryLabel }}
+                        </button>
+                    @endif
+                </div>
+            </section>
+        </div>
+    @endif
+
     @if($order->shipping_pricing_status)
         <x-filament::section :heading="$order->shipping_pricing_status->label()">
             <p class="text-sm text-gray-600">A solicitação reserva estoque por 24 horas. Depois desse prazo, a compra depende de uma nova verificação de disponibilidade.</p>
@@ -35,11 +99,29 @@
                 <div class="flex justify-between gap-4"><dt class="text-zinc-500">Itens</dt><dd class="font-medium text-zinc-900">{{ $order->items->sum('quantity') }}</dd></div>
                 <div class="flex justify-between gap-4 border-t border-zinc-200 pt-4"><dt class="font-medium text-zinc-700">Total</dt><dd class="text-lg font-bold text-zinc-950">{{ $order->formattedTotal() }}</dd></div>
             </dl>
+            @if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED)
+                <div class="mt-5 rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-900">
+                    <p class="font-semibold">Pedido cancelado{{ $order->cancelled_at ? ' em '.$order->cancelled_at->format('d/m/Y H:i') : '' }}</p>
+                    @if($order->cancellation_reason)
+                        <p class="mt-2 whitespace-pre-line text-red-800"><span class="font-medium">Motivo interno:</span> {{ $order->cancellation_reason }}</p>
+                    @endif
+                    @if($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::APPROVED)
+                        <p class="mt-2 text-xs leading-5 text-red-700">O pagamento continua marcado como aprovado. O cancelamento do pedido não realiza estorno automaticamente.</p>
+                    @endif
+                </div>
+            @endif
         </section>
 
         <section class="fi-section xl:col-span-4 p-6">
-            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Cliente</p>
-            <h2 class="mt-1 text-lg font-semibold text-zinc-900">{{ $order->customer_name }}</h2>
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Cliente</p>
+                    <h2 class="mt-1 text-lg font-semibold text-zinc-900">{{ $order->customer_name }}</h2>
+                </div>
+                @if($order->customer)
+                    <a href="{{ \App\Filament\Resources\Customers\CustomerResource::getUrl('view', ['record' => $order->customer]) }}" class="text-sm font-semibold text-red-600 hover:text-red-700">Ver cliente</a>
+                @endif
+            </div>
             <dl class="mt-5 grid gap-3 text-sm">
                 <div><dt class="text-zinc-500">E-mail</dt><dd class="mt-1 font-medium text-zinc-900">{{ $order->customer_email }}</dd></div>
                 <div><dt class="text-zinc-500">Telefone</dt><dd class="mt-1 font-medium text-zinc-900">{{ \App\Support\BrazilianData::phone($order->customer_phone) }}</dd></div>
@@ -103,6 +185,12 @@
             <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Logística</p>
             <h2 class="mt-1 text-lg font-semibold text-zinc-900">Envios e etiquetas</h2>
             @php($currentShipments = \App\Domain\Shipping\OrderShipping::currentShipments($order))
+            @if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED && $currentShipments->contains(fn($shipment) => !$shipment->cancelled_at))
+                <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <p class="font-semibold">O pedido foi cancelado, mas existe envio logístico ativo.</p>
+                    <p class="mt-1 text-xs leading-5">O cancelamento comercial não cancela automaticamente etiquetas ou postagens. Use a ação <strong>Cancelar etiqueta</strong> quando o provedor ainda permitir.</p>
+                </div>
+            @endif
             <div class="mt-5 grid gap-3">
                 @forelse($currentShipments as $shipmentIndex => $shipment)
                     <div class="rounded-lg border border-zinc-200 p-4 text-sm">
@@ -139,12 +227,23 @@
                             </details>
                         @endif
 
+                        @if($shipment->status === \App\Domain\Shipping\Enums\ShipmentStatus::PURCHASED && filled(($shipment->metadata ?? [])['generation_requested_at'] ?? null))
+                            <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                                <p class="font-semibold">Etiqueta em processamento</p>
+                                <p class="mt-1 text-xs leading-5">O Melhor Envio recebeu a solicitação de geração. Use <strong>Atualizar status da etiqueta</strong> até a geração ser confirmada.</p>
+                            </div>
+                        @endif
+
                         @if($shipment->generated_at && !$shipment->cancelled_at)
                             <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
                                 <a class="inline-flex font-semibold text-red-600 hover:text-red-700" href="{{ route('admin.shipping.labels.open', ['shipment' => $shipment]) }}" target="_blank" rel="noopener noreferrer">Abrir / imprimir etiqueta ↗</a>
-                                <a class="inline-flex font-semibold text-zinc-600 hover:text-zinc-900" href="{{ route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => 'pdf']) }}">Baixar PDF</a>
+                                @if($shipment->environment === 'production')
+                                    <a class="inline-flex font-semibold text-zinc-600 hover:text-zinc-900" href="{{ route('admin.shipping.labels.download', ['shipment' => $shipment, 'format' => 'pdf']) }}">Baixar PDF</a>
+                                @endif
                             </div>
-                            <p class="mt-2 text-xs leading-5 text-zinc-400">No Sandbox, o Melhor Envio limita o download direto de arquivos a alguns serviços. Se o arquivo não estiver disponível, o sistema abrirá automaticamente a impressão oficial.</p>
+                            @if($shipment->environment === 'sandbox')
+                                <p class="mt-2 text-xs leading-5 text-zinc-400">No ambiente de homologação, use <strong>Abrir / imprimir etiqueta</strong>. O download direto de arquivo é limitado pelo Melhor Envio para alguns serviços.</p>
+                            @endif
                         @endif
                     </div>
                 @empty

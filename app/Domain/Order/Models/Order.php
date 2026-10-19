@@ -29,6 +29,7 @@ final class Order extends Model
         'customer_phone',
         'customer_document',
         'status',
+        'cancellation_reason',
         'payment_status',
         'subtotal_cents',
         'shipping_cents',
@@ -50,6 +51,7 @@ final class Order extends Model
         'ready_for_shipping_at',
         'shipped_at',
         'delivered_at',
+        'cancelled_at',
     ];
 
     protected function casts(): array
@@ -67,6 +69,7 @@ final class Order extends Model
             'ready_for_shipping_at' => 'datetime',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 

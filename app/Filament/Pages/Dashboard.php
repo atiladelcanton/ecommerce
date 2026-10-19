@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\BestSellingProducts;
+use App\Filament\Widgets\CustomerBirthdays;
+use App\Filament\Widgets\DeliveredVsCancelledChart;
 use App\Filament\Widgets\MonthlyOrdersChart;
+use App\Filament\Widgets\OrderOutcomesSummary;
 use App\Filament\Widgets\OrdersAttention;
 use App\Filament\Widgets\OrdersByStatusChart;
 use App\Filament\Widgets\OrdersOverview;
@@ -29,8 +32,11 @@ final class Dashboard extends BaseDashboard
             OrdersOverview::class,
             MonthlyOrdersChart::class,
             OrdersByStatusChart::class,
+            DeliveredVsCancelledChart::class,
+            OrderOutcomesSummary::class,
             OrdersAttention::class,
             BestSellingProducts::class,
+            CustomerBirthdays::class,
         ];
     }
 

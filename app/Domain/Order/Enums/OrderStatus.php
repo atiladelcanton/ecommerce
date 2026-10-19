@@ -47,6 +47,17 @@ enum OrderStatus: string
         };
     }
 
+    public function canBeCancelled(): bool
+    {
+        return in_array($this, [
+            self::RECEIVED,
+            self::PAID,
+            self::PROCESSING,
+            self::READY_TO_SHIP,
+            self::READY_FOR_PICKUP,
+        ], true);
+    }
+
     /** @return list<self> */
     public function allowedTransitions(): array
     {
@@ -56,7 +67,8 @@ enum OrderStatus: string
             // SHIPPED remains available for non-integrated/manual carriers.
             self::PROCESSING => [self::READY_FOR_SHIPPING, self::SHIPPED, self::READY_FOR_PICKUP, self::CANCELLED],
             self::READY_FOR_SHIPPING => [self::SHIPPED, self::PROCESSING, self::CANCELLED],
-            self::SHIPPED, self::READY_FOR_PICKUP => [self::DELIVERED],
+            self::READY_FOR_PICKUP => [self::DELIVERED, self::CANCELLED],
+            self::SHIPPED => [self::DELIVERED],
             self::DELIVERED, self::CANCELLED => [],
         };
     }

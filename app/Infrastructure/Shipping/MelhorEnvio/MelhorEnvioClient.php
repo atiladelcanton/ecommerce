@@ -198,6 +198,9 @@ final class MelhorEnvioClient
 
         if ($status === 422) {
             $normalized = mb_strtolower((string) $providerMessage);
+            if (str_contains($normalized, 'e-crt-0001') || (str_contains($normalized, 'valor segurado') && str_contains($normalized, 'não comerciais'))) {
+                return 'Este envio não comercial ultrapassa o limite de valor segurado aceito pelo Melhor Envio para declaração de conteúdo. Para continuar com esta entrega, utilize uma Nota Fiscal (NF-e).'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
+            }
             if (str_contains($normalized, 'nota fiscal') || str_contains($normalized, 'invoice') || str_contains($normalized, 'nfe') || str_contains($normalized, 'nf-e')) {
                 return 'O Melhor Envio recusou a NF-e. Use uma chave real de NF-e modelo 55; no Sandbox as chaves também são validadas.'.($providerMessage ? ' Detalhe: '.$providerMessage : '');
             }

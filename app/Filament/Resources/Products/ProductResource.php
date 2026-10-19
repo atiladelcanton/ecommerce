@@ -95,11 +95,18 @@ final class ProductResource extends Resource
                         ['bulletList', 'orderedList', 'blockquote', 'link'],
                         ['undo', 'redo'],
                     ])
-                    ->formatStateUsing(fn (?string $state): string => ProductDescription::html($state))
-                    ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? ProductDescription::html($state) : null)
+                    ->formatStateUsing(fn (mixed $state): string => ProductDescription::html($state))
+                    ->dehydrateStateUsing(fn (mixed $state): ?string => ProductDescription::html($state) !== '' ? ProductDescription::html($state) : null)
                     ->helperText('Formate o texto e use emojis. Scripts, HTML livre e anexos não são permitidos.')
                     ->columnSpanFull(),
             ]),
+            Section::make('SEO')
+                ->description('Opcional. Se ficar vazio, a loja usa automaticamente o nome e a descrição do produto.')
+                ->columns(['default' => 1, 'lg' => 2])
+                ->schema([
+                    TextInput::make('seo_title')->label('Título SEO')->maxLength(255)->helperText('Idealmente até 60 caracteres.'),
+                    Textarea::make('seo_description')->label('Descrição SEO')->maxLength(5000)->rows(3)->helperText('Idealmente até 160 caracteres.'),
+                ]),
             Section::make('Mídia')->schema([
                 self::uploads(),
                 TextInput::make('youtube_url')->label('Vídeo demonstrativo do YouTube')->url()->maxLength(2048),

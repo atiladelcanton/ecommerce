@@ -53,6 +53,8 @@ final class ValidateCatalogData
             'sku' => ['nullable', 'string', 'max:255', Rule::unique('products')->ignore($product?->id)],
             'short_description' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:5000'],
             'youtube_url' => ['nullable', 'url', 'max:2048', 'regex:~^https?://(?:www\.)?(?:youtube\.com|youtu\.be)/~i'],
             'availability' => [$required, 'required', Rule::enum(ProductAvailability::class)],
             'cost_price' => [$required, 'required', $cents],

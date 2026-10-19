@@ -20,9 +20,11 @@ final class UpdateCustomerProfileAction
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($customer->id)],
             'phone' => ['required', 'regex:/\A\d{10,13}\z/'],
+            'birth_date' => ['nullable', 'date', 'before_or_equal:today'],
         ], [
             'email.unique' => 'Este e-mail já está em uso.',
             'phone.regex' => 'Informe um telefone válido com DDD.',
+            'birth_date.before_or_equal' => 'A data de nascimento não pode estar no futuro.',
             'required' => 'Informe :attribute.',
         ], ['name' => 'o nome', 'email' => 'o e-mail', 'phone' => 'o telefone'])->validate();
         $customer->update($data);

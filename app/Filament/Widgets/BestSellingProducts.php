@@ -15,7 +15,7 @@ final class BestSellingProducts extends Widget
 
     protected int|string|array $columnSpan = [
         'md' => 12,
-        'xl' => 4,
+        'xl' => 6,
     ];
 
     protected function getViewData(): array

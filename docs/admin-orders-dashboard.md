@@ -17,6 +17,8 @@ Widgets:
 - Total de pedidos, faturamento pago, ticket médio e pedidos que exigem ação.
 - Evolução de pedidos nos últimos 12 meses.
 - Distribuição por status.
+- Comparativo mensal de pedidos entregues x cancelados nos últimos 12 meses, usando `delivered_at` e `cancelled_at` em vez da data de criação do pedido.
+- Resumo mensal de desfechos com entregues, cancelados, taxa de cancelamento e valor dos pedidos cancelados. A taxa considera apenas pedidos com desfecho (`cancelados / (entregues + cancelados)`).
 - Pedidos pagos/em preparação que exigem atenção.
 - Produtos mais vendidos no mês considerando somente pedidos com pagamento aprovado.
 

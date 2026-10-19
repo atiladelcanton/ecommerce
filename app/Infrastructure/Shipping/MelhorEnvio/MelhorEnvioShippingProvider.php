@@ -209,9 +209,28 @@ final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, Shipme
     public function printLabel(string $externalId, string $format = 'pdf'): string
     {
         $printed = $this->client->post('/api/v2/me/shipment/print', ['mode' => 'public', 'orders' => [$externalId]]);
-        $url = $printed['url'] ?? null;
-        if (! is_string($url) || ! filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') {
-            throw new ShippingProviderFailed('A impressão ainda não está disponível. Tente novamente em instantes.');
+
+        return $this->labelUrl($printed, 'A impressão ainda não está disponível. Tente novamente em instantes.');
+    }
+
+    public function previewLabel(string $externalId): string
+    {
+        $preview = $this->client->post('/api/v2/me/shipment/preview', ['orders' => [$externalId]]);
+
+        return $this->labelUrl($preview, 'A pré-visualização da etiqueta ainda não está disponível.');
+    }
+
+    /** @param array<string, mixed> $response */
+    private function labelUrl(array $response, string $message): string
+    {
+        $url = $response['url'] ?? $response['data']['url'] ?? $response['data'] ?? null;
+        if (! is_string($url) || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new ShippingProviderFailed($message);
+        }
+
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        if ($scheme !== 'https') {
+            throw new ShippingProviderFailed('O Melhor Envio retornou um link de etiqueta inválido.');
         }
 
         return $url;

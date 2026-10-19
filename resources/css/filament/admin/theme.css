@@ -586,3 +586,66 @@
         grid-column: 2;
     }
 }
+
+/* Dashboard: resolved orders summary beside the delivered x cancelled chart. */
+.saba-outcomes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.saba-outcomes-metric {
+    min-width: 0;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid #f1f1f2;
+}
+
+.saba-outcomes-metric:nth-child(odd) {
+    border-right: 1px solid #f1f1f2;
+}
+
+.saba-outcomes-metric:nth-last-child(-n + 2) {
+    border-bottom: 0;
+}
+
+.saba-outcomes-metric__label {
+    display: block;
+    margin-bottom: .3rem;
+    color: #71717a;
+    font-size: .7rem;
+    font-weight: 650;
+}
+
+.saba-outcomes-metric__value {
+    display: block;
+    color: #18181b;
+    font-size: 1.25rem;
+    font-weight: 750;
+    letter-spacing: -.025em;
+    line-height: 1.15;
+}
+
+.saba-outcomes-metric--success .saba-outcomes-metric__value { color: #15803d; }
+.saba-outcomes-metric--danger .saba-outcomes-metric__value { color: #b91c1c; }
+.saba-outcomes-metric__value--money { font-size: 1rem; }
+
+.saba-outcomes-metric__hint {
+    display: block;
+    margin-top: .32rem;
+    color: #a1a1aa;
+    font-size: .64rem;
+    line-height: 1.25;
+}
+
+.saba-outcomes-metric__hint--good { color: #15803d; }
+.saba-outcomes-metric__hint--bad { color: #b91c1c; }
+
+@media (max-width: 639px) {
+    .saba-outcomes-grid { grid-template-columns: 1fr; }
+    .saba-outcomes-metric,
+    .saba-outcomes-metric:nth-child(odd),
+    .saba-outcomes-metric:nth-last-child(-n + 2) {
+        border-right: 0;
+        border-bottom: 1px solid #f1f1f2;
+    }
+    .saba-outcomes-metric:last-child { border-bottom: 0; }
+}

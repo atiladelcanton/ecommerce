@@ -27,6 +27,8 @@ final class Product extends Model
         'sku',
         'short_description',
         'description',
+        'seo_title',
+        'seo_description',
         'youtube_url',
         'availability',
         'cost_price',

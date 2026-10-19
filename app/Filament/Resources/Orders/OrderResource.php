@@ -8,6 +8,7 @@ use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Filament\Resources\Orders\Pages\ListOrders;
+use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Support\BrazilianMoney;
 use Filament\Actions\ViewAction;
@@ -47,7 +48,8 @@ final class OrderResource extends Resource
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('items')->with(['customer']))
             ->columns([
                 TextColumn::make('number')->label('Pedido')->searchable()->sortable()->weight('semibold'),
-                TextColumn::make('customer_name')->label('Cliente')->searchable(['customer_name', 'customer_email', 'customer_document'])->description(fn (Order $record): string => $record->customer_email),
+                TextColumn::make('customer_name')->label('Cliente')->searchable(['customer_name', 'customer_email', 'customer_document'])->description(fn (Order $record): string => $record->customer_email)
+                    ->url(fn (Order $record): ?string => $record->customer ? CustomerResource::getUrl('view', ['record' => $record->customer]) : null),
                 TextColumn::make('created_at')->label('Data')->dateTime('d/m/Y H:i')->sortable(),
                 TextColumn::make('items_count')->label('Itens')->numeric()->alignCenter(),
                 TextColumn::make('total_cents')->label('Total')->placeholder('A definir')->formatStateUsing(fn (int $state): string => BrazilianMoney::display($state))->sortable(),

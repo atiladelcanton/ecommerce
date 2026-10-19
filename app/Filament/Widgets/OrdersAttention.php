@@ -14,7 +14,7 @@ final class OrdersAttention extends Widget
 
     protected int|string|array $columnSpan = [
         'md' => 12,
-        'xl' => 8,
+        'xl' => 12,
     ];
 
     protected function getViewData(): array

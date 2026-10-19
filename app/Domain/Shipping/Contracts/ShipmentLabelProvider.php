@@ -14,6 +14,8 @@ interface ShipmentLabelProvider
 
     public function printLabel(string $externalId, string $format = 'pdf'): string;
 
+    public function previewLabel(string $externalId): string;
+
     public function canCancel(string $externalId): bool;
 
     public function cancel(string $externalId, string $reason): void;

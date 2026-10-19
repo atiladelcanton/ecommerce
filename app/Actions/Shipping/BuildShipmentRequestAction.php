@@ -10,6 +10,7 @@ use App\Domain\Shipping\Data\ApiMoney;
 use App\Domain\Shipping\Data\ShipmentCreateRequest;
 use App\Domain\Shipping\Enums\ShipmentDocumentType;
 use App\Domain\Shipping\Models\ShippingAgency;
+use App\Support\BrazilianMoney;
 use Illuminate\Validation\ValidationException;
 
 final class BuildShipmentRequestAction
@@ -120,14 +121,28 @@ final class BuildShipmentRequestAction
             throw ValidationException::withMessages(['shipping' => 'O snapshot não identifica os produtos de cada volume. Complete a preparação do envio antes de comprar.']);
         }
 
-        if (($snapshot['metadata']['insured'] ?? true) && $insurance === 0) {
-            foreach ($products as $product) {
-                $unit = $product['unitary_value']->cents;
-                if ($unit > intdiv(PHP_INT_MAX - $insurance, $product['quantity'])) {
-                    throw ValidationException::withMessages(['shipping' => 'O valor segurado excede o limite permitido.']);
-                }
-                $insurance += $unit * $product['quantity'];
+        $declaredValue = 0;
+        foreach ($products as $product) {
+            $unit = $product['unitary_value']->cents;
+            if ($unit > intdiv(PHP_INT_MAX - $declaredValue, max(1, (int) $product['quantity']))) {
+                throw ValidationException::withMessages(['shipping' => 'O valor declarado excede o limite permitido.']);
             }
+            $declaredValue += $unit * (int) $product['quantity'];
+        }
+
+        if ($documentType->isContentDeclaration()) {
+            // No fluxo não comercial o Melhor Envio exige que o valor segurado
+            // corresponda ao total declarado. A API atualmente rejeita este fluxo
+            // acima de R$ 1.000,00 (E-CRT-0001), então bloqueamos antes de comprar
+            // o frete para evitar uma tentativa externa que já sabemos que falhará.
+            if ($declaredValue > 100_000) {
+                throw ValidationException::withMessages([
+                    'shipping_document_type' => 'Este pedido possui '.BrazilianMoney::display($declaredValue).' em produtos, acima do limite de R$ 1.000,00 permitido para este tipo de envio no Melhor Envio. Para continuar com esta entrega, utilize uma Nota Fiscal (NF-e).',
+                ]);
+            }
+            $insurance = $declaredValue;
+        } elseif (($snapshot['metadata']['insured'] ?? true) && $insurance === 0) {
+            $insurance = $declaredValue;
         }
 
         $document = preg_replace('/\D/', '', (string) $order->customer_document);

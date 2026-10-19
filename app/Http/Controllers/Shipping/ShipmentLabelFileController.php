@@ -8,18 +8,22 @@ use App\Actions\Shipping\DownloadShipmentLabelAction;
 use App\Actions\Shipping\PrintShipmentLabelAction;
 use App\Domain\Shipping\Models\Shipment;
 use App\Filament\Pages\ShippingMethods;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ShipmentLabelFileController extends Controller
 {
     public function __invoke(
+        Request $request,
         Shipment $shipment,
         string $format,
         DownloadShipmentLabelAction $download,
         PrintShipmentLabelAction $print,
-    ): Response {
+    ): Response|RedirectResponse|View {
         abort_unless(ShippingMethods::canAccess(), 403);
 
         try {
@@ -33,22 +37,18 @@ final class ShipmentLabelFileController extends Controller
                 'X-Content-Type-Options' => 'nosniff',
             ]);
         } catch (ValidationException $downloadException) {
-            // O endpoint de arquivo do Melhor Envio possui limitações no Sandbox
-            // (a documentação informa suporte a arquivos apenas para serviços Jadlog).
-            // Em vez de deixar o usuário diante de um download silenciosamente falho,
-            // usamos o fluxo oficial de impressão pública como fallback.
             try {
                 $url = $print->execute($shipment, 'pdf');
 
                 return redirect()->away($url);
             } catch (ValidationException $printException) {
-                return redirect()->back()->with(
-                    'error',
-                    $this->validationMessage(
+                return view('shipping.label-error', [
+                    'message' => $this->validationMessage(
                         $printException,
-                        $this->validationMessage($downloadException, 'Não foi possível obter a etiqueta. Verifique o envio e tente novamente.'),
+                        $this->validationMessage($downloadException, 'Não foi possível obter a etiqueta. Atualize o status do envio e tente novamente.'),
                     ),
-                );
+                    'backUrl' => $request->headers->get('referer') ?: url('/admin/orders/'.$shipment->order_id),
+                ]);
             }
         }
     }

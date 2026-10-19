@@ -27,6 +27,7 @@ final class Customer extends Authenticatable
         'email',
         'phone',
         'document',
+        'birth_date',
         'password',
     ];
 
@@ -34,7 +35,10 @@ final class Customer extends Authenticatable
 
     protected function casts(): array
     {
-        return ['password' => 'hashed'];
+        return [
+            'password' => 'hashed',
+            'birth_date' => 'date',
+        ];
     }
 
     public function orders(): HasMany
