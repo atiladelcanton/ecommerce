@@ -64,6 +64,20 @@ final class CustomerOrderTracking extends Component
         return OrderShipping::mode($order) === 'pickup';
     }
 
+    private function stepDescription(OrderStatus $status): string
+    {
+        return match ($status) {
+            OrderStatus::PENDING => 'Recebemos seu pedido',
+            OrderStatus::PAID => 'Pagamento confirmado',
+            OrderStatus::PROCESSING => 'Preparando seus itens',
+            OrderStatus::READY_FOR_SHIPPING => 'Embalado e etiquetado',
+            OrderStatus::READY_FOR_PICKUP => 'Disponível para retirada',
+            OrderStatus::SHIPPED => 'Pedido a caminho',
+            OrderStatus::DELIVERED => 'Entrega concluída',
+            OrderStatus::CANCELLED => 'Pedido cancelado',
+        };
+    }
+
     private function steps(OrderStatus $current): array
     {
         $sequence = $this->isPickupOrder()
@@ -77,6 +91,7 @@ final class CustomerOrderTracking extends Component
                 'label' => $status->label(),
                 'complete' => $current !== OrderStatus::CANCELLED && $currentIndex !== false && $index <= $currentIndex,
                 'current' => $status === $current,
+                'description' => $this->stepDescription($status),
             ];
         }, $sequence, array_keys($sequence));
     }

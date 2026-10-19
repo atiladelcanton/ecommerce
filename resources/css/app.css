@@ -423,18 +423,40 @@ a.store-contact-value:hover { color: var(--color-store-red); }
 .store-order-status--delivered, .store-payment-status--approved { background: #f0f8f2; color: var(--color-store-green); }
 .store-order-status--cancelled, .store-payment-status--failed, .store-payment-status--cancelled { background: #fef2f2; color: var(--color-store-red-dark); }
 .store-payment-status--refunded { background: var(--color-store-soft); color: var(--color-store-muted); }
-.store-order-progress { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; }
-.store-order-progress li { position: relative; display: flex; min-width: 0; flex-direction: column; align-items: center; gap: .65rem; text-align: center; color: var(--color-store-muted); font-size: .75rem; }
-.store-order-progress li:not(:last-child)::after { content: ''; position: absolute; top: 17px; left: calc(50% + 18px); right: calc(-50% + 18px); height: 2px; background: var(--color-store-border); }
+.store-order-tracking-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem; }
+.store-order-live-note { display: inline-flex; align-items: center; gap: .45rem; color: var(--color-store-muted); font-size: .8125rem; }
+.store-order-live-note svg { width: 1rem; height: 1rem; flex: 0 0 auto; }
+.store-order-current-status { display: flex; min-width: min(100%, 245px); align-items: center; gap: .8rem; padding: .75rem .9rem; border: 1px solid var(--color-store-border); border-radius: 10px; background: var(--color-store-soft); }
+.store-order-current-status-icon { display: inline-flex; width: 42px; height: 42px; flex: 0 0 42px; align-items: center; justify-content: center; border-radius: 10px; background: white; color: var(--color-store-red); box-shadow: inset 0 0 0 1px var(--color-store-border); }
+.store-order-current-status-icon svg { width: 22px; height: 22px; }
+.store-order-current-status-icon--delivered { background: #ecfdf3; color: var(--color-store-green); box-shadow: inset 0 0 0 1px #bbf7d0; }
+.store-order-current-status-icon--cancelled { background: #fef2f2; color: var(--color-store-red-dark); box-shadow: inset 0 0 0 1px #fecaca; }
+.store-order-progress { --order-step-count: 5; display: grid; grid-template-columns: repeat(var(--order-step-count), minmax(0, 1fr)); gap: 0; padding-inline: .5rem; }
+.store-order-progress li { position: relative; display: flex; min-width: 0; flex-direction: column; align-items: center; gap: .65rem; text-align: center; color: var(--color-store-muted); }
+.store-order-progress li:not(:last-child)::after { content: ''; position: absolute; top: 22px; left: calc(50% + 25px); right: calc(-50% + 25px); height: 3px; border-radius: 999px; background: var(--color-store-border); }
 .store-order-progress li.is-complete:not(:last-child)::after { background: var(--color-store-red); }
-.store-order-progress-dot { position: relative; z-index: 1; display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border: 2px solid var(--color-store-border); border-radius: 50%; background: white; color: white; font-size: .75rem; font-weight: 700; }
-.store-order-progress li.is-complete .store-order-progress-dot { border-color: var(--color-store-red); background: var(--color-store-red); }
-.store-order-progress li.is-current .store-order-progress-dot { box-shadow: 0 0 0 5px #dc262616; }
+.store-order-progress-dot { position: relative; z-index: 1; display: flex; width: 46px; height: 46px; flex: 0 0 46px; align-items: center; justify-content: center; border: 2px solid var(--color-store-border); border-radius: 14px; background: white; color: #9ca3af; transition: border-color .2s ease, background .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.store-order-progress-dot svg { width: 22px; height: 22px; }
+.store-order-progress li.is-complete .store-order-progress-dot { border-color: var(--color-store-red); background: var(--color-store-red); color: white; }
+.store-order-progress li.is-current .store-order-progress-dot { transform: translateY(-2px); box-shadow: 0 0 0 5px #dc262614, 0 8px 20px #dc262618; }
+.store-order-progress li.is-current.is-delivered .store-order-progress-dot { border-color: #16a34a; background: #16a34a; box-shadow: 0 0 0 5px #16a34a14, 0 8px 20px #16a34a18; }
+.store-order-progress-copy { display: grid; min-width: 0; gap: .2rem; justify-items: center; }
+.store-order-progress-label { max-width: 135px; color: var(--color-store-ink); font-size: .8125rem; font-weight: 600; line-height: 1.35; }
+.store-order-progress-description { max-width: 145px; color: var(--color-store-muted); font-size: .6875rem; line-height: 1.35; }
+.store-order-progress li:not(.is-complete) .store-order-progress-label { color: var(--color-store-muted); font-weight: 500; }
 .store-order-progress li.is-current .store-order-progress-label { color: var(--color-store-ink); font-weight: 700; }
-.store-order-progress-label { max-width: 110px; line-height: 1.35; }
-@media (max-width: 639px) {
-    .store-order-progress { grid-template-columns: 1fr; gap: 1rem; }
-    .store-order-progress li { flex-direction: row; text-align: left; }
-    .store-order-progress li:not(:last-child)::after { top: 32px; bottom: -1rem; left: 17px; right: auto; width: 2px; height: auto; }
-    .store-order-progress-label { max-width: none; }
+.store-order-progress li.is-current.is-delivered .store-order-progress-label { color: var(--color-store-green); }
+@media (max-width: 767px) {
+    .store-order-tracking-header { align-items: stretch; }
+    .store-order-current-status { width: 100%; }
+    .store-order-progress { grid-template-columns: 1fr; gap: 1rem; padding-inline: 0; }
+    .store-order-progress li { flex-direction: row; align-items: flex-start; gap: .85rem; text-align: left; }
+    .store-order-progress li:not(:last-child)::after { top: 43px; bottom: -1rem; left: 22px; right: auto; width: 3px; height: auto; }
+    .store-order-progress-copy { padding-top: .15rem; justify-items: start; }
+    .store-order-progress-label, .store-order-progress-description { max-width: none; }
 }
+@media (min-width: 768px) and (max-width: 1023px) {
+    .store-order-progress-label { font-size: .75rem; }
+    .store-order-progress-description { display: none; }
+}
+

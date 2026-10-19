@@ -10,26 +10,45 @@
     @endif
 
     <section class="store-account-card">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
+        <div class="store-order-tracking-header">
+            <div class="min-w-0">
                 <p class="store-eyebrow">Pedido {{ $order->number }}</p>
                 <h1 class="store-title mt-2">Acompanhe seu pedido</h1>
-                <p class="mt-2 text-sm text-store-muted">Atualização automática a cada 15 segundos.</p>
+                <p class="store-order-live-note mt-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 11a8 8 0 1 0-2.34 5.66" />
+                        <path d="M20 5v6h-6" />
+                    </svg>
+                    Atualização automática a cada 15 segundos
+                </p>
             </div>
-            <div class="text-right">
-                <span class="store-order-status store-order-status--{{ $order->status->value }}">{{ $order->status->label() }}</span>
-                <p class="mt-2 text-xs text-store-muted">Atualizado em {{ $order->updated_at->format('d/m/Y H:i') }}</p>
+            <div class="store-order-current-status">
+                <span class="store-order-current-status-icon store-order-current-status-icon--{{ $order->status->value }}" aria-hidden="true">
+                    <x-store.order-status-icon :status="$order->status" />
+                </span>
+                <div class="min-w-0">
+                    <span class="store-order-status store-order-status--{{ $order->status->value }}">{{ $order->status->label() }}</span>
+                    <p class="mt-1 text-xs text-store-muted">Atualizado em {{ $order->updated_at->format('d/m/Y H:i') }}</p>
+                </div>
             </div>
         </div>
 
         @if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED)
             <div class="mt-6 rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-store-red-dark">Este pedido foi cancelado. Se precisar de ajuda, entre em contato com a loja.</div>
         @else
-            <ol class="store-order-progress mt-8" aria-label="Progresso do pedido">
+            <ol class="store-order-progress mt-8" style="--order-step-count: {{ count($steps) }}" aria-label="Progresso do pedido">
                 @foreach($steps as $step)
-                    <li class="{{ $step['complete'] ? 'is-complete' : '' }} {{ $step['current'] ? 'is-current' : '' }}">
-                        <span class="store-order-progress-dot" aria-hidden="true">@if($step['complete'])✓@endif</span>
-                        <span class="store-order-progress-label">{{ $step['label'] }}</span>
+                    <li
+                        class="{{ $step['complete'] ? 'is-complete' : '' }} {{ $step['current'] ? 'is-current' : '' }} {{ $step['status'] === \App\Domain\Order\Enums\OrderStatus::DELIVERED ? 'is-delivered' : '' }}"
+                        @if($step['current']) aria-current="step" @endif
+                    >
+                        <span class="store-order-progress-dot" aria-hidden="true">
+                            <x-store.order-status-icon :status="$step['status']" />
+                        </span>
+                        <span class="store-order-progress-copy">
+                            <span class="store-order-progress-label">{{ $step['label'] }}</span>
+                            <span class="store-order-progress-description">{{ $step['description'] }}</span>
+                        </span>
                     </li>
                 @endforeach
             </ol>

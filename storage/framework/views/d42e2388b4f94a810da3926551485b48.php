@@ -10,26 +10,87 @@
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
     <section class="store-account-card">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
+        <div class="store-order-tracking-header">
+            <div class="min-w-0">
                 <p class="store-eyebrow">Pedido <?php echo e($order->number); ?></p>
                 <h1 class="store-title mt-2">Acompanhe seu pedido</h1>
-                <p class="mt-2 text-sm text-store-muted">Atualização automática a cada 15 segundos.</p>
+                <p class="store-order-live-note mt-2">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 11a8 8 0 1 0-2.34 5.66" />
+                        <path d="M20 5v6h-6" />
+                    </svg>
+                    Atualização automática a cada 15 segundos
+                </p>
             </div>
-            <div class="text-right">
-                <span class="store-order-status store-order-status--<?php echo e($order->status->value); ?>"><?php echo e($order->status->label()); ?></span>
-                <p class="mt-2 text-xs text-store-muted">Atualizado em <?php echo e($order->updated_at->format('d/m/Y H:i')); ?></p>
+            <div class="store-order-current-status">
+                <span class="store-order-current-status-icon store-order-current-status-icon--<?php echo e($order->status->value); ?>" aria-hidden="true">
+                    <?php if (isset($component)) { $__componentOriginal6449da563c37d54691e551bd375e2b81 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal6449da563c37d54691e551bd375e2b81 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.store.order-status-icon','data' => ['status' => $order->status]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('store.order-status-icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($order->status)]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal6449da563c37d54691e551bd375e2b81)): ?>
+<?php $attributes = $__attributesOriginal6449da563c37d54691e551bd375e2b81; ?>
+<?php unset($__attributesOriginal6449da563c37d54691e551bd375e2b81); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal6449da563c37d54691e551bd375e2b81)): ?>
+<?php $component = $__componentOriginal6449da563c37d54691e551bd375e2b81; ?>
+<?php unset($__componentOriginal6449da563c37d54691e551bd375e2b81); ?>
+<?php endif; ?>
+                </span>
+                <div class="min-w-0">
+                    <span class="store-order-status store-order-status--<?php echo e($order->status->value); ?>"><?php echo e($order->status->label()); ?></span>
+                    <p class="mt-1 text-xs text-store-muted">Atualizado em <?php echo e($order->updated_at->format('d/m/Y H:i')); ?></p>
+                </div>
             </div>
         </div>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED): ?>
             <div class="mt-6 rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-store-red-dark">Este pedido foi cancelado. Se precisar de ajuda, entre em contato com a loja.</div>
         <?php else: ?>
-            <ol class="store-order-progress mt-8" aria-label="Progresso do pedido">
+            <ol class="store-order-progress mt-8" style="--order-step-count: <?php echo e(count($steps)); ?>" aria-label="Progresso do pedido">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $steps; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $step): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <li class="<?php echo e($step['complete'] ? 'is-complete' : ''); ?> <?php echo e($step['current'] ? 'is-current' : ''); ?>">
-                        <span class="store-order-progress-dot" aria-hidden="true"><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($step['complete']): ?>✓<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></span>
-                        <span class="store-order-progress-label"><?php echo e($step['label']); ?></span>
+                    <li
+                        class="<?php echo e($step['complete'] ? 'is-complete' : ''); ?> <?php echo e($step['current'] ? 'is-current' : ''); ?> <?php echo e($step['status'] === \App\Domain\Order\Enums\OrderStatus::DELIVERED ? 'is-delivered' : ''); ?>"
+                        <?php if($step['current']): ?> aria-current="step" <?php endif; ?>
+                    >
+                        <span class="store-order-progress-dot" aria-hidden="true">
+                            <?php if (isset($component)) { $__componentOriginal6449da563c37d54691e551bd375e2b81 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal6449da563c37d54691e551bd375e2b81 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.store.order-status-icon','data' => ['status' => $step['status']]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('store.order-status-icon'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['status' => \Illuminate\View\Compilers\BladeCompiler::sanitizeComponentAttribute($step['status'])]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal6449da563c37d54691e551bd375e2b81)): ?>
+<?php $attributes = $__attributesOriginal6449da563c37d54691e551bd375e2b81; ?>
+<?php unset($__attributesOriginal6449da563c37d54691e551bd375e2b81); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal6449da563c37d54691e551bd375e2b81)): ?>
+<?php $component = $__componentOriginal6449da563c37d54691e551bd375e2b81; ?>
+<?php unset($__componentOriginal6449da563c37d54691e551bd375e2b81); ?>
+<?php endif; ?>
+                        </span>
+                        <span class="store-order-progress-copy">
+                            <span class="store-order-progress-label"><?php echo e($step['label']); ?></span>
+                            <span class="store-order-progress-description"><?php echo e($step['description']); ?></span>
+                        </span>
                     </li>
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
             </ol>
