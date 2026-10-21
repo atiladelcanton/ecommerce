@@ -1,4 +1,4 @@
-<x-filament-panels::page>
+<x-filament-panels::page wire:poll.20s="refreshOrderStatus">
     @php($order = $this->record->loadMissing(['items', 'address', 'payments', 'statusHistories.user', 'shipments.events']))
 
     @if($blockingOperationModalOpen)

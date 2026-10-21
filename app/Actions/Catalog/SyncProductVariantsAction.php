@@ -125,6 +125,7 @@ final class SyncProductVariantsAction
     private function hasReservation(ProductVariant $variant): bool
     {
         return InventoryReservation::query()->whereIn('order_item_id', OrderItem::query()->where('product_variant_id', $variant->id)->select('id'))
-            ->whereNull('consumed_at')->whereNull('released_at')->where('expires_at', '>', now())->exists();
+            ->whereNull('consumed_at')->whereNull('released_at')
+            ->where(fn ($q) => $q->where('expires_at', '>', now())->orWhere('payment_hold', true))->exists();
     }
 }

@@ -156,3 +156,17 @@ Incremental migrations extend `product_variants` with JSON `attributes`, a canon
 `orders.shipping_pricing_status` distinguishes awaiting_quote, quoted and confirmed; legacy/automatic orders remain null. Shipping/total cents are nullable while freight is unknown. `order_shipping_quotes` stores immutable numbered revisions, admin author, carrier/service/instructions/estimate, integer-cent price, expiry, acceptance and supersession. Order items/prices and addresses are frozen before manual freight is negotiated.
 
 `inventory_reservations` has one unique row per order item, the product/variant stock pool, quantity and lifecycle timestamps (expires, consumed, released, restored). Stock stays physical on the catalog; available stock subtracts unexpired reservations. Only newly created orders participate. Reservation creation, payment consumption and commercial cancellation lock the order and stock pools in a consistent order. Made-to-order products do not consume immediate physical stock.
+
+## Pagamentos reais (2026-10-20)
+
+Migration incremental `2026_10_20_000001_create_real_payment_infrastructure.php` cria `payment_integrations` e `payment_events`, estende `payments` com ambiente, integração, idempotência, checkout externo, resultado do provedor e auditoria de revisão, e adiciona `inventory_reservations.payment_hold`. A flag financeira impede expiração local enquanto a cobrança remota permanece pendente. A liberação depende de estado terminal verificado junto ao provider, não do relógio local. Consulte `docs/payments.md`.
+
+
+## Asaas Checkout (21/10/2026)
+
+Migration incremental `2026_10_21_000001_enable_asaas_and_archive_mercado_pago.php`: desativa `mercado_pago` para novas cobranças e adiciona `payment_events.payload` JSON opcional com campos mínimos autenticados do checkout Asaas; preserva todos os IDs, pagamentos e credenciais anteriores. Nenhuma outra tabela nova.
+
+
+### Monitoramento e notificações (migração incremental de 2026-10-21)
+
+`shipments.monitor_checked_at` (timestamp nulo, índice conjunto provider/status/monitor_checked_at) permite escalonar consultas read-only da transportadora. `notifications` segue a tabela Laravel/Filament para notificações administrativas persistentes; cada ID é determinístico por pedido, marco e usuário administrativo, impedindo alertas repetidos após reconciliação de webhooks.

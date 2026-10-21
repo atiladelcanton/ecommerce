@@ -135,7 +135,16 @@
             <section class="store-account-card">
                 <h2 class="font-semibold">Pagamento</h2>
                 <p class="mt-3"><span class="store-payment-status store-payment-status--{{ $order->payment_status->value }}">{{ $order->payment_status->label() }}</span></p>
-                @if($order->payments->last()?->is_demo)
+                @php($latestPayment = $order->payments->sortByDesc('id')->first())
+                @if($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::PENDING && $latestPayment?->gateway === 'asaas' && $latestPayment?->checkout_url && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($latestPayment->checkout_url, $latestPayment->environment))
+                    <a class="store-button mt-4 inline-flex" href="{{ $latestPayment->checkout_url }}" rel="noopener noreferrer">Concluir pagamento no Asaas</a>
+                @elseif(in_array($order->payment_status, [\App\Domain\Payment\Enums\PaymentStatus::FAILED, \App\Domain\Payment\Enums\PaymentStatus::CANCELLED], true) && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
+                    <form method="POST" action="{{ route('store.order.payment-retry', $order->number) }}" class="mt-4">
+                        @csrf
+                        <button class="store-button" type="submit">Tentar pagar novamente</button>
+                    </form>
+                @endif
+                @if($latestPayment?->is_demo)
                     <p class="mt-3 text-xs leading-5 text-store-muted">Pagamento simulado no ambiente de demonstração.</p>
                 @endif
             </section>

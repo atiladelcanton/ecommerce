@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Notification\NotifyOrderMilestoneAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
@@ -12,6 +13,7 @@ use App\Domain\Shipping\Enums\ShipmentStatus;
 use App\Domain\Shipping\Enums\ShippingPricingStatus;
 use App\Domain\Shipping\OrderShipping;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 final class TransitionOrderStatusAction
@@ -58,6 +60,9 @@ final class TransitionOrderStatusAction
                 throw ValidationException::withMessages(['status' => 'O cliente precisa confirmar o frete e o pagamento.']);
             }
             if ($to === OrderStatus::CANCELLED) {
+                if ($locked->payments()->whereIn('gateway', ['mercado_pago', 'asaas'])->where('status', PaymentStatus::PENDING->value)->exists()) {
+                    throw ValidationException::withMessages(['status' => 'Há uma cobrança financeira pendente. Aguarde sua confirmação de encerramento antes de cancelar.']);
+                }
                 $reason = filled($cancellationReason) ? trim((string) $cancellationReason) : null;
                 if ($reason !== null && mb_strlen($reason) > 1000) {
                     throw ValidationException::withMessages(['cancellation_reason' => 'O motivo do cancelamento deve ter no máximo 1.000 caracteres.']);
@@ -148,6 +153,21 @@ final class TransitionOrderStatusAction
                 'to_status' => $to,
                 'description' => ($contingency ? 'Contingência administrativa: ' : '').($description ?: $this->defaultDescription($to)),
             ]);
+
+            // Persistent, transaction-bound admin alerts: when the transition
+            // rolls back, its corresponding notification rolls back too.
+            try {
+                app(NotifyOrderMilestoneAction::class)->execute($locked, $to);
+            } catch (\Throwable $exception) {
+                // Notification infrastructure must not block payment approval
+                // or a valid shipping state transition. Scheduled backfill
+                // can recover the alert later.
+                Log::warning('Order operational notification failed.', [
+                    'order_id' => $locked->id,
+                    'milestone' => $to->value,
+                    'exception_type' => $exception::class,
+                ]);
+            }
 
             return $locked->refresh();
         }, 3);

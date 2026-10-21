@@ -1,1 +1,50 @@
-[2026-10-19 17:00:11] local.WARNING: Groq returned invalid structured product content. {"status":200,"model":"openai/gpt-oss-120b"} 
+[2026-10-21 10:30:15] local.WARNING: Payment provider rejected checkout initialization. {"provider":"mercado_pago","environment":"sandbox","integration_id":1,"operation":"create_order","order_number":"SABA-000012","http_status":400,"request_id":"2646f31d-6a3f-408c-aa37-483eeffb145e","error_code":null,"error_message":null,"details":[{"code":"unsupported_properties","message":"Properties not supported"}]} 
+[2026-10-21 15:29:50] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-21 15:29:50] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-21 15:29:50] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-21 15:29:50] testing.WARNING: Shipping quote provider failed. {"provider":"fake","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteFailed","reason":"provider_unavailable"} 
+[2026-10-21 15:29:53] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/agencies","status":503} 
+[2026-10-21 15:29:53] testing.WARNING: Shipping administration operation failed {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-21 15:29:54] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-21 15:29:54] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"902","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-21 15:29:54] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"provider_unavailable"} 
+[2026-10-21 15:29:54] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-21 15:29:54] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"902","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-21 15:29:54] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"provider_unavailable"} 
+[2026-10-21 15:29:54] testing.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"missing_measurements"} 
+[2026-10-21 15:29:55] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":422,"provider_message":"A Nota fiscal informada é inválida."} 
+[2026-10-21 15:29:55] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/generate","status":422} 
+[2026-10-21 15:29:55] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/checkout","status":503} 
+[2026-10-21 15:29:55] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/print","status":400,"provider_message":"Impressão ainda indisponível"} 
+[2026-10-21 15:29:55] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/imprimir/pdf/external-1","status":404,"provider_message":"Arquivo indisponível neste serviço"} 
+[2026-10-21 15:29:55] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":503} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/cart","status":503} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/checkout","status":503} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/generate","status":422} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/services","status":503} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping request rejected {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","status":503} 
+[2026-10-21 15:29:56] testing.WARNING: Shipping service quote failed {"provider":"melhor_envio","endpoint":"/api/v2/me/shipment/calculate","service_id":"903","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingProviderFailed"} 
+[2026-10-21 15:35:24] local.WARNING: Asaas rejected checkout initialization. {"order_number":"SABA-000013","integration_id":2,"http_status":400,"request_id":""} 
+[2026-10-21 15:40:18] local.WARNING: Asaas rejected checkout initialization. {"order_number":"SABA-000013","integration_id":2,"http_status":400,"request_id":""} 
+[2026-10-21 15:40:27] local.WARNING: Asaas rejected checkout initialization. {"order_number":"SABA-000013","integration_id":2,"http_status":400,"request_id":""} 
+[2026-10-21 16:08:21] local.ERROR: There are no commands defined in the "queueD" namespace.
+
+Did you mean this?
+    queue {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"queueD\" namespace.
+
+Did you mean this?
+    queue at /var/www/html/vendor/symfony/console/Application.php:716)
+[stacktrace]
+#0 /var/www/html/vendor/symfony/console/Application.php(769): Symfony\\Component\\Console\\Application->findNamespace()
+#1 /var/www/html/vendor/symfony/console/Application.php(321): Symfony\\Component\\Console\\Application->find()
+#2 /var/www/html/vendor/symfony/console/Application.php(218): Symfony\\Component\\Console\\Application->doRun()
+#3 /var/www/html/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run()
+#4 /var/www/html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1243): Illuminate\\Foundation\\Console\\Kernel->handle()
+#5 /var/www/html/artisan(14): Illuminate\\Foundation\\Application->handleCommand()
+#6 {main}
+"} 
+[2026-10-21 16:09:46] local.WARNING: Order shipping operation failed {"order_id":14,"exception_type":"InvalidArgumentException"} 
+[2026-10-21 16:23:48] local.WARNING: Order shipping operation failed {"order_id":15,"exception_type":"InvalidArgumentException"} 
+[2026-10-21 16:55:13] local.WARNING: Order shipping operation failed {"order_id":16,"exception_type":"InvalidArgumentException","source":"app/Domain/Shipping/Data/ApiMoney.php","line":27,"known_error":"Valor monetário inválido na resposta de frete."} 

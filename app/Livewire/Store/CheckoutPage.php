@@ -167,6 +167,15 @@ final class CheckoutPage extends Component
         }
 
         $this->dispatch('cart-updated');
+        $payment = $order->payments()->latest('id')->first();
+        if ($payment && $payment->gateway === 'asaas' && ! $payment->is_demo && $payment->checkout_url && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($payment->checkout_url, $payment->environment)) {
+            $this->redirect($payment->checkout_url);
+            return;
+        }
+        if ($payment && ! $payment->is_demo) {
+            $this->redirectRoute('store.order.payment-status', ['number' => $order->number]);
+            return;
+        }
         $this->redirectRoute('store.order.confirmation', ['number' => $order->number]);
     }
 

@@ -1,0 +1,24 @@
+{
+  "sources": [
+    {
+      "path": "/tintas-a-base-de-agua/para-tecidos-algodao-e-mistos",
+      "category": "Tinta Base Água"
+    },
+    {
+      "path": "/tintas-plastisol/plastisol",
+      "category": "Tinta Plastisol"
+    },
+    {
+      "path": "/equipamentos/berco-chaveta-e-morcete",
+      "category": "Berços",
+      "rules": [
+        {"match": "carrossel", "category": "Máquinas de Serigrafia"},
+        {"match": "mesa de 6 berços", "category": "Máquinas de Serigrafia"},
+        {"match": "chaveta", "category": "Acessórios"},
+        {"match": "morcete", "category": "Acessórios"},
+        {"match": "gaveta", "category": "Acessórios"},
+        {"match": "mola", "category": "Acessórios"}
+      ]
+    }
+  ]
+}

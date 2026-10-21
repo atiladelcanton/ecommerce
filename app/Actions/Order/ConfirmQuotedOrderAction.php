@@ -21,7 +21,7 @@ final class ConfirmQuotedOrderAction
     {
         $authorized = app(GetQuotedOrderAction::class)->execute($number, $revision, $signedUrl);
 
-        return DB::transaction(function () use ($authorized, $number, $revision, $signedUrl): Order {
+        $confirmed = DB::transaction(function () use ($authorized, $number, $revision, $signedUrl): Order {
             $order = Order::query()->lockForUpdate()->findOrFail($authorized->id);
             // Recheck revision and expiry after acquiring the order lock.
             app(GetQuotedOrderAction::class)->execute($number, $revision, $signedUrl);
@@ -31,7 +31,7 @@ final class ConfirmQuotedOrderAction
             if ($order->payment_status === PaymentStatus::APPROVED) {
                 return $order;
             }
-            if ($order->status !== OrderStatus::RECEIVED || $order->shipping_pricing_status !== ShippingPricingStatus::QUOTED) {
+            if ($order->status !== OrderStatus::RECEIVED || ! in_array($order->shipping_pricing_status, [ShippingPricingStatus::QUOTED, ShippingPricingStatus::CONFIRMED], true)) {
                 throw ValidationException::withMessages(['payment' => 'Este pedido não está disponível para confirmação.']);
             }
             $items = $order->items()->orderBy('product_id')->get();
@@ -46,9 +46,14 @@ final class ConfirmQuotedOrderAction
             }
             app(ManageOrderInventoryAction::class)->reserve($order);
             $order->update(['shipping_pricing_status' => ShippingPricingStatus::CONFIRMED]);
-            $order->latestShippingQuote()->firstOrFail()->update(['accepted_at' => now()]);
+            $quote = $order->latestShippingQuote()->firstOrFail();
+            if (! $quote->accepted_at) {
+                $quote->update(['accepted_at' => now()]);
+            }
 
-            return app(PayOrderAction::class)->execute($order);
+            return $order;
         }, 3);
+
+        return app(PayOrderAction::class)->execute($confirmed);
     }
 }

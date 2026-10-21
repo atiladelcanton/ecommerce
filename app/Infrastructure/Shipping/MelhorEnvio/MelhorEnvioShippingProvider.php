@@ -333,14 +333,23 @@ final class MelhorEnvioShippingProvider implements ShipmentLabelProvider, Shipme
     {
         $row = $this->client->get('/api/v2/me/orders/'.rawurlencode($externalId));
 
+        // A etiqueta pode continuar em "released" (paga/aguardando postagem)
+        // mesmo depois de gerada. O campo generated_at, quando confirmado
+        // pelo detalhe da API, diferencia a etiqueta pronta do frete só pago.
+        $status = strtolower((string) ($row['status'] ?? 'unknown'));
+        if ($status === 'released' && filled($row['generated_at'] ?? null)) {
+            $status = 'generated';
+        }
+
         return new ShipmentTrackingResult(
-            strtolower((string) ($row['status'] ?? 'unknown')),
-            isset($row['tracking']) && filled($row['tracking']) ? (string) $row['tracking'] : null,
+            $status,
+            isset($row['tracking']) && is_scalar($row['tracking']) && filled($row['tracking']) ? (string) $row['tracking'] : null,
             isset($row['tracking_url']) && is_string($row['tracking_url']) ? $row['tracking_url'] : null,
             metadata: [
                 'tags' => $row['tags'] ?? [],
                 'service' => $row['service_id'] ?? $row['service']['id'] ?? null,
                 'protocol' => $row['protocol'] ?? null,
+                'generated_at' => $row['generated_at'] ?? null,
             ],
         );
     }

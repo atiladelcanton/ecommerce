@@ -178,7 +178,16 @@
             <section class="store-account-card">
                 <h2 class="font-semibold">Pagamento</h2>
                 <p class="mt-3"><span class="store-payment-status store-payment-status--<?php echo e($order->payment_status->value); ?>"><?php echo e($order->payment_status->label()); ?></span></p>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->payments->last()?->is_demo): ?>
+                <?php ($latestPayment = $order->payments->sortByDesc('id')->first()); ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::PENDING && $latestPayment?->gateway === 'asaas' && $latestPayment?->checkout_url && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($latestPayment->checkout_url, $latestPayment->environment)): ?>
+                    <a class="store-button mt-4 inline-flex" href="<?php echo e($latestPayment->checkout_url); ?>" rel="noopener noreferrer">Concluir pagamento no Asaas</a>
+                <?php elseif(in_array($order->payment_status, [\App\Domain\Payment\Enums\PaymentStatus::FAILED, \App\Domain\Payment\Enums\PaymentStatus::CANCELLED], true) && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED): ?>
+                    <form method="POST" action="<?php echo e(route('store.order.payment-retry', $order->number)); ?>" class="mt-4">
+                        <?php echo csrf_field(); ?>
+                        <button class="store-button" type="submit">Tentar pagar novamente</button>
+                    </form>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($latestPayment?->is_demo): ?>
                     <p class="mt-3 text-xs leading-5 text-store-muted">Pagamento simulado no ambiente de demonstração.</p>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </section>

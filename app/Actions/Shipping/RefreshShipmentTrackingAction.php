@@ -12,7 +12,12 @@ use Illuminate\Validation\ValidationException;
 
 final class RefreshShipmentTrackingAction
 {
-    public function __construct(private readonly ShippingProviderRegistry $providers, private readonly AssertShipmentConnectionAction $connection, private readonly ProcessShippingWebhookAction $events) {}
+    public function __construct(
+        private readonly ShippingProviderRegistry $providers,
+        private readonly AssertShipmentConnectionAction $connection,
+        private readonly ProcessShippingWebhookAction $events,
+        private readonly ReconcileShipmentAction $reconcile,
+    ) {}
 
     public function execute(Shipment $shipment): Shipment
     {
@@ -21,6 +26,21 @@ final class RefreshShipmentTrackingAction
         if (! $provider instanceof ShipmentTrackingProvider || ! $shipment->external_id) {
             throw ValidationException::withMessages(['shipping' => 'Este envio não oferece rastreamento automático.']);
         }
+        // Uma etiqueta paga que aguarda confirmação de geração precisa da
+        // consulta de detalhes, não apenas do endpoint de rastreio, que pode
+        // continuar retornando "released" após o PDF ficar disponível.
+        // ReconcileShipmentAction valida a tag da operação e o serviço antes
+        // de projetar qualquer mudança de estado; não compra outra etiqueta.
+        $metadata = $shipment->metadata ?? [];
+        if ($shipment->status === \App\Domain\Shipping\Enums\ShipmentStatus::PURCHASED
+            && filled($metadata['generation_requested_at'] ?? null)) {
+            try {
+                return $this->reconcile->execute($shipment, (string) $shipment->external_id);
+            } catch (ShippingProviderFailed $exception) {
+                throw ValidationException::withMessages(['shipping' => $exception->getMessage()]);
+            }
+        }
+
         try {
             $result = $provider->track($shipment->external_id);
         } catch (ShippingProviderFailed $exception) {

@@ -42,6 +42,8 @@ final class AdminPanelProvider extends PanelProvider
             ->collapsibleNavigationGroups(false)
             ->navigationGroups(['Painel', 'Catálogo', 'Vendas', 'Configurações'])
             ->darkMode(false)
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('20s')
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, fn (): string => view('filament.components.view-store-link')->render())
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->colors([

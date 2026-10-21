@@ -24,10 +24,10 @@
         @if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED)
             <p class="mt-5 text-store-red">Este pedido foi cancelado. Entre em contato com a loja.</p>
         @elseif($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::APPROVED)
-            <p class="mt-5 font-semibold text-store-green" role="status">Pagamento aprovado — ambiente de demonstração.</p>
+            <p class="mt-5 font-semibold text-store-green" role="status">{{ $order->payments->contains('is_demo', true) ? 'Pagamento aprovado — ambiente de demonstração.' : 'Pagamento aprovado.' }}</p>
         @elseif($order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
-            <p class="mt-5 text-sm text-store-muted">Pagamento de demonstração. Nenhuma cobrança real será realizada.</p>
-            <button type="button" wire:click="confirmPayment" wire:loading.attr="disabled" class="store-button mt-5 w-full">Confirmar pedido e pagamento de teste</button>
+            <p class="mt-5 text-sm text-store-muted">{{ app(\App\Infrastructure\Payments\PaymentGatewayRegistry::class)->active() ? 'Você será encaminhado ao Asaas para efetuar o pagamento.' : 'Pagamento de demonstração. Nenhuma cobrança real será realizada.' }}</p>
+            <button type="button" wire:click="confirmPayment" wire:loading.attr="disabled" class="store-button mt-5 w-full">{{ app(\App\Infrastructure\Payments\PaymentGatewayRegistry::class)->active() ? 'Aceitar frete e pagar' : 'Confirmar pedido e pagamento de teste' }}</button>
         @else
             <p class="mt-5 text-store-red">Este pedido não está disponível para pagamento. Entre em contato com a loja.</p>
         @endif

@@ -121,8 +121,8 @@
                 </section>
 
                 <section class="rounded-xl border border-store-border bg-white p-5 sm:p-7" aria-labelledby="checkout-payment-heading">
-                    <h2 id="checkout-payment-heading" class="mb-3 text-lg font-semibold">Pagamento de demonstração</h2>
-                    <p class="text-sm leading-6 text-store-muted">Ao finalizar este pedido de teste, o pagamento será aprovado de forma simulada. Nenhuma cobrança será realizada.</p>
+                    <h2 id="checkout-payment-heading" class="mb-3 text-lg font-semibold">Pagamento</h2>
+                    <p class="text-sm leading-6 text-store-muted">@if(app(\App\Infrastructure\Payments\PaymentGatewayRegistry::class)->active()) Você será encaminhado ao Asaas para concluir sua compra. O pedido será considerado pago somente após confirmação da cobrança. Seus itens ficarão reservados até o pagamento ser confirmado, reprovado ou a cobrança expirar. @else Ambiente de demonstração: nenhuma cobrança real será realizada. @endif</p>
                 </section>
                 <a href="{{ route('store.cart') }}" class="store-text-link">← Voltar ao carrinho</a>
             </div>
@@ -151,7 +151,7 @@
                     <p class="mt-3 text-sm text-store-muted">Você revisará o frete e o total antes do pagamento. Nenhuma cobrança será realizada nesta solicitação.</p>
                 @else
                 <button type="submit" wire:loading.attr="disabled" wire:target="submit" @disabled($summary['shippingError'] || $summary['totalError'] || !$summary['selectedShipping']) class="store-button mt-6 w-full disabled:cursor-wait disabled:opacity-50">
-                    <span wire:loading.remove wire:target="submit">Finalizar pedido de teste</span>
+                    <span wire:loading.remove wire:target="submit">{{ app(\App\Infrastructure\Payments\PaymentGatewayRegistry::class)->active() ? 'Continuar para o pagamento' : 'Finalizar pedido de teste' }}</span>
                     <span wire:loading wire:target="submit">Finalizando pedido…</span>
                 </button>
                 @endif

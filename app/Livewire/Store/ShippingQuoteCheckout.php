@@ -24,7 +24,11 @@ final class ShippingQuoteCheckout extends Component
     public function confirmPayment(ConfirmQuotedOrderAction $action): void
     {
         $this->resetValidation();
-        $action->execute($this->number, $this->revision, $this->signedUrl);
+        $order = $action->execute($this->number, $this->revision, $this->signedUrl);
+        $payment = $order->payments()->latest('id')->first();
+        if ($payment && $payment->gateway === 'asaas' && ! $payment->is_demo && $payment->checkout_url && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($payment->checkout_url, $payment->environment)) {
+            $this->redirect($payment->checkout_url);
+        }
     }
 
     public function render(): View

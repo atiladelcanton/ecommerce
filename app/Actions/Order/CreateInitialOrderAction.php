@@ -140,9 +140,7 @@ final class CreateInitialOrderAction
                         'from_status' => null, 'to_status' => OrderStatus::PENDING, 'description' => 'Pedido criado.',
                     ]);
                     app(ManageOrderInventoryAction::class)->reserve($order);
-                    if (! $requestFreight) {
-                        $order = app(PayOrderAction::class)->execute($order);
-                    }
+                    // External checkout must start after the database transaction has committed.
 
                     return $order;
                 }, 3);
@@ -155,6 +153,10 @@ final class CreateInitialOrderAction
             }
         } catch (LockTimeoutException) {
             throw ValidationException::withMessages(['checkout' => 'Seu pedido está sendo processado. Aguarde e tente novamente.']);
+        }
+
+        if (! $requestFreight && $order->payment_status !== PaymentStatus::APPROVED) {
+            $order = app(PayOrderAction::class)->execute($order);
         }
 
         // Keep a server-side session capability for a guest order so a customer who

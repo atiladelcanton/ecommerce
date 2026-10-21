@@ -1,150 +1,119 @@
-# Saba Equipamentos — E-commerce Starter
+# SABA Equipamentos — importação CSV e crawler por URL
 
-Starter técnico para o novo e-commerce da Saba Equipamentos.
+Pacote **para integrar no repositório Laravel 13 do SABA**, não um projeto Laravel independente. Os arquivos PHP foram verificados por `php -l`. A execução integrada com o banco do SABA depende da aplicação real, que não foi enviada.
 
-## Stack definida
+## Estrutura e decisões
 
-- Laravel 13
-- PHP 8.4
-- Laravel Sail
-- MySQL 8.4
-- Redis
-- Filament 5
-- Livewire 4
-- Tailwind CSS 4
-- PHPUnit
+- `saba:catalog:import`: importa produtos, associa **categorias preexistentes por nome/slug**, baixa imagens para `storage/app/public/products/imported/...` (no disco `public`) e grava os caminhos relativos em `product_images`.
+- `saba:catalog:crawl`: recebe **URL pública** de categoria/produto, coleta HTML/JSON-LD + links de produto, exporta três CSVs e chama o mesmo importador. Para a home da Tele Silk, o mapa de categorias permite examinar as três seções originalmente coletadas.
+- `catalog_import_sources`: guarda a URL de origem, identidade idempotente, metadados/preço original e `product_id`.
+- `catalog_import_options`: mantém as **opções não verificadas** vinculadas ao registro de origem. **Não** cria `product_variants`, que exigem combinações completas e SKUs/preços confiáveis.
+- Todos os produtos **novos** entram inativos, `availability=unavailable`, estoque 0, custo 0, e preço original em centavos (inclusive preço 0 como indicador de ausência de referência). **Não ativar sem ajustar preço/custo/estoque/medidas e conferir direitos das imagens.**
+- Reimportações preservam produtos já alterados no administrativo: não reescrevem preço/custo/estoque/status, não excluem fotos. `--update-text` atualiza apenas textos de produtos importados ainda inativos.
+- Nunca modifica produtos preexistentes apenas por slug. Se houver colisão de slug cria novo nome com sufixo de origem; SKU já usado não é duplicado.
+- O crawler é **conservador**: páginas que dependem exclusivamente de JavaScript, Cloudflare, API privada, autenticação ou HTML não reconhecido podem retornar informações incompletas. Não tenta contornar proteções do site. Respeita `robots.txt`, limita páginas/produtos e atrasa requisições.
+- Não há download de imagens neste pacote: apenas URLs para serem baixadas **no servidor da loja ao executar o Artisan**.
 
-A arquitetura e as regras de trabalho para Codex estão em `AGENTS.md` e `docs/`.
+## Instalação
 
-## Importante sobre este ZIP
-
-O diretório `vendor/` e `node_modules/` não são versionados nem incluídos. Isso é intencional e é o padrão para projetos Laravel. Execute o setup uma vez na sua máquina para resolver as dependências nas versões compatíveis do `composer.lock` que será gerado localmente.
-
-O script funciona com Composer local ou, se você não tiver Composer, usa a imagem oficial do Composer via Docker.
-
-## Instalação rápida
-
-Linux / macOS / WSL2:
+1. Faça backup do banco e do diretório `storage/app/public`.
+2. Na **raiz do projeto SABA**, copie os conteúdos das pastas `app/`, `database/`, `config/`, `tests/` e `import-data/`, preservando seus caminhos. A pasta `import-data/` será criada na raiz com os CSVs de exemplo.
+3. Confirme extensões PHP `fileinfo`, `mbstring`, `dom`/`xml` (DOM necessário para detectar opções em páginas HTML; JSON-LD e links funcionam sem DOM), e acesso HTTP HTTPS.
+4. Verifique as categorias cadastradas: `Tinta Base Água`, `Tinta Plastisol`, `Berços`, `Máquinas de Serigrafia`, `Acessórios`. **IDs podem variar**, pois o importador confirma a identidade pelo nome, não pelo número isolado.
+5. Execute a migration **incremental** e vincule o storage público:
 
 ```bash
-chmod +x scripts/setup.sh
-./scripts/setup.sh
-```
-
-Depois:
-
-```bash
-./vendor/bin/sail up -d
 ./vendor/bin/sail artisan migrate
-./vendor/bin/sail test
-./vendor/bin/sail artisan make:filament-user
+./vendor/bin/sail artisan storage:link
+./vendor/bin/sail artisan list | grep 'saba:catalog:'
 ```
 
-Acesse:
+Laravel 13 costuma descobrir automaticamente as classes em `app/Console/Commands`. Se os comandos não aparecerem, registre as duas classes através de `withCommands([...])` em `bootstrap/app.php` conforme o padrão já usado no projeto.
 
-- Storefront: `http://localhost:8081`
-- Filament: `http://localhost:8081/admin`
+Se estiver em hospedagem sem Sail, substitua `./vendor/bin/sail artisan` por `php artisan`.
 
-## Alternativa manual
+## Importar os três CSVs enviados
+
+Primeiro simule (não altera o banco, nem faz download):
 
 ```bash
-cp .env.example .env
-composer install
-php artisan key:generate
-npm install
-npm run build
-./vendor/bin/sail up -d
-./vendor/bin/sail artisan migrate
-./vendor/bin/sail test
+./vendor/bin/sail artisan saba:catalog:import import-data/telesilk_produtos_ecommerce.csv \
+  --images=import-data/telesilk_imagens.csv \
+  --options=import-data/telesilk_opcoes_variacoes.csv \
+  --dry-run
 ```
 
-Se estiver trabalhando exclusivamente dentro do Sail, use `./vendor/bin/sail composer`, `./vendor/bin/sail npm` etc. depois que as dependências iniciais estiverem presentes.
-
-
-## Portas do ambiente local
-
-Para evitar conflito com outros projetos Docker/Sail, este starter não usa as portas mais comuns no host:
-
-- Aplicação: `8081` → container `80`
-- Vite: `5174`
-- MySQL: `3307` → container `3306`
-- Redis: `6380` → container `6379`
-
-As portas internas dos containers continuam as padrões; somente o encaminhamento para a máquina host foi alterado.
-
-## Identidade visual do administrativo
-
-O painel Filament já está configurado com o logo da **SABA Equipamentos Serigráficos** na tela de login. O arquivo está em `public/images/saba-logo.jpeg` e a configuração fica em `app/Providers/Filament/AdminPanelProvider.php`.
-
-## Estrutura
-
-```text
-app/
-├── Actions/
-├── Domain/
-│   ├── Catalog/
-│   ├── Customer/
-│   ├── Cart/
-│   ├── Order/
-│   ├── Payment/
-│   ├── Shipping/
-│   ├── Finance/
-│   └── Settings/
-├── Infrastructure/
-│   ├── Payments/
-│   └── Shipping/
-├── Filament/
-└── Livewire/
-
-docs/
-├── architecture.md
-├── business-rules.md
-├── database.md
-├── frontend.md
-├── filament.md
-├── roadmap.md
-└── codex-prompts.md
-```
-
-## Próximo passo recomendado
-
-Não peça ao Codex para criar todo o e-commerce.
-
-Abra `docs/codex-prompts.md` e execute o primeiro prompt: **Catalog domain**.
-
-Quando essa entrega estiver testada e revisada, faça commit e só então avance ao Filament do catálogo.
-
-## Comandos úteis
+Para realmente cadastrar e baixar as imagens:
 
 ```bash
-make up
-make down
-make test
-make migrate
-make fresh
-make build
-make pint
+./vendor/bin/sail artisan saba:catalog:import import-data/telesilk_produtos_ecommerce.csv \
+  --images=import-data/telesilk_imagens.csv \
+  --options=import-data/telesilk_opcoes_variacoes.csv
 ```
 
-## Convenções essenciais
+Opcional: `--no-images` para importar apenas os registros, `--update-text` para atualizar textos de rascunhos já importados. Execute novamente após falha de rede para completar imagens sem duplicar vínculos.
 
-- categorias não têm imagem;
-- preço de custo nunca aparece no storefront;
-- dinheiro é armazenado em centavos inteiros;
-- preço histórico de pedido é snapshot, não leitura do produto atual;
-- webhooks de pagamento devem ser idempotentes;
-- Filament/Livewire não carregam regras de negócio complexas;
-- integrações de pagamento e frete entram atrás de contratos.
+## Crawler: informar a URL e salvar automaticamente
 
-## Portas locais reservadas
+### Uma categoria de qualquer loja com páginas HTML reconhecíveis
 
-Este projeto usa portas diferentes das padrões para coexistir com outros projetos locais:
+```bash
+./vendor/bin/sail artisan saba:catalog:crawl \
+  'https://www.telesilkonline.com.br/tintas-plastisol/plastisol' \
+  --category='Tinta Plastisol' --max-products=100
+```
 
-- HTTP: `8081`
-- MySQL no host: `3307`
-- Redis no host: `6380`
-- Vite: `5174`
+O crawler exportará os três CSVs em `storage/app/catalog-imports/crawl-.../` e, por padrão, importará no banco + salvará imagens no `public` disk. Use `--no-import` para somente coletar, ou `--dry-run` para coletar e simular a importação.
 
-Dentro da rede Docker, Laravel continua usando `DB_HOST=mysql`, `DB_PORT=3306` e `REDIS_PORT=6379`.
+### Home da Tele Silk, com mapeamento das 3 categorias coletadas
 
-Se você reutilizou uma pasta de uma versão anterior, rode novamente `./scripts/setup.sh`: o script corrige as portas no `.env`, limpa caches e publica os assets do Filament.
+```bash
+./vendor/bin/sail artisan saba:catalog:crawl \
+  'https://www.telesilkonline.com.br/' \
+  --map=config/telesilk-categorias.json \
+  --max-products=100 --delay-ms=900
+```
+
+O mapa diferencia **Berços**, **Máquinas** e **Acessórios** na mesma página de equipamentos. Para novos fornecedores, crie um JSON nesse mesmo formato com as URLs de categoria (`path`) e nome de categoria SABA (`category`). As regras `match` são substrings de nomes de produtos, revisáveis e explícitas.
+
+### Uma página de produto
+
+```bash
+./vendor/bin/sail artisan saba:catalog:crawl \
+  'https://www.telesilkonline.com.br/produto/hidrocryl-mix-248' \
+  --category='Tinta Base Água' --max-products=1
+```
+
+Opções: `--max-pages=10`, `--max-products=100`, `--delay-ms=800`, `--no-images`, `--no-import`, `--dry-run`. Outros padrões de URL podem usar `--product-pattern="~\/loja\/[^/]+~"` (regex PHP sobre o caminho). Para uma URL de home é necessário o mapa com caminhos específicos, não um único slug geral.
+
+## Conferência do banco
+
+```sql
+SELECT c.name, COUNT(*) AS produtos_importados
+FROM catalog_import_sources src
+JOIN products p ON p.id = src.product_id
+JOIN categories c ON c.id = p.category_id
+GROUP BY c.id, c.name;
+
+SELECT p.id, p.name, p.price, p.is_active, p.availability,
+       COUNT(DISTINCT i.id) AS fotos,
+       COUNT(DISTINCT o.id) AS opcoes_a_conferir
+FROM catalog_import_sources s
+JOIN products p ON p.id = s.product_id
+LEFT JOIN product_images i ON i.product_id = p.id
+LEFT JOIN catalog_import_options o ON o.catalog_import_source_id = s.id
+GROUP BY p.id, p.name, p.price, p.is_active, p.availability;
+```
+
+**Atenção:** `source_options_count` do CSV (264 agregadas) descreve contadores de opções na vitrine, não o número de combinações individuais válidas. O CSV de opções tem 107 registros, alguns vazios/informativos, dos quais 93 trazem característica/valor recuperados. As opções coletadas ao vivo podem ter cobertura diferente.
+
+## Testes locais no repositório
+
+```bash
+./vendor/bin/sail artisan test --filter=CatalogImportTest
+./vendor/bin/sail artisan test --filter=CatalogHtmlExtractorTest
+./vendor/bin/sail artisan test
+./vendor/bin/sail pint --test
+```
+
+O download remoto usa HTTPS/HTTP, não segue redirect, limita tamanho e impede hosts privados no momento da validação DNS. Em produção, recomende também bloqueio de tráfego de saída para redes privadas na infraestrutura para mitigar DNS rebinding. Imagens podem estar sujeitas a direitos autorais/licença do fornecedor; confira permissão antes de publicá-las.

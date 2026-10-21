@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\Payment\MercadoPagoWebhookController;
+use App\Http\Controllers\Payment\AsaasWebhookController;
+use App\Http\Controllers\Payment\PaymentReturnController;
+use App\Http\Controllers\Payment\PaymentRetryController;
+use App\Http\Controllers\Payment\PaymentStatusController;
 use App\Http\Controllers\Shipping\MelhorEnvioOAuthController;
 use App\Http\Controllers\Shipping\MelhorEnvioWebhookController;
 use App\Http\Controllers\Shipping\ShipmentLabelController;
@@ -61,3 +66,10 @@ Route::get('/admin/shipping/labels/{shipment}/file/{format}', ShipmentLabelFileC
 
 Route::get('/pedido/{number}/entrega/{revision}', ShippingQuoteCheckoutController::class)
     ->whereNumber('revision')->middleware(['signed', 'throttle:60,1'])->name('store.order.shipping-quote');
+
+Route::post('/webhooks/payments/asaas', AsaasWebhookController::class)->name('webhooks.payments.asaas');
+Route::post('/webhooks/payments/mercado-pago', MercadoPagoWebhookController::class)->name('webhooks.payments.mercado-pago');
+Route::get('/pedido/{number}/retorno-pagamento', PaymentReturnController::class)->name('store.order.payment-return');
+Route::get('/pedido/{number}/pagamento', PaymentStatusController::class)->name('store.order.payment-status');
+
+Route::post('/pedido/{number}/pagamento/tentar-novamente', PaymentRetryController::class)->middleware('throttle:10,1')->name('store.order.payment-retry');

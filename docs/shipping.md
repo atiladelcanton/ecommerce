@@ -157,3 +157,8 @@ A compra de etiqueta começa em `POST /api/v2/me/cart`. Respostas HTTP 422 são 
 Para envio comercial, a chave de NF-e é validada localmente quanto a 44 dígitos, modelo 55 e dígito verificador. Isso não substitui a validação do Melhor Envio/SEFAZ: inclusive no Sandbox uma chave apenas inventada, ainda que estruturalmente válida, pode ser recusada. Para testar o fluxo sem possuir NF-e, use **Declaração de conteúdo** somente quando essa modalidade for aplicável ao envio. Nesse fluxo, `products` é sempre enviado corretamente e a DC-e externa é opcional; se ela não existir, `options.dce` também não é enviado.
 
 A unidade de postagem escolhida pode ser mantida no SABA como referência operacional. No payload do Melhor Envio, `agency` só é enviado quando o serviço sincronizado indicar `agency_required`; serviços com unidade apenas opcional não recebem esse parâmetro. Isso evita rejeições do `/cart` em cenários OAuth/Sandbox em que a API não espera agência para o serviço selecionado.
+
+
+## Monitoramento automático e central de notificações — 2026-10-21
+
+O estado do frete também é consultado pelo job agendado `saba:monitor-shipments` (consulta read-only ao Melhor Envio, sem repetir compras). A fila executa os jobs individuais e o Filament apresenta alertas persistentes de pagamento aprovado/ação fiscal, etiquetas prontas, postagem e entrega. O monitor respeita ambientes e verifica a tag da operação antes de atualizar estados. Detalhes em `docs/monitoramento-envios-notificacoes.md`.

@@ -1,0 +1,32 @@
+RELATÓRIO DE COLETA TELE SILK — 2026-10-19
+
+Alcance: os 3 endereços de categorias indicados pelo solicitante.
+Produtos principais encontrados: 56 (água 13, plastisol 21, equipamentos 22).
+Número de opções mostrado nas páginas de categoria (soma): 264; não confundir com combinações/SKUs confirmados.
+
+Categorias de destino existentes:
+- 6 Tinta Base Água: 13 produtos
+- 5 Tinta Plastisol: 21 produtos
+- 3 Berços: berços e tábuas
+- 2 Máquinas de Serigrafia: mesa seis berços e carrosséis
+- 9 Acessórios: chavetas, morcetes, gaveta e mola
+Categoria nova: nenhuma necessária sob a taxonomia atual.
+
+DADOS IMPORTANTES:
+1. O site exibiu preços para apenas parte dos anúncios nas páginas públicas consultadas. Para os sem preço recuperável, price=0 (valor técnico obrigatório, NÃO valor comercial) e price_status=preco_nao_exibido_na_fonte. Nenhum preço foi inventado.
+2. Os anúncios com muitas opções exibem no máximo um PREÇO A PARTIR DE, sem as tabelas de valores por variante. price corresponde ao preço mínimo anunciado, e não pode ser atribuído indiscriminadamente a todas as combinações de cor/tamanho.
+3. Todos os produtos são gerados is_active=0, stock=0 e availability=out_of_stock para impedir exposição e vendas com custos, saldos ou preços desconhecidos. cost_price=0 é placeholder técnico; preencher custo real antes da ativação.
+4. product_images.path na base original é um path LOCAL de no máximo 255 caracteres. Este CSV usa coluna extra image_url; as imagens DEVEM ser baixadas para storage e cadastradas em product_images, ao invés de inserir a URL diretamente no campo path.
+5. source_options_json documenta algumas opções disponíveis; NÃO fornece combinações finais/SKUs por variante. O CSV de opções registra escolhas vistas na página, mas não é um cadastro confiável de product_variants.
+6. O campo availability aceita string no banco, mas valores válidos de regra de negócio devem ser verificados na aplicação antes do import. O valor out_of_stock é conservador e pode demandar adaptação.
+7. As descrições são versões editoriais curtas, derivadas de informações publicadas no site; não são cópias integrais da descrição do anunciante.
+8. Links de imagem fornecidos como no CDN (majoritariamente thumbnails 150x); duas imagens são 1200x. Uma imagem de mola não estava exposta e ficou em branco.
+9. CSV exportado com separador ; e UTF-8 BOM para Excel em português. Preços do banco expressos em centavos, inteiros.
+10. Produtos e preços de terceiros podem mudar. A extração é uma fotografia das páginas consultadas.
+
+PRÉ-IMPORTAÇÃO RECOMENDADA:
+- Validar os preços e custos pendentes e as variantes reais com seus SKUs.
+- Definir política de preços da SUA loja (não usar automaticamente preços de concorrente).
+- Validar as URLs de imagens, copiar para storage e construir product_images.
+- Importar por slug e fazer upsert/idempotência; deixar o id vazio para auto_increment.
+- Validar disponibilidade, medidas para frete, estoque e necessidade de cotação.

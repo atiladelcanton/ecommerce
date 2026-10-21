@@ -265,3 +265,7 @@ Do not introduce independent visual styles per module.
 - Use `BrazilianMoney::display()` for administrative monetary listings. Preserve precision with strings and integer cents; do not use float, parseFloat or floating-point formatting for money.
 - Product cost must be >= 0; selling price is required and > 0; optional promotional price must be > 0 and strictly lower than selling price. These rules belong in the existing Catalog validation/domain layer and must return friendly Portuguese field errors.
 - Reuse this same input and formatter for future order, cash-flow, shipping, discount and payment amounts; do not implement different monetary masks per module.
+
+## Payment integration update (2026-10-20)
+
+The initial real payment adapter is Mercado Pago Checkout Pro via Orders API. Read `docs/payments.md` before changing payment logic. While a remote charge is pending, `inventory_reservations.payment_hold` prevents a 24h local expiry from releasing stock. Release only after authenticated provider confirmation of a terminal failed/canceled state, and consume only after verified accredited payment. Webhook signature + dedup and scheduled reconciliation are mandatory. Never trust browser redirects or call the remote gateway inside a SQL transaction. Monetary values remain integer cents. Remote refunds and disputed payments require explicit post-sale workflow; do not silently restore inventory. Do not use demo gateway in production.
