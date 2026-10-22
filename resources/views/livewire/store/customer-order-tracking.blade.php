@@ -75,6 +75,7 @@
             </ul>
             <dl class="mt-4 border-t border-store-border pt-4 text-sm">
                 <div class="flex justify-between py-2"><dt>Subtotal</dt><dd>{{ \App\Support\BrazilianMoney::display($order->subtotal_cents) }}</dd></div>
+                @if($order->discount_cents > 0)<div class="flex justify-between gap-4 py-2 text-green-700"><dt>Cupom {{ $order->coupon_code }}</dt><dd>- {{ \App\Support\BrazilianMoney::display($order->discount_cents) }}</dd></div>@endif
                 <div class="flex justify-between py-2"><dt>Frete</dt><dd>{{ $order->formattedShipping() }}</dd></div>
                 <div class="mt-2 flex justify-between border-t border-store-border pt-4 text-lg font-semibold"><dt>Total</dt><dd>{{ $order->formattedTotal() }}</dd></div>
             </dl>

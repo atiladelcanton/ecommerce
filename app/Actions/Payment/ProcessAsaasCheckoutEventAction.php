@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Payment;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\Payment;
@@ -103,6 +104,7 @@ final class ProcessAsaasCheckoutEventAction
                         } catch (ValidationException $exception) {
                             $locked->update(['status' => PaymentStatus::APPROVED]);
                             $order->update(['payment_status' => PaymentStatus::APPROVED]);
+                            app(ManageCouponUsageAction::class)->consume($order);
                             $this->flag($locked, 'Pagamento recebido, mas pedido/estoque exige atendimento manual.');
                         }
                     }
@@ -115,6 +117,7 @@ final class ProcessAsaasCheckoutEventAction
                     if (! $anotherPending && $order->payment_status !== PaymentStatus::APPROVED) {
                         $order->update(['payment_status' => PaymentStatus::CANCELLED]);
                         app(ManageOrderInventoryAction::class)->releasePaymentHold($order);
+                        app(ManageCouponUsageAction::class)->release($order);
                     }
                 }
             }
@@ -131,17 +134,24 @@ final class ProcessAsaasCheckoutEventAction
     {
         $sum = 0;
         foreach ($items as $item) {
-            if (! is_array($item) || ! is_int($item['quantity'] ?? null) || $item['quantity'] < 1
+            if (! is_array($item) || ! $this->isValidQuantity($item['quantity'] ?? null) || (int) $item['quantity'] < 1
                 || ! is_numeric($item['value'] ?? null)) {
                 return null;
             }
             $raw = is_string($item['value']) ? $item['value'] : json_encode($item['value'], JSON_PRESERVE_ZERO_FRACTION);
             $cents = AsaasGateway::cents($raw);
-            if ($cents === null || $cents <= 0 || $cents > intdiv(PHP_INT_MAX - $sum, $item['quantity'])) {
+            if ($cents === null || $cents <= 0 || $cents > intdiv(PHP_INT_MAX - $sum, (int) $item['quantity'])) {
                 return null;
             }
-            $sum += $cents * $item['quantity'];
+            $sum += $cents * (int) $item['quantity'];
         }
         return $sum;
     }
+
+    private function isValidQuantity(mixed $quantity): bool
+    {
+        return (is_int($quantity) && $quantity >= 1 && $quantity <= 999)
+            || (is_float($quantity) && is_finite($quantity) && $quantity >= 1 && $quantity <= 999 && floor($quantity) === $quantity);
+    }
+
 }

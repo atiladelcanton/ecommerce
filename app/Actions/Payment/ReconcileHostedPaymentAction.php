@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Payment;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
@@ -69,6 +70,7 @@ final class ReconcileHostedPaymentAction
                     $locked->update(['status' => PaymentStatus::APPROVED, 'needs_review' => true,
                         'review_reason' => 'Pagamento recebido, mas o estoque/pedido exige tratamento manual.']);
                     $order->update(['payment_status' => PaymentStatus::APPROVED]);
+                    app(ManageCouponUsageAction::class)->consume($order);
                 }
                 return;
             }
@@ -93,6 +95,7 @@ final class ReconcileHostedPaymentAction
                     if (! $otherActive) {
                         $order->update(['payment_status' => $newStatus]);
                         app(ManageOrderInventoryAction::class)->releasePaymentHold($order);
+                        app(ManageCouponUsageAction::class)->release($order);
                     }
                 }
             }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Coupon\QuoteCouponAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Actions\Cart\ClearCartAction;
 use App\Actions\Cart\GetCartAction;
 use App\Actions\Catalog\ManageOrderInventoryAction;
@@ -101,7 +103,12 @@ final class CreateInitialOrderAction
                     } elseif (! $shipping) {
                         throw ValidationException::withMessages(['shipping_option' => 'Selecione uma forma de entrega disponível.']);
                     }
-                    $totals = $shipping ? new OrderTotals($cart['subtotal'], $shipping->price) : null;
+                    $couponQuote = null;
+                    if (filled($data['coupon_code'] ?? null)) {
+                        $couponQuote = app(QuoteCouponAction::class)->execute((string) $data['coupon_code'], array_values($cart['items']), $cart['subtotal']);
+                    }
+                    $discount = $couponQuote['discount'] ?? 0;
+                    $totals = $shipping ? new OrderTotals($cart['subtotal'], $shipping->price, $discount) : null;
                     $order = Order::query()->create([
                         'customer_id' => $this->auth->guard('customer')->id(),
                         'checkout_token' => $token, 'checkout_session_hash' => $owner,
@@ -109,7 +116,8 @@ final class CreateInitialOrderAction
                         'customer_phone' => $data['phone'], 'customer_document' => $data['document'],
                         'status' => OrderStatus::PENDING, 'payment_status' => PaymentStatus::PENDING,
                         'subtotal_cents' => $cart['subtotal'], 'shipping_cents' => $totals?->shipping,
-                        'discount_cents' => 0, 'total_cents' => $totals?->total,
+                        'discount_cents' => $discount, 'total_cents' => $totals?->total,
+                        'coupon_id' => $couponQuote['coupon']->id ?? null, 'coupon_code' => $couponQuote['coupon']->code ?? null,
                         'shipping_pricing_status' => $requestFreight ? ShippingPricingStatus::AWAITING_QUOTE : null,
                         'shipping_option_id' => $shipping?->id ?? 'manual:pending',
                         'shipping_provider' => $shipping?->provider ?? 'manual',
@@ -139,6 +147,9 @@ final class CreateInitialOrderAction
                     $order->statusHistories()->create([
                         'from_status' => null, 'to_status' => OrderStatus::PENDING, 'description' => 'Pedido criado.',
                     ]);
+                    if ($couponQuote) {
+                        app(ManageCouponUsageAction::class)->reserve($order, $couponQuote['coupon'], $discount);
+                    }
                     app(ManageOrderInventoryAction::class)->reserve($order);
                     // External checkout must start after the database transaction has committed.
 

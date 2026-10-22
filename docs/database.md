@@ -170,3 +170,7 @@ Migration incremental `2026_10_21_000001_enable_asaas_and_archive_mercado_pago.p
 ### Monitoramento e notificações (migração incremental de 2026-10-21)
 
 `shipments.monitor_checked_at` (timestamp nulo, índice conjunto provider/status/monitor_checked_at) permite escalonar consultas read-only da transportadora. `notifications` segue a tabela Laravel/Filament para notificações administrativas persistentes; cada ID é determinístico por pedido, marco e usuário administrativo, impedindo alertas repetidos após reconciliação de webhooks.
+
+## Cupons digitados — incremento de 21/10/2026
+
+Migration `2026_10_21_000001_create_coupons.php`: `coupons`, `coupon_products`, `coupon_categories`, `coupon_usages`, `coupon_claims`, e snapshots `orders.coupon_id`/`orders.coupon_code`. Os centavos efetivamente concedidos continuam em `orders.discount_cents`. O par `(coupon_id, document_hash)` em `coupon_claims` é único. O CPF/CNPJ é normalizado e gravado somente como HMAC-SHA256 com `APP_KEY`, sem documento em claro nas tabelas de cupons. Pagamento pendente mantém a claim; pagamento aprovado marca uso permanente; recusa/expiração/cancelamento confirmado sem aprovação remove a claim, mantendo histórico em `coupon_usages`. Reservas de pedidos sem cobrança remota após 24h são liberadas por `saba:expire-unused-coupons`. Não executar `migrate:fresh` na loja.

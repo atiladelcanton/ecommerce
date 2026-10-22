@@ -231,7 +231,7 @@
             <dl class="ml-auto mt-5 max-w-sm border-t border-zinc-200 pt-4 text-sm">
                 <div class="flex justify-between py-1.5"><dt class="text-zinc-500">Subtotal</dt><dd><?php echo e(\App\Support\BrazilianMoney::display($order->subtotal_cents)); ?></dd></div>
                 <div class="flex justify-between py-1.5"><dt class="text-zinc-500">Frete</dt><dd><?php echo e($order->formattedShipping()); ?></dd></div>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->discount_cents > 0): ?><div class="flex justify-between py-1.5 text-green-700"><dt>Desconto</dt><dd>- <?php echo e(\App\Support\BrazilianMoney::display($order->discount_cents)); ?></dd></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($order->discount_cents > 0): ?><div class="flex justify-between py-1.5 text-green-700"><dt>Cupom <?php echo e($order->coupon_code ?: 'de desconto'); ?></dt><dd>- <?php echo e(\App\Support\BrazilianMoney::display($order->discount_cents)); ?></dd></div><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 <div class="mt-2 flex justify-between border-t border-zinc-200 pt-3 text-base font-bold"><dt>Total</dt><dd><?php echo e($order->formattedTotal()); ?></dd></div>
             </dl>
         </section>

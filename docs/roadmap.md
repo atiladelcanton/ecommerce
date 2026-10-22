@@ -134,3 +134,7 @@ Mercado Pago Checkout Pro via Orders API, integração configurável, checkout h
 ## Pagamentos — incremento Asaas (21/10/2026)
 
 Checkout Asaas (Pix/cartão/parcelamento), webhook `CHECKOUT_*`, reserva por cobrança pendente e arquivamento do Mercado Pago para novas vendas. Consulte `docs/payments.md` e `INSTALACAO-ASAAS.md`. Homologação real e reembolsos continuam pendentes.
+
+## Incremento aprovado — cupons digitados e uso único
+
+O cliente recebe desconto somente após informar o código. Um CPF/CNPJ pode aproveitar cada cupom no máximo uma vez (inclusive entre contas e como visitante), com reserva da utilização enquanto existir cobrança pendente. Os cupons podem ser gerais, por categoria ou produto, com desconto percentual/fixo, compra mínima, limite global e período. Pagamentos Asaas recebem o valor final calculado pelo SABA. Ver `docs/coupons.md`.

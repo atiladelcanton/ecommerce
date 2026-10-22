@@ -20,7 +20,7 @@
         <p class="mt-3 text-sm text-store-muted">Cotação válida até {{ $order->latestShippingQuote->expires_at->format('d/m/Y H:i') }}. A reserva inicial de estoque dura 24 horas; após esse prazo, a disponibilidade é conferida novamente.</p>
     </section>
     <section class="rounded-xl border border-store-border bg-white p-6">
-        <dl class="space-y-3"><div class="flex justify-between"><dt>Produtos</dt><dd>{{ \App\Support\BrazilianMoney::display($order->subtotal_cents) }}</dd></div><div class="flex justify-between"><dt>Frete</dt><dd>{{ $order->formattedShipping() }}</dd></div><div class="flex justify-between border-t border-store-border pt-3 text-lg font-bold"><dt>Total</dt><dd>{{ $order->formattedTotal() }}</dd></div></dl>
+        <dl class="space-y-3"><div class="flex justify-between"><dt>Produtos</dt><dd>{{ \App\Support\BrazilianMoney::display($order->subtotal_cents) }}</dd></div><div class="flex justify-between"><dt>Frete</dt><dd>{{ $order->formattedShipping() }}</dd></div>@if($order->discount_cents > 0)<div class="flex justify-between"><dt>Cupom {{ $order->coupon_code }}</dt><dd>- {{ \App\Support\BrazilianMoney::display($order->discount_cents) }}</dd></div>@endif<div class="flex justify-between border-t border-store-border pt-3 text-lg font-bold"><dt>Total</dt><dd>{{ $order->formattedTotal() }}</dd></div></dl>
         @if($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED)
             <p class="mt-5 text-store-red">Este pedido foi cancelado. Entre em contato com a loja.</p>
         @elseif($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::APPROVED)

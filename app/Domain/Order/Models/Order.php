@@ -34,6 +34,7 @@ final class Order extends Model
         'subtotal_cents',
         'shipping_cents',
         'discount_cents',
+        'coupon_id', 'coupon_code',
         'total_cents',
         'shipping_pricing_status',
         'shipping_option_id',
@@ -93,6 +94,11 @@ final class Order extends Model
     public function latestShippingQuote(): HasOne
     {
         return $this->hasOne(OrderShippingQuote::class)->ofMany('revision', 'max');
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(\App\Domain\Coupon\Models\Coupon::class);
     }
 
     public function customer(): BelongsTo

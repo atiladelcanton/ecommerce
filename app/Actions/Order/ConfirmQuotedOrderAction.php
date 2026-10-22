@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Domain\Catalog\Enums\ProductAvailability;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductVariant;
@@ -43,6 +44,9 @@ final class ConfirmQuotedOrderAction
                 if (! $product || ! $product->is_active || $product->availability === ProductAvailability::UNAVAILABLE || ($item->product_variant_id === null && $product->variants()->exists()) || ($item->variant_value !== null && (! $variant || ! $variant->is_active || $variant->characteristics() != $item->variant_attributes_snapshot))) {
                     throw ValidationException::withMessages(['stock' => 'Um dos itens não está mais disponível nessa configuração. Entre em contato com a loja.']);
                 }
+            }
+            if ($order->coupon_id !== null) {
+                app(ManageCouponUsageAction::class)->reserve($order, $order->coupon, $order->discount_cents);
             }
             app(ManageOrderInventoryAction::class)->reserve($order);
             $order->update(['shipping_pricing_status' => ShippingPricingStatus::CONFIRMED]);

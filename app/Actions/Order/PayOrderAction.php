@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Actions\Payment\HandleApprovedPaymentAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
@@ -72,6 +73,10 @@ final class PayOrderAction
             if ($pending) {
                 return $pending;
             }
+            // Reclaim a coupon released after an earlier definitively failed attempt.
+            if ($order->coupon_id !== null) {
+                app(ManageCouponUsageAction::class)->reserve($order, $order->coupon, $order->discount_cents);
+            }
             // Reserve under the order lock BEFORE any external operation.
             app(ManageOrderInventoryAction::class)->holdForPayment($order);
             $idempotencyKey = (string) Str::uuid();
@@ -138,6 +143,7 @@ final class PayOrderAction
                 Payment::query()->whereKey($payment->id)->update(['status' => PaymentStatus::FAILED]);
                 $locked->update(['payment_status' => PaymentStatus::FAILED]);
                 app(ManageOrderInventoryAction::class)->releasePaymentHold($locked);
+                app(ManageCouponUsageAction::class)->release($locked);
             });
             throw $exception;
         } catch (\RuntimeException $exception) {

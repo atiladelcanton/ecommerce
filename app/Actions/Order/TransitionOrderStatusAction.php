@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Actions\Notification\NotifyOrderMilestoneAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
@@ -87,6 +88,8 @@ final class TransitionOrderStatusAction
                 }
 
                 app(ManageOrderInventoryAction::class)->cancel($locked);
+                // Once paid, a coupon remains used even after a commercial cancellation.
+                app(ManageCouponUsageAction::class)->release($locked);
 
                 $locked->cancellation_reason = $reason;
                 $locked->cancelled_at = now();
