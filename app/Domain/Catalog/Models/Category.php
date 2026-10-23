@@ -37,6 +37,12 @@ final class Category extends Model
         return $query->where('is_active', true);
     }
 
+    /** Sem definicao é uma fila administrativa, jamais uma categoria pública. */
+    public function scopeVisibleInStore(Builder $query): Builder
+    {
+        return $query->active()->where('slug', '!=', 'sem-definicao');
+    }
+
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('id');
