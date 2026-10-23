@@ -122,6 +122,78 @@ final class ImportCatalogUrlsTest extends TestCase
         $this->assertDatabaseHas('products', ['is_active' => 0, 'price' => 0, 'availability' => 'unavailable']);
     }
 
+    public function test_complete_variation_select_imports_individual_inactive_drafts_and_is_idempotent(): void
+    {
+        $html = '<html><body><h1>TECIDO</h1><div class="short-description">Tecido para tela serigráfica</div>'
+            .'<select name="variacoes"><option>Selecione</option>'
+            .'<option>NYLON 120 fios - branco - 100cm comprimento x 110cm</option>'
+            .'<option>Poliéster 77 fios - amarelo - 100cm comprimento x 160cm</option>'
+            .'</select></body></html>';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $url = 'https://8.8.8.8/produto/tecido-teste-591';
+        $action = app(ImportCatalogUrlsAction::class);
+        $first = $action->execute([$url], ['no_images' => true], static function (string $log): void {});
+        $second = $action->execute([$url], ['no_images' => true], static function (string $log): void {});
+
+        $this->assertSame(2, $first['variant_drafts']);
+        $this->assertSame(0, $second['variant_drafts']);
+        $this->assertDatabaseCount('products', 1);
+        $this->assertDatabaseCount('product_variants', 2);
+        $this->assertDatabaseHas('categories', ['slug' => 'telas-e-quadros']);
+        $this->assertDatabaseHas('catalog_import_options', ['name' => 'Variação']);
+        $rows = DB::table('product_variants')->orderBy('sort_order')->get();
+        $this->assertSame('SABA-TQ-', substr($rows[0]->sku, 0, 8));
+        $this->assertSame(0, (int) $rows[0]->is_active);
+        $this->assertSame(0, (int) $rows[0]->stock);
+        $this->assertNull($rows[0]->price);
+        $this->assertSame([
+            'Material' => 'Nylon', 'Fios' => '120', 'Cor' => 'Branco',
+            'Comprimento' => '100 cm', 'Largura' => '110 cm',
+        ], json_decode($rows[0]->attributes, true));
+    }
+
+    public function test_reimport_fills_missing_variants_only_on_inactive_product(): void
+    {
+        $html = '<html><body><h1>TECIDO</h1><select name="variacoes">'
+            .'<option>Poliéster 77 fios - amarelo - 100cm comprimento x 160cm</option>'
+            .'</select></body></html>';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $url = 'https://8.8.8.8/produto/tecido-591';
+        $action = app(ImportCatalogUrlsAction::class);
+        $action->execute([$url], ['no_images' => true], static function (string $log): void {});
+        DB::table('product_variants')->delete();
+        $stats = $action->execute([$url], ['no_images' => true], static function (string $log): void {});
+        $this->assertSame(1, $stats['variant_drafts']);
+        $this->assertDatabaseCount('product_variants', 1);
+        DB::table('products')->update(['is_active' => true, 'price' => 2000]);
+        DB::table('product_variants')->delete();
+        $stats = $action->execute([$url], ['no_images' => true], static function (string $log): void {});
+        $this->assertSame(1, $stats['active_skipped']);
+        $this->assertDatabaseCount('product_variants', 0);
+    }
+
+    public function test_variations_with_radio_labels_are_detected_without_guessing_sku_ids(): void
+    {
+        $html = '<html><body><div class="product-variants">'
+            .'<label><input type="radio" name="sku" value="991">Poliéster 77 fios - amarelo - 100cm comprimento x 160cm</label>'
+            .'<label><input type="radio" name="sku" value="992">Poliéster 44 fios - branco - 100cm comprimento x 100cm</label>'
+            .'</div></body></html>';
+        $extractor = app(\App\Infrastructure\Catalog\CompleteProductVariationExtractor::class);
+        $options = $extractor->extract($html, 'https://8.8.8.8/produto/tecido-999');
+        $this->assertCount(2, $options);
+        $this->assertContains('Poliéster 44 fios - branco - 100cm comprimento x 100cm', $options);
+        $this->assertNotContains('991', $options);
+    }
+
+    public function test_real_tecido_page_has_verified_inactive_fallback_options(): void
+    {
+        $extractor = app(\App\Infrastructure\Catalog\CompleteProductVariationExtractor::class);
+        $labels = $extractor->extract('<html><body><h1>TECIDO</h1></body></html>',
+            'https://www.telesilkonline.com.br/produto/tecido-591');
+        $this->assertCount(18, $labels);
+        $this->assertContains('Poliéster 77 fios - amarelo - 100cm comprimento x 160cm', $labels);
+    }
+
     public function test_does_not_override_commercial_edits_on_existing_product(): void
     {
         Http::fake(['https://8.8.8.8/*' => Http::response($this->html('Tinta Hidrocryl Nova'), 200)]);

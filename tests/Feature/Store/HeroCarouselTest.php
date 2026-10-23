@@ -8,6 +8,7 @@ use App\Domain\Catalog\Models\Banner;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class HeroCarouselTest extends TestCase
@@ -47,6 +48,19 @@ final class HeroCarouselTest extends TestCase
         $this->assertStringNotContainsString('<button', $html);
         $this->assertStringNotContainsString('<a ', $html);
         $this->assertStringContainsString('data-initial-active', $html);
+    }
+
+    public function test_hero_uses_real_dimensions_of_uploaded_banner_when_available(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('banners/one-pixel.png', base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Px0AAAAASUVORK5CYII='
+        ));
+        $html = Blade::render('<x-store.hero-carousel :banners="$banners" />', [
+            'banners' => collect([Banner::factory()->make(['desktop_image' => 'banners/one-pixel.png', 'mobile_image' => null])]),
+        ]);
+        $this->assertStringContainsString('--saba-hero-ratio: 1 / 1', $html);
+        $this->assertStringContainsString('object-contain', $html);
     }
 
     public function test_empty_banner_collection_does_not_render_a_carousel(): void

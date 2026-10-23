@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Catalog;
 
 use App\Infrastructure\Catalog\CatalogHtmlExtractor;
+use App\Infrastructure\Catalog\CompleteProductVariationExtractor;
 use App\Infrastructure\Catalog\HomologInkPageExtractor;
 use App\Infrastructure\Catalog\RemoteCatalogImage;
 use App\Infrastructure\Catalog\SafeCatalogHttp;
@@ -21,6 +22,7 @@ final class ImportCatalogUrlsAction
         private readonly SafeCatalogHttp $http,
         private readonly CatalogHtmlExtractor $html,
         private readonly HomologInkPageExtractor $technical,
+        private readonly CompleteProductVariationExtractor $completeVariations,
         private readonly RemoteCatalogImage $images,
     ) {}
 
@@ -50,7 +52,7 @@ final class ImportCatalogUrlsAction
         }
         $stats = ['urls' => count($urls), 'created' => 0, 'existing' => 0, 'categories_created' => 0,
             'uncategorized' => 0, 'images' => 0, 'image_errors' => 0, 'options' => 0,
-            'variant_drafts' => 0, 'preview_visible' => 0, 'failed' => 0];
+            'variant_drafts' => 0, 'active_skipped' => 0, 'preview_visible' => 0, 'failed' => 0];
         // As URLs dos produtos são públicas. Não alterar links técnicos de origem.
         foreach ($urls as $index => $url) {
             if ($index > 0 && ! app()->environment('testing')) usleep(600000);
@@ -90,10 +92,23 @@ final class ImportCatalogUrlsAction
                     $imageUrls[] = $photo;
                     if (count($imageUrls) >= 12) break;
                 }
+                $fullChoices = $preset ? [] : $this->completeVariations->extract($html, $url);
                 $options = $this->options($preset, $detail['options']);
-                $draftVariants = $this->draftVariants($preset);
-                $log(sprintf('[COLETA] %s => %s; imagens: %d; opções: %d; %s', $name, $categoryName,
-                    count($imageUrls), count($options), $technicalDescription !== '' ? '.short-description' : 'descrição alternativa'));
+                foreach ($fullChoices as $label) {
+                    $label = $this->clean($label, 255);
+                    if ($label !== '') {
+                        $options[] = ['name' => 'Variação', 'value' => $label];
+                    }
+                }
+                // Repetição deve ser inofensiva inclusive quando a mesma opção vier de dois extratores.
+                $uniqueOptions = [];
+                foreach ($options as $row) {
+                    $uniqueOptions[mb_strtolower($row['name'].'|'.$row['value'])] = $row;
+                }
+                $options = array_values($uniqueOptions);
+                $draftVariants = $this->draftVariants($preset, $fullChoices, $name);
+                $log(sprintf('[COLETA] %s => %s; imagens: %d; opções: %d; variantes completas: %d; %s', $name, $categoryName,
+                    count($imageUrls), count($options), count($draftVariants), $technicalDescription !== '' ? '.short-description' : 'descrição alternativa'));
                 if ($dryRun) {
                     $log('[DRY-RUN] Nenhuma alteração no banco ou em arquivos: '.$slug);
                     if ($fallback) {
@@ -160,7 +175,7 @@ final class ImportCatalogUrlsAction
                             'product_id' => $id, 'source_key' => $key, 'source_url' => $url,
                             'source_domain' => strtolower((string) parse_url($url, PHP_URL_HOST)),
                             'price_status' => (string) ($detail['price_status'] ?? ''),
-                            'variant_details_status' => 'opcoes_nao_comprovam_combinacoes_vendaveis',
+                            'variant_details_status' => $draftVariants !== [] ? 'variacoes_aguardando_revisao' : 'opcoes_nao_comprovam_combinacoes_vendaveis',
                             'metadata' => json_encode(['source_price_cents' => $detail['price'] ?? 0,
                                 'collected_at' => now()->toIso8601String(), 'category_guess' => $categoryName], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
                             'created_at' => now(), 'updated_at' => now(),
@@ -178,7 +193,8 @@ final class ImportCatalogUrlsAction
                             'created_at' => now(), 'updated_at' => now(),
                         ]);
                     }
-                    // Pré-configuração dos 7 itens: apenas variantes RASCUNHO, nunca vendáveis.
+                    // Opções completas do site viram variantes INATIVAS. Nunca atualizar as
+                    // condições comerciais de variantes já existentes (nem produtos ativos).
                     $variantCount = 0;
                     if ($isNew || ! (bool) $existing->is_active) {
                         foreach ($draftVariants as $position => $attributes) {
@@ -202,12 +218,17 @@ final class ImportCatalogUrlsAction
                         }
                     }
                     return ['product_id' => $id, 'created' => $isNew, 'options' => $savedOptions,
-                        'variants' => $variantCount, 'category_id' => $category['id'], 'category_created' => $category['created']];
+                        'variants' => $variantCount, 'skipped_active' => ! $isNew && (bool) $existing->is_active && $draftVariants !== [],
+                        'category_id' => $category['id'], 'category_created' => $category['created']];
                 }, 3);
                 $stats[$record['created'] ? 'created' : 'existing']++;
                 if ($record['category_created']) $stats['categories_created']++;
                 $stats['options'] += $record['options'];
                 $stats['variant_drafts'] += $record['variants'];
+                if ($record['skipped_active']) {
+                    $stats['active_skipped']++;
+                    $log('[AVISO] Produto ativo: opções coletadas, mas variantes não foram alteradas. Desative o produto antes de reimportar variantes.');
+                }
                 if ($fallback) {
                     $stats['uncategorized']++;
                 } elseif ($publishPreview) {
@@ -306,7 +327,7 @@ final class ImportCatalogUrlsAction
             if (preg_match('/\bberco\b|tabua de impressao/', $text)) return 'Berços';
             if (preg_match('/carrossel|maquina de serigrafia|mesa serigrafica/', $text)) return 'Máquinas de Serigrafia';
             if (preg_match('/\brodo\b|rodos/', $text)) return 'Rodos';
-            if (preg_match('/\btela\b|\bquadro\b|quadros/', $text)) return 'Telas e Quadros';
+            if (preg_match('/\btela\b|\bquadro\b|quadros|\btecidos?\b|\bnylon\b|\bpoliester\b/', $text)) return 'Telas e Quadros';
             if (preg_match('/estufa|flash cure|secagem|cura termica/', $text)) return 'Secagem e Cura';
             if (preg_match('/acessorio|morcete|chaveta|\bmola\b|cola permanente/', $text)) return 'Acessórios';
         }
@@ -377,12 +398,37 @@ final class ImportCatalogUrlsAction
     }
 
     /** @param ?array<string,mixed> $preset
+     *  @param list<string> $fullChoices
      *  @return list<array<string,string>> */
-    private function draftVariants(?array $preset): array
+    private function draftVariants(?array $preset, array $fullChoices, string $productName): array
     {
-        // Somente os sete presets recebem pré-combinações de rascunho; outros produtos
-        // guardam opções individualmente para evitar inventar combinações/SKUs vendáveis.
-        if (! $preset || ($preset['colors'] ?? []) === []) return [];
+        // Variações explícitas representam escolhas completas na página, NÃO o
+        // produto cartesiano de seletores Cor, Largura, Fios e Tamanho separados.
+        if (! $preset) {
+            $result = [];
+            foreach ($fullChoices as $choice) {
+                $choice = $this->clean($choice, 255);
+                if ($choice === '') continue;
+                // TECIDO: decomposição apenas de opções completas já listadas.
+                if (preg_match('/^(nylon|poli[eé]ster)\s+(\d+)\s*fios?\s*-\s*([^\-]+)\s*-\s*(\d+)\s*cm\s*comprimento\s*x\s*(\d+)\s*cm$/iu', $choice, $match)) {
+                    $attributes = [
+                        'Material' => mb_convert_case($match[1], MB_CASE_TITLE, 'UTF-8'),
+                        'Fios' => $match[2],
+                        'Cor' => mb_convert_case(trim($match[3]), MB_CASE_TITLE, 'UTF-8'),
+                        'Comprimento' => $match[4].' cm',
+                        'Largura' => $match[5].' cm',
+                    ];
+                } else {
+                    $attributes = ['Variação' => $choice];
+                }
+                $canonical = [];
+                foreach ($attributes as $key => $value) $canonical[mb_strtolower($key)] = mb_strtolower($value);
+                ksort($canonical);
+                $result[hash('sha256', json_encode($canonical, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR))] = $attributes;
+            }
+            return array_slice(array_values($result), 0, 100);
+        }
+        if (($preset['colors'] ?? []) === []) return [];
         $combinations = [];
         $packages = $preset['packages'] ?: [''];
         foreach ($preset['colors'] as $color) {

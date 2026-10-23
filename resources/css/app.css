@@ -123,7 +123,11 @@
 .store-home .store-container { max-width: 1600px; padding-inline: clamp(1rem, 3vw, 3rem); }
 .store-home-content { padding-top: 1.5rem; padding-bottom: 4.5rem; }
 .store-home .store-announcement { font-size: .75rem; }
-.store-home .store-hero { height: clamp(300px, 65vw, 460px); border-radius: 10px; }
+/* Altura proporcional ao banner real, evitando faixas laterais sem recortar texto/preço. */
+.store-home .store-hero { height: auto; aspect-ratio: var(--saba-hero-ratio, 16 / 9); border-radius: 10px; }
+@media (max-width: 639px) {
+    .store-home .store-hero { aspect-ratio: var(--saba-hero-mobile-ratio, var(--saba-hero-ratio, 16 / 9)); }
+}
 .store-home .store-hero img { object-fit: contain; object-position: center; }
 .store-home .store-intro { min-height: 360px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
 .store-home .store-section { padding: 0; margin: 4rem 0 0; }
@@ -164,7 +168,7 @@
     .store-home .store-category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 1024px) {
-    .store-home .store-hero { height: clamp(480px, 36vw, 560px); }
+    .store-home .store-hero { height: auto; }
     .store-home .store-intro { min-height: 520px; }
     .store-home .store-category-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
