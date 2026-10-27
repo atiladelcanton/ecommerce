@@ -27,3 +27,11 @@ Cancelamento comercial libera reservas e repõe uma única vez o que foi baixado
 ## Atualização e reversão
 
 Aplicar migrations incrementais normalmente, sem migrate:fresh no banco da loja. O backfill de características não altera os preços existentes. A reversão que tornaria frete e total novamente obrigatórios recusa pedidos com valores ainda indefinidos, evitando inventar frete grátis durante um rollback. Antes de reverter, concluir a negociação desses pedidos ou tratar sua migração explicitamente. Os testes de rollback usam dados históricos com totais definidos.
+
+## Seleção de variações na loja — 26/10/2026
+
+A página pública não usa mais selects para configurar produtos. Quando a variação tem uma ou duas características, cada valor aparece como botão direto (com amostra visual para `Cor`). A seleção de uma característica filtra as possibilidades da seguinte; alterar uma escolha limpa escolhas posteriores. Valores cujas combinações não possuem estoque disponível permanecem visíveis, mas desativados. A seleção é validada no servidor.
+
+Quando as combinações usam três ou mais características (por exemplo, material, fios, cor, largura e comprimento), a loja mostra **cada combinação vendável como opção completa selecionável em um clique**; preço e disponibilidade constam da opção. Listas acima de oito combinações oferecem expansão para exibir todas, sem remover as outras do HTML. Essa distinção é exclusivamente de apresentação, gerada por `GetProductPurchaseDataAction`; não altera a modelagem das variações, nem IDs, snapshots ou regras comerciais.
+
+Tanto os botões simples quanto as opções completas atualizam a oferta e o identificador da variação selecionada, utilizados pelo carrinho e pelo link de cotação por WhatsApp. `ResolveProductOfferAction`, `InventoryAvailability` e a validação existente do carrinho continuam sendo a fonte de verdade de preços e estoque.

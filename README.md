@@ -1,102 +1,119 @@
-# SABA Equipamentos — importação por URLs (homologação)
+# SABA Equipamentos — importação CSV e crawler por URL
 
-Pacote incremental para o projeto Laravel 13 / PHP 8.3+ SABA. Não é um e-commerce inteiro: **extraia sobre a raiz de seu projeto existente**. Não apaga categorias, produtos, pedidos, clientes ou histórico.
+Pacote **para integrar no repositório Laravel 13 do SABA**, não um projeto Laravel independente. Os arquivos PHP foram verificados por `php -l`. A execução integrada com o banco do SABA depende da aplicação real, que não foi enviada.
 
-## O que faz
+## Estrutura e decisões
 
-- `saba:catalog:urls`: importa **URLs individuais de produto**, informadas como argumentos, em arquivo texto ou por um preset de sete tintas.
-- Lê o HTML público e prioriza `class="short-description"` para a **descrição técnica**. SEO fica separado; preserva parágrafos/quebras de linha.
-- Normaliza referências de marca **Tele Silk/Telesilk** para **SABA** nos textos de catálogo, nomes e alt-texts. URLs de origem e de CDN não são alteradas porque precisam apontar para os arquivos verdadeiros.
-- Vincula pelo `catalog_import_sources.source_key` (hash de host+caminho): executar novamente **não duplica** o mesmo produto. Nunca sequestra um produto existente sem proveniência da URL.
-- Cria as categorias reconhecidas caso ainda não existam: Tinta Base Água, Tinta Plastisol, Berços, Máquinas de Serigrafia, Secagem e Cura, Telas e Quadros, Rodos, Acessórios. Também pode criar categoria informada explicitamente com `--category`.
-- Produto sem categoria confiável vai para **Sem definicao** (`sem-definicao`), inativa. A regra de visibilidade do site **exclui sempre** essa categoria e TODOS os produtos dela: home, menu, busca, listagem, detalhe (404), carrinho e produtos relacionados. Mesmo que a categoria seja reativada acidentalmente, permanece oculta.
-- Gera SKUs internos determinísticos `SABA-TA-*`, `SABA-TP-*`, etc. Para produtos importados anteriormente e ainda inativos, converte SKUs externos para internos; não altera SKUs de produtos comerciais ativos.
-- Baixa imagens JPG/PNG/WebP (até 5 MB cada) com validação para `storage/app/public/products/imported/...`; mantém galerias e foto principal em `product_images`, repetível sem duplicação. Tenta foto grande antes da miniatura, quando o CDN admite.
-- Coleta escolhas de cor/tamanho em `catalog_import_options`. Os sete produtos iniciais têm configurações revistas para **gerar apenas variações inativas** no admin. Essas combinações e preços NÃO são confirmados pelo fornecedor. Nas URLs novas com múltiplos atributos, somente as opções ficam no staging, sem fabricar combinações vendáveis.
-- **Não importa preços comerciais, custo, peso, medidas ou estoque fictícios.** Novos produtos ficam inativos, `availability=unavailable`, `stock=0`, `cost_price=0`, `price=0`. É obrigatório revisar antes de qualquer venda.
+- `saba:catalog:import`: importa produtos, associa **categorias preexistentes por nome/slug**, baixa imagens para `storage/app/public/products/imported/...` (no disco `public`) e grava os caminhos relativos em `product_images`.
+- `saba:catalog:crawl`: recebe **URL pública** de categoria/produto, coleta HTML/JSON-LD + links de produto, exporta três CSVs e chama o mesmo importador. Para a home da Tele Silk, o mapa de categorias permite examinar as três seções originalmente coletadas.
+- `catalog_import_sources`: guarda a URL de origem, identidade idempotente, metadados/preço original e `product_id`.
+- `catalog_import_options`: mantém as **opções não verificadas** vinculadas ao registro de origem. **Não** cria `product_variants`, que exigem combinações completas e SKUs/preços confiáveis.
+- Todos os produtos **novos** entram inativos, `availability=unavailable`, estoque 0, custo 0, e preço original em centavos (inclusive preço 0 como indicador de ausência de referência). **Não ativar sem ajustar preço/custo/estoque/medidas e conferir direitos das imagens.**
+- Reimportações preservam produtos já alterados no administrativo: não reescrevem preço/custo/estoque/status, não excluem fotos. `--update-text` atualiza apenas textos de produtos importados ainda inativos.
+- Nunca modifica produtos preexistentes apenas por slug. Se houver colisão de slug cria novo nome com sufixo de origem; SKU já usado não é duplicado.
+- O crawler é **conservador**: páginas que dependem exclusivamente de JavaScript, Cloudflare, API privada, autenticação ou HTML não reconhecido podem retornar informações incompletas. Não tenta contornar proteções do site. Respeita `robots.txt`, limita páginas/produtos e atrasa requisições.
+- Não há download de imagens neste pacote: apenas URLs para serem baixadas **no servidor da loja ao executar o Artisan**.
 
 ## Instalação
 
-Faça backup do banco e do código. Dentro da pasta do e-commerce SABA:
+1. Faça backup do banco e do diretório `storage/app/public`.
+2. Na **raiz do projeto SABA**, copie os conteúdos das pastas `app/`, `database/`, `config/`, `tests/` e `import-data/`, preservando seus caminhos. A pasta `import-data/` será criada na raiz com os CSVs de exemplo.
+3. Confirme extensões PHP `fileinfo`, `mbstring`, `dom`/`xml` (DOM necessário para detectar opções em páginas HTML; JSON-LD e links funcionam sem DOM), e acesso HTTP HTTPS.
+4. Verifique as categorias cadastradas: `Tinta Base Água`, `Tinta Plastisol`, `Berços`, `Máquinas de Serigrafia`, `Acessórios`. **IDs podem variar**, pois o importador confirma a identidade pelo nome, não pelo número isolado.
+5. Execute a migration **incremental** e vincule o storage público:
 
 ```bash
-unzip -o /caminho/SABA_Homolog_Import_URLS.zip -d .
-./vendor/bin/sail artisan optimize:clear
 ./vendor/bin/sail artisan migrate
 ./vendor/bin/sail artisan storage:link
+./vendor/bin/sail artisan list | grep 'saba:catalog:'
 ```
 
-Sem Sail, substitua `./vendor/bin/sail artisan` por `php artisan` no servidor, no ambiente com PHP 8.3+ e dependências Composer instaladas.
+Laravel 13 costuma descobrir automaticamente as classes em `app/Console/Commands`. Se os comandos não aparecerem, registre as duas classes através de `withCommands([...])` em `bootstrap/app.php` conforme o padrão já usado no projeto.
 
-O PHP precisa da extensão **DOM** (`php-xml`) para recuperar `.short-description` e opções do HTML. Confirme com `./vendor/bin/sail php -m | grep -i dom`.
+Se estiver em hospedagem sem Sail, substitua `./vendor/bin/sail artisan` por `php artisan`.
 
-As tabelas `catalog_import_sources` e `catalog_import_options` estão incluídas por migration incremental. A migration mantém IDs e não modifica pedidos. **Não use `migrate:fresh`, `TRUNCATE` ou `DROP`** neste processo.
+## Importar os três CSVs enviados
 
-## Comandos
-
-**Simular os sete produtos iniciais sem gravar arquivos/banco** (faz HTTP para extrair informações):
+Primeiro simule (não altera o banco, nem faz download):
 
 ```bash
-./vendor/bin/sail artisan saba:catalog:urls --preset=tintas --dry-run
+./vendor/bin/sail artisan saba:catalog:import import-data/telesilk_produtos_ecommerce.csv \
+  --images=import-data/telesilk_imagens.csv \
+  --options=import-data/telesilk_opcoes_variacoes.csv \
+  --dry-run
 ```
 
-**Importar as sete tintas como rascunhos não publicados:**
+Para realmente cadastrar e baixar as imagens:
 
 ```bash
-./vendor/bin/sail artisan saba:catalog:urls --preset=tintas --refresh-text
+./vendor/bin/sail artisan saba:catalog:import import-data/telesilk_produtos_ecommerce.csv \
+  --images=import-data/telesilk_imagens.csv \
+  --options=import-data/telesilk_opcoes_variacoes.csv
 ```
 
-**Ou importar pelas sete URLs do TXT incluso:**
+Opcional: `--no-images` para importar apenas os registros, `--update-text` para atualizar textos de rascunhos já importados. Execute novamente após falha de rede para completar imagens sem duplicar vínculos.
+
+## Crawler: informar a URL e salvar automaticamente
+
+### Uma categoria de qualquer loja com páginas HTML reconhecíveis
 
 ```bash
-./vendor/bin/sail artisan saba:catalog:urls --file=import-data/urls-tintas-homolog.txt --refresh-text
+./vendor/bin/sail artisan saba:catalog:crawl \
+  'https://www.telesilkonline.com.br/tintas-plastisol/plastisol' \
+  --category='Tinta Plastisol' --max-products=100
 ```
 
-**Importar novas URLs específicas** (não precisa alterar PHP nem configuração):
+O crawler exportará os três CSVs em `storage/app/catalog-imports/crawl-.../` e, por padrão, importará no banco + salvará imagens no `public` disk. Use `--no-import` para somente coletar, ou `--dry-run` para coletar e simular a importação.
+
+### Home da Tele Silk, com mapeamento das 3 categorias coletadas
 
 ```bash
-./vendor/bin/sail artisan saba:catalog:urls \
-  'https://www.telesilkonline.com.br/produto/EXEMPLO-1' \
-  'https://www.telesilkonline.com.br/produto/EXEMPLO-2'
+./vendor/bin/sail artisan saba:catalog:crawl \
+  'https://www.telesilkonline.com.br/' \
+  --map=config/telesilk-categorias.json \
+  --max-products=100 --delay-ms=900
 ```
 
-Substitua os exemplos por URLs reais e existentes. Pode informar URLs de outros sites públicos, desde que tenham páginas HTML individuais acessíveis; a extração de variantes/imagens varia conforme o site. Não há navegação automática por categorias nem autenticação.
+O mapa diferencia **Berços**, **Máquinas** e **Acessórios** na mesma página de equipamentos. Para novos fornecedores, crie um JSON nesse mesmo formato com as URLs de categoria (`path`) e nome de categoria SABA (`category`). As regras `match` são substrings de nomes de produtos, revisáveis e explícitas.
 
-**Criar/corrigir explicitamente a categoria de um conjunto de URLs:**
+### Uma página de produto
 
 ```bash
-./vendor/bin/sail artisan saba:catalog:urls --category='Tinta Base Água' \
-  'https://www.telesilkonline.com.br/produto/tinta-hidrocryl-cromia-243'
+./vendor/bin/sail artisan saba:catalog:crawl \
+  'https://www.telesilkonline.com.br/produto/hidrocryl-mix-248' \
+  --category='Tinta Base Água' --max-products=1
 ```
 
-**Importar sem baixar fotos:** adicione `--no-images`.
+Opções: `--max-pages=10`, `--max-products=100`, `--delay-ms=800`, `--no-images`, `--no-import`, `--dry-run`. Outros padrões de URL podem usar `--product-pattern="~\/loja\/[^/]+~"` (regex PHP sobre o caminho). Para uma URL de home é necessário o mapa com caminhos específicos, não um único slug geral.
 
-**Rebuscar títulos/descrições dos produtos ainda inativos:** adicione `--refresh-text`. O comando não sobrescreve o conteúdo editorial de produtos ativos nem seus preços, saldos, custos ou medidas.
+## Conferência do banco
 
-### Mostrar na vitrine de homologação, sem permitir compras
+```sql
+SELECT c.name, COUNT(*) AS produtos_importados
+FROM catalog_import_sources src
+JOIN products p ON p.id = src.product_id
+JOIN categories c ON c.id = p.category_id
+GROUP BY c.id, c.name;
 
-Opcional. Para o cliente visualizar os produtos, mas SEM concluir pedidos, configure `APP_ENV=staging` ou `APP_ENV=homolog` (também aceita `local`, `homologation`, `testing`). Depois execute:
-
-```bash
-./vendor/bin/sail artisan saba:catalog:urls --preset=tintas --refresh-text \
-  --publish-preview --demo-price-cents=9990
+SELECT p.id, p.name, p.price, p.is_active, p.availability,
+       COUNT(DISTINCT i.id) AS fotos,
+       COUNT(DISTINCT o.id) AS opcoes_a_conferir
+FROM catalog_import_sources s
+JOIN products p ON p.id = s.product_id
+LEFT JOIN product_images i ON i.product_id = p.id
+LEFT JOIN catalog_import_options o ON o.catalog_import_source_id = s.id
+GROUP BY p.id, p.name, p.price, p.is_active, p.availability;
 ```
 
-Requer confirmação interativa. O valor **R$ 99,90 é apenas ilustrativo**, não preço real obtido do fornecedor. O produto fica `is_active=1`, `is_featured=1` (aparece também na home) e `availability=unavailable` impede a compra. **Nunca use preço de demonstração para vender.** `Sem definicao` continua inativa/invisível mesmo neste modo. Para publicar de verdade, a equipe deve revisar e cadastrar os preços, custos, SKUs, combinações, fotos, pesos, dimensões e disponibilidade pelo administrativo.
+**Atenção:** `source_options_count` do CSV (264 agregadas) descreve contadores de opções na vitrine, não o número de combinações individuais válidas. O CSV de opções tem 107 registros, alguns vazios/informativos, dos quais 93 trazem característica/valor recuperados. As opções coletadas ao vivo podem ter cobertura diferente.
 
-Se a homologação utiliza `APP_ENV=production`, o modo demonstrativo é deliberadamente recusado. Você pode executar a importação em rascunho e revisar/publicar manualmente no Filament.
-
-## Verificação
+## Testes locais no repositório
 
 ```bash
-./vendor/bin/sail artisan test --filter=ImportCatalogUrlsTest
+./vendor/bin/sail artisan test --filter=CatalogImportTest
+./vendor/bin/sail artisan test --filter=CatalogHtmlExtractorTest
+./vendor/bin/sail artisan test
 ./vendor/bin/sail pint --test
 ```
 
-Após a importação, confira os produtos em **/admin/products** e as categorias em **/admin/categories**. No banco, verifique `products`, `product_images`, `product_variants`, `catalog_import_sources` e `catalog_import_options`.
-
-O sucesso do importador depende do HTML atual, do acesso à rede, da CDN e das proteções dos sites consultados. HTTP 403/429 e falhas de imagem são reportados — não há bypass de bloqueios. O parâmetro `--dry-run` não grava no banco nem baixa imagens, mas faz requisições ao site.
-
-## Compatibilidade
-
-Inclui apenas os arquivos novos/substituídos do SABA. Reutiliza as classes `CatalogHtmlExtractor`, `SafeCatalogHttp` e `RemoteCatalogImage` já existentes no projeto enviado no ZIP de 20/10/2026 ou instaladas com a importação anterior. Não exige pacotes Composer novos. Execute primeiro em banco de homologação, com backup. Reexecutar a mesma URL não sobrepõe alterações comerciais existentes.
+O download remoto usa HTTPS/HTTP, não segue redirect, limita tamanho e impede hosts privados no momento da validação DNS. Em produção, recomende também bloqueio de tráfego de saída para redes privadas na infraestrutura para mitigar DNS rebinding. Imagens podem estar sujeitas a direitos autorais/licença do fornecedor; confira permissão antes de publicá-las.

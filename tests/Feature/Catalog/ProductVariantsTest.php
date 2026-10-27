@@ -113,7 +113,7 @@ final class ProductVariantsTest extends TestCase
         );
         $this->get(route('store.product', $product->slug))->assertOk()
             ->assertSee('data-color-selector', false)
-            ->assertSee('wire:model.live="selectedAttributes.0"', false)
+            ->assertSee('wire:click="selectOption(0,', false)
             ->assertSee('aria-disabled="true"', false)
             ->assertSee('onclick="event.preventDefault()"', false)
             ->assertSeeInOrder(self::COLORS);

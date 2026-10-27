@@ -33,7 +33,6 @@ final class Shipment extends Model
         'posted_at',
         'delivered_at',
         'cancelled_at',
-        'monitor_checked_at',
     ];
 
     protected function casts(): array
@@ -49,7 +48,6 @@ final class Shipment extends Model
             'posted_at' => 'datetime',
             'delivered_at' => 'datetime',
             'cancelled_at' => 'datetime',
-            'monitor_checked_at' => 'datetime',
         ];
     }
 

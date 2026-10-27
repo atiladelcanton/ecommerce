@@ -141,6 +141,94 @@ final class ProductCombinationsTest extends TestCase
         $this->assertFalse($data['canPurchase']);
     }
 
+    public function test_two_attribute_product_uses_clickable_options_and_recalculates_price(): void
+    {
+        $product = Product::factory()->create(['price' => 15000]);
+        app(SyncProductVariantsAction::class)->execute($product, [
+            $this->row(['Cor' => 'Magenta', 'Embalagem' => '900ml'], 4342),
+            $this->row(['Cor' => 'Cyan', 'Embalagem' => '900ml'], 5000),
+        ]);
+
+        $this->get(route('store.product', $product->slug))->assertOk()
+            ->assertSee('data-color-selector', false)
+            ->assertSee('wire:click="selectOption(0,', false)
+            ->assertDontSee('<select', false);
+
+        Livewire::test(ProductPurchase::class, ['productId' => $product->id])
+            ->assertSee('Escolha Cor primeiro')
+            ->call('selectOption', 0, 'Magenta')
+            ->assertSee('900ml')
+            ->call('selectOption', 1, '900ml')
+            ->assertSee('R$ 43,42')
+            ->assertSet('productVariantId', $product->variants()->where('value', 'Magenta / 900ml')->value('id'))
+            ->call('add')
+            ->assertHasNoErrors();
+    }
+
+    public function test_product_with_many_attributes_offers_one_click_complete_combinations(): void
+    {
+        $product = Product::factory()->create(['price' => 15000]);
+        app(SyncProductVariantsAction::class)->execute($product, [
+            $this->row(['Comprimento' => '100 cm', 'Cor' => 'Branco', 'Fios' => '140', 'Largura' => '110 cm', 'Material' => 'Poliéster'], 1010),
+            $this->row(['Comprimento' => '100 cm', 'Cor' => 'Amarelo', 'Fios' => '120', 'Largura' => '110 cm', 'Material' => 'Poliéster'], 2000),
+        ]);
+        $data = app(GetProductPurchaseDataAction::class)->execute($product->fresh());
+        $this->assertSame('combinations', $data['selectionMode']);
+        $this->assertCount(2, $data['combinations']);
+        $this->assertCount(5, $data['combinations'][0]['attributes']);
+
+        $variantId = $product->variants()->where('price', 1010)->value('id');
+        Livewire::test(ProductPurchase::class, ['productId' => $product->id])
+            ->assertSee('Escolha a configuração')
+            ->assertSee('selectCombination(', false)
+            ->assertDontSee('Selecione uma combinação disponível.')
+            ->call('selectCombination', $variantId)
+            ->assertSet('productVariantId', $variantId)
+            ->assertSee('R$ 10,10')
+            ->call('add')
+            ->assertHasNoErrors();
+    }
+
+    public function test_sold_out_choices_are_visible_but_disabled_and_cannot_be_selected(): void
+    {
+        $product = Product::factory()->create(['stock' => null]);
+        app(SyncProductVariantsAction::class)->execute($product, [
+            $this->row(['Cor' => 'Branco', 'Embalagem' => '900ml'], 4342, 0),
+            $this->row(['Cor' => 'Magenta', 'Embalagem' => '900ml'], 5000, 3),
+        ]);
+        $data = app(GetProductPurchaseDataAction::class)->execute($product->fresh());
+        $this->assertSame('attributes', $data['selectionMode']);
+        $this->assertFalse($data['fields'][0]['values'][0]['available']);
+        $this->assertTrue($data['fields'][0]['values'][1]['available']);
+
+        Livewire::test(ProductPurchase::class, ['productId' => $product->id])
+            ->assertSee('Opção indisponível')
+            ->call('selectOption', 0, 'Branco')
+            ->assertSet('selectedAttributes', [])
+            ->call('selectOption', 0, 'Magenta')
+            ->assertSet('selectedAttributes', [0 => 'Magenta']);
+    }
+
+    public function test_complete_variant_selection_rejects_invalid_and_sold_out_ids(): void
+    {
+        $product = Product::factory()->create(['stock' => null]);
+        app(SyncProductVariantsAction::class)->execute($product, [
+            $this->row(['Cor' => 'Branco', 'Fios' => '120', 'Material' => 'Nylon'], 1000, 0),
+            $this->row(['Cor' => 'Amarelo', 'Fios' => '140', 'Material' => 'Poliéster'], 2000, 2),
+        ]);
+        $otherProduct = Product::factory()->create();
+        $otherVariant = $otherProduct->variants()->create(['name' => 'Cor', 'value' => 'Preto']);
+        $outOfStockId = $product->variants()->where('price', 1000)->value('id');
+
+        Livewire::test(ProductPurchase::class, ['productId' => $product->id])
+            ->call('selectCombination', $outOfStockId)
+            ->assertSet('productVariantId', null)
+            ->call('selectCombination', $otherVariant->id)
+            ->assertSet('productVariantId', null)
+            ->call('selectCombination', $product->variants()->where('price', 2000)->value('id'))
+            ->assertSee('R$ 20,00');
+    }
+
     public function test_listing_price_filter_and_metadata_use_variant_prices(): void
     {
         $product = Product::factory()->create(['price' => 100000]);

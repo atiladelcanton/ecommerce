@@ -12,7 +12,7 @@ final class PublicProducts
 {
     public function query(bool $gallery = false): Builder
     {
-        return Product::query()->active()->whereHas('category', fn (Builder $query): Builder => $query->visibleInStore())->select([
+        return Product::query()->active()->select([
             'id', 'category_id', 'name', 'slug', 'sku', 'short_description', 'description',
             'youtube_url', 'availability', 'stock', 'price', 'promotional_price', 'whatsapp_quote_enabled', 'created_at',
             'is_active', 'weight', 'height', 'width', 'length',

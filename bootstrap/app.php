@@ -13,7 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
             'webhooks/shipping/*',
-            'webhooks/payments/*',
         ]);
         $middleware->redirectGuestsTo(fn ($request) => $request->is('admin/*')
             ? route('filament.admin.auth.login')

@@ -1,22 +1,6 @@
 @props(['banners'])
 @if($banners->isNotEmpty())
-    @php
-        // A proporção reflete o arquivo real no disco public, em vez de presumir 1600x600.
-        // Se a imagem não estiver acessível no disco local, usamos a proporção padrão.
-        $firstBanner = $banners->first();
-        $heroRatios = [];
-        foreach (['desktop_image' => 'saba-hero-ratio', 'mobile_image' => 'saba-hero-mobile-ratio'] as $field => $property) {
-            $relativePath = $firstBanner?->{$field};
-            if (! is_string($relativePath) || $relativePath === '' || str_contains($relativePath, '..')) continue;
-            $fullPath = Storage::disk('public')->path($relativePath);
-            if (! is_file($fullPath)) continue;
-            $size = @getimagesize($fullPath);
-            if (is_array($size) && $size[0] > 0 && $size[1] > 0) {
-                $heroRatios[] = '--'.$property.': '.$size[0].' / '.$size[1];
-            }
-        }
-    @endphp
-    <section class="store-hero" style="{{ implode('; ', $heroRatios) }}" x-data="storeCarousel({{ $banners->count() }})"
+    <section class="store-hero" x-data="storeCarousel({{ $banners->count() }})"
         :style="{ '--slide-offset': (direction * 20) + 'px' }"
         @mouseenter="hovered = true" @mouseleave="hovered = false"
         @focusin="focused = $event.target.matches(':focus-visible')" @focusout="focused = false"

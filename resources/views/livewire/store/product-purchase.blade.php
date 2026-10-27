@@ -1,38 +1,123 @@
 <div class="product-purchase">
     <div class="product-detail-price" aria-live="polite">
-        @if($product->variants->isNotEmpty() && ! $selectedVariant)<p class="text-sm text-store-muted">A partir de</p>@endif
+        @if($product->variants->isNotEmpty() && ! $selectedVariant)
+            <p class="text-sm text-store-muted">A partir de</p>
+        @endif
         @if($offer->pricing->hasPromotion())
             <p class="product-detail-original">De: <del>{{ \App\Support\BrazilianMoney::display($offer->pricing->regularPrice) }}</del></p>
         @endif
-        <p @class(['product-detail-current', 'product-detail-promotion' => $offer->pricing->hasPromotion()])>@if($offer->pricing->hasPromotion())<span class="product-detail-price-label">Por:</span> @endif{{ \App\Support\BrazilianMoney::display($offer->pricing->finalPrice()) }}</p>
-        @if($offer->pricing->hasPromotion())<p class="product-detail-savings">Economize {{ $offer->pricing->discountPercentage() }}%</p>@endif
+        <p @class(['product-detail-current', 'product-detail-promotion' => $offer->pricing->hasPromotion()])>
+            @if($offer->pricing->hasPromotion())<span class="product-detail-price-label">Por:</span> @endif{{ \App\Support\BrazilianMoney::display($offer->pricing->finalPrice()) }}
+        </p>
+        @if($offer->pricing->hasPromotion())
+            <p class="product-detail-savings">Economize {{ $offer->pricing->discountPercentage() }}%</p>
+        @endif
     </div>
-    @foreach($fields as $index => $field)
-        <fieldset class="product-detail-colors" @if($field['name'] === 'Cor') data-color-selector @endif>
-            <legend class="text-sm font-semibold">{{ $field['name'] }}</legend>
-            @if($field['name'] === 'Cor')
-                <p id="color-help" class="text-sm text-store-muted">Selecione uma cor para adicionar ao carrinho ou solicitar sua cotação.</p>
-                <div class="product-detail-swatches">
-                    @foreach($field['values'] as $value)
-                        <label class="product-detail-swatch"><input type="radio" wire:model.live="selectedAttributes.{{ $index }}" name="color" value="{{ $value }}" class="sr-only"><span class="product-detail-color-dot" data-color="{{ $value }}" aria-hidden="true"></span><span>{{ $value }}</span><x-heroicon-m-check class="product-detail-color-check size-4" aria-hidden="true" /></label>
-                    @endforeach
-                </div>
-            @else
-            <select wire:model.live="selectedAttributes.{{ $index }}" class="mt-2 w-full rounded-lg border border-store-border p-3" aria-label="{{ $field['name'] }}">
-                <option value="">Selecione {{ $field['name'] }}</option>
-                @foreach($field['values'] as $value)<option value="{{ $value }}">{{ $value }}</option>@endforeach
-            </select>
-            @endif
-        </fieldset>
-    @endforeach
+
+    @if($selectionMode === 'combinations')
+        <section class="product-variant-picker" aria-labelledby="variant-picker-title">
+            <div class="product-variant-heading">
+                <h2 id="variant-picker-title">Escolha a configuração</h2>
+                <p>Selecione a opção completa em um clique.</p>
+            </div>
+            <div class="product-combination-list" x-data="{ expanded: false }">
+                @foreach($combinations as $combination)
+                    <button
+                        type="button"
+                        wire:key="product-combination-{{ $combination['id'] }}"
+                        wire:click="selectCombination({{ $combination['id'] }})"
+                        class="product-combination-option"
+                        aria-pressed="{{ $selectedVariant?->id === $combination['id'] ? 'true' : 'false' }}"
+                        @disabled(! $combination['available'])
+                        @if(! $combination['available']) title="Opção indisponível" @endif
+                        @if($loop->index >= 8) x-show="expanded" x-cloak @endif
+                    >
+                        <span class="product-variant-indicator" aria-hidden="true"><x-heroicon-m-check class="size-3.5" /></span>
+                        <span class="product-combination-content">
+                            <span class="product-combination-attributes">
+                                @foreach($combination['attributes'] as $attribute)
+                                    <span><span class="product-combination-attribute-name">{{ $attribute['name'] }}:</span> {{ $attribute['value'] }}</span>
+                                @endforeach
+                            </span>
+                            @unless($combination['available'])<span class="product-variant-unavailable">Indisponível</span>@endunless
+                        </span>
+                        <span class="product-combination-price">{{ \App\Support\BrazilianMoney::display($combination['price']) }}</span>
+                    </button>
+                @endforeach
+                @if(count($combinations) > 8)
+                    <button type="button" class="product-combination-more" @click="expanded = ! expanded" :aria-expanded="expanded.toString()">
+                        <span x-text="expanded ? 'Mostrar menos opções' : 'Ver todas as {{ count($combinations) }} opções'">Ver todas as {{ count($combinations) }} opções</span>
+                        <x-heroicon-o-chevron-down class="size-4" x-bind:class="expanded ? 'rotate-180' : ''" aria-hidden="true" />
+                    </button>
+                @endif
+            </div>
+        </section>
+    @else
+        @foreach($fields as $index => $field)
+            <fieldset class="product-variant-group" @if($field['name'] === 'Cor') data-color-selector @endif>
+                <legend>
+                    {{ $field['name'] }}
+                    @if(filled($selectedAttributes[$index] ?? null))
+                        <span class="product-variant-selected">{{ $selectedAttributes[$index] }}</span>
+                    @endif
+                </legend>
+                @if($index > 0 && blank($selectedAttributes[$index - 1] ?? null))
+                    <p class="product-variant-hint">Escolha {{ $fields[$index - 1]['name'] }} primeiro para ver as opções.</p>
+                @else
+                    <div class="product-variant-options">
+                        @foreach($field['values'] as $option)
+                            <button
+                                type="button"
+                                wire:key="product-attribute-{{ $index }}-{{ $loop->index }}"
+                                wire:click="selectOption({{ $index }}, @js($option['value']))"
+                                class="product-variant-option"
+                                aria-pressed="{{ ($selectedAttributes[$index] ?? null) === $option['value'] ? 'true' : 'false' }}"
+                                @disabled(! $option['available'])
+                                @unless($option['available']) title="Opção indisponível" @endunless
+                            >
+                                @if($field['name'] === 'Cor')
+                                    <span class="product-detail-color-dot" data-color="{{ $option['value'] }}" aria-hidden="true"></span>
+                                @endif
+                                <span>{{ $option['value'] }}</span>
+                                @if(($selectedAttributes[$index] ?? null) === $option['value'])
+                                    <x-heroicon-m-check class="product-variant-check size-4" aria-hidden="true" />
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+            </fieldset>
+        @endforeach
+    @endif
+
     @error('productVariantId')<p class="mt-2 text-sm text-store-red" role="alert">{{ $message }}</p>@enderror
-    @if($selectedVariant)<p class="mt-3 text-sm text-store-muted">{{ $selectedVariant->name }}: {{ $selectedVariant->value }}@if($available !== null) · {{ $available }} disponível(is)@endif</p>@endif
-    <button type="button" wire:click="add" wire:loading.attr="disabled" wire:target="add" class="store-button product-detail-add" @disabled(! $canPurchase)>
+
+    @if($selectedVariant)
+        <div class="product-variant-confirmation" role="status">
+            <x-heroicon-m-check-circle class="size-5 shrink-0" aria-hidden="true" />
+            <span><strong>Opção selecionada</strong>
+                @if($available !== null)
+                    <span class="product-variant-stock">· {{ $available > 0 ? $available.' em estoque' : 'Sem estoque' }}</span>
+                @endif
+            </span>
+        </div>
+    @endif
+
+    <button type="button" wire:click="add" wire:loading.attr="disabled" wire:target="add,selectOption,selectCombination" class="store-button product-detail-add" @disabled(! $canPurchase)>
         <x-heroicon-o-shopping-cart class="size-5" aria-hidden="true" />
         <span wire:loading.remove wire:target="add">Adicionar ao carrinho</span>
         <span wire:loading wire:target="add">Adicionando…</span>
     </button>
-    @if(! $canPurchase)<p class="store-cart-feedback">{{ $product->variants->isNotEmpty() && ! $selectedVariant ? 'Selecione uma combinação disponível.' : 'Produto sem estoque disponível para compra.' }}</p>@endif
+    @if(! $canPurchase)
+        <p class="store-cart-feedback">
+            @if($product->variants->isNotEmpty() && ! $selectedVariant)
+                {{ $combinations === [] && $fields === [] ? 'Nenhuma opção disponível no momento.' : 'Escolha uma opção disponível para comprar.' }}
+            @else
+                Produto sem estoque disponível para compra.
+            @endif
+        </p>
+    @endif
+
     @if($quoteUrl || $variantQuoteUrls)
         <a class="store-button product-detail-quote"
             @if($product->variants->isNotEmpty())

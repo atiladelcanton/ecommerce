@@ -125,16 +125,3 @@ Implement hosted checkout, webhook validation, idempotency and payment history. 
 ## Incremento aprovado — combinações e frete assistido
 
 A etapa de Shipping inclui normalização da resposta única do Melhor Envio e negociação de frete com conclusão posterior na loja. O catálogo passa a suportar combinações com preço/estoque e medidas próprios; solicitações reservam estoque por 24 horas. O checkout mantém o gateway fake até a fase própria de pagamentos reais. Referência operacional: docs/product-variants.md e docs/shipping.md.
-
-## Pagamento real — implementação inicial (2026-10-20)
-
-Mercado Pago Checkout Pro via Orders API, integração configurável, checkout hospedado, webhook HMAC, registros de eventos, reconciliação agendada e retenção de estoque até estado terminal confirmado. Reembolsos remotos e contestações permanecem fora da entrega; verificar `docs/payments.md`. Necessita testes de integração com conta sandbox e homologação antes de produção.
-
-
-## Pagamentos — incremento Asaas (21/10/2026)
-
-Checkout Asaas (Pix/cartão/parcelamento), webhook `CHECKOUT_*`, reserva por cobrança pendente e arquivamento do Mercado Pago para novas vendas. Consulte `docs/payments.md` e `INSTALACAO-ASAAS.md`. Homologação real e reembolsos continuam pendentes.
-
-## Incremento aprovado — cupons digitados e uso único
-
-O cliente recebe desconto somente após informar o código. Um CPF/CNPJ pode aproveitar cada cupom no máximo uma vez (inclusive entre contas e como visitante), com reserva da utilização enquanto existir cobrança pendente. Os cupons podem ser gerais, por categoria ou produto, com desconto percentual/fixo, compra mínima, limite global e período. Pagamentos Asaas recebem o valor final calculado pelo SABA. Ver `docs/coupons.md`.

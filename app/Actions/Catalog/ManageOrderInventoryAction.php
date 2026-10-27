@@ -26,8 +26,7 @@ final class ManageOrderInventoryAction
             $products = Product::query()->whereIn('id', $items->pluck('product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             $variants = ProductVariant::query()->whereIn('id', $items->pluck('product_variant_id')->filter())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             foreach ($items as $item) {
-                $existing = InventoryReservation::query()->where('order_item_id', $item->id)->lockForUpdate()->first();
-                if ($existing && ($existing->consumed_at || (! $existing->released_at && ($existing->payment_hold || $existing->expires_at->isFuture())))) {
+                if (InventoryReservation::query()->where('order_item_id', $item->id)->exists()) {
                     continue;
                 }
                 $product = $products->get($item->product_id);
@@ -40,17 +39,12 @@ final class ManageOrderInventoryAction
                 if (! $pool) {
                     continue;
                 }
-                $reservationData = [
+                InventoryReservation::query()->create([
                     'order_item_id' => $item->id, 'product_id' => $product->id,
                     'product_variant_id' => $pool instanceof ProductVariant ? $pool->id : null,
                     'pool_type' => $pool instanceof ProductVariant ? 'variant' : 'product',
-                    'quantity' => $item->quantity, 'expires_at' => now()->addHours(24), 'released_at' => null, 'payment_hold' => false,
-                ];
-                if ($existing) {
-                    $existing->update($reservationData);
-                } else {
-                    InventoryReservation::query()->create($reservationData);
-                }
+                    'quantity' => $item->quantity, 'expires_at' => now()->addHours(24),
+                ]);
             }
         }, 3);
     }
@@ -68,11 +62,11 @@ final class ManageOrderInventoryAction
                     continue;
                 }
                 $pool = $row->pool_type === 'variant' ? $variants->get($row->product_variant_id) : $products->get($row->product_id);
-                if (! $pool || $row->released_at || $this->availability->available($pool, $row->order_item_id) < $row->quantity) {
+                if (! $pool || ($row->released_at && $row->expires_at->isFuture()) || $this->availability->available($pool, $row->order_item_id) < $row->quantity) {
                     throw ValidationException::withMessages(['stock' => 'A reserva expirou ou o estoque não está mais disponível. Entre em contato com a loja.']);
                 }
                 $pool->decrement('stock', $row->quantity);
-                $row->update(['consumed_at' => now(), 'payment_hold' => false]);
+                $row->update(['consumed_at' => now()]);
             }
         }, 3);
     }
@@ -90,30 +84,15 @@ final class ManageOrderInventoryAction
                     $pool?->increment('stock', $row->quantity);
                     $row->restored_at = now();
                 }
-                $row->payment_hold = false;
                 $row->released_at ??= now();
                 $row->save();
             }
         }, 3);
     }
 
-    /** While a remote charge is pending, do not release stock at local timeout. */
-    public function holdForPayment(Order $order): void
-    {
-        $this->reserve($order);
-        InventoryReservation::query()->whereIn('order_item_id', $order->items()->select('id'))
-            ->whereNull('consumed_at')->whereNull('released_at')->update(['payment_hold' => true]);
-    }
-
-    public function releasePaymentHold(Order $order): void
-    {
-        InventoryReservation::query()->whereIn('order_item_id', $order->items()->select('id'))
-            ->whereNull('consumed_at')->update(['payment_hold' => false, 'released_at' => now()]);
-    }
-
     public function expire(): int
     {
-        return InventoryReservation::query()->where('payment_hold', false)->whereNull('consumed_at')->whereNull('released_at')->where('expires_at', '<=', now())->update(['released_at' => now()]);
+        return InventoryReservation::query()->whereNull('consumed_at')->whereNull('released_at')->where('expires_at', '<=', now())->update(['released_at' => now()]);
     }
 
     private function reservations(Order $order): Collection

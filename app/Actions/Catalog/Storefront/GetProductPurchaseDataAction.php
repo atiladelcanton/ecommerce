@@ -15,6 +15,22 @@ final class GetProductPurchaseDataAction
     public function execute(Product $product, array $selection = [], ?int $variantId = null): array
     {
         $variants = $product->variants->where('is_active', true);
+        $inventory = app(InventoryAvailability::class);
+        $resolveOffer = app(ResolveProductOfferAction::class);
+
+        // The same stock rules used by the cart determine which choices can be clicked.
+        $availableById = [];
+        $availableByPool = [];
+        foreach ($variants as $variant) {
+            $pool = $inventory->pool($product, $variant);
+            $poolKey = $pool ? ($pool instanceof ProductVariant ? 'variant:' : 'product:').$pool->id : null;
+            $remaining = $poolKey !== null
+                ? ($availableByPool[$poolKey] ??= $inventory->available($pool))
+                : null;
+            $availableById[$variant->id] = $product->availability !== ProductAvailability::UNAVAILABLE
+                && ($remaining === null || $remaining > 0);
+        }
+
         $names = [];
         foreach ($variants as $variant) {
             foreach ($variant->characteristics() as $name => $value) {
@@ -23,6 +39,7 @@ final class GetProductPurchaseDataAction
         }
         ksort($names);
         $names = array_values($names);
+
         $fields = [];
         foreach ($names as $index => $name) {
             $values = [];
@@ -30,26 +47,36 @@ final class GetProductPurchaseDataAction
                 $attributes = $this->canonicalAttributes($variant);
                 $matches = true;
                 for ($previous = 0; $previous < $index; $previous++) {
-                    if (filled($selection[$previous] ?? null) && ($attributes[mb_strtolower($names[$previous])] ?? null) !== mb_strtolower((string) $selection[$previous])) {
+                    if (filled($selection[$previous] ?? null)
+                        && ($attributes[mb_strtolower((string) $names[$previous])] ?? null) !== mb_strtolower((string) $selection[$previous])) {
                         $matches = false;
+                        break;
                     }
                 }
-                if ($matches) {
-                    foreach ($variant->characteristics() as $key => $value) {
-                        if (mb_strtolower((string) $key) === mb_strtolower((string) $name)) {
-                            $values[$value] = $value;
-                        }
+                if (! $matches) {
+                    continue;
+                }
+
+                foreach ($variant->characteristics() as $key => $value) {
+                    if (mb_strtolower((string) $key) !== mb_strtolower((string) $name)) {
+                        continue;
                     }
+
+                    $normalized = mb_strtolower((string) $value);
+                    $values[$normalized] ??= ['value' => (string) $value, 'available' => false];
+                    $values[$normalized]['available'] = $values[$normalized]['available'] || $availableById[$variant->id];
                 }
             }
-            $fields[] = ['name' => $name, 'values' => array_values($values)];
+            $fields[] = ['name' => (string) $name, 'values' => array_values($values)];
         }
+
         $selected = $variantId ? $variants->firstWhere('id', $variantId) : null;
         if ($selection !== []) {
             $selected = $variants->first(function (ProductVariant $variant) use ($selection, $names): bool {
                 $attributes = $this->canonicalAttributes($variant);
                 foreach ($names as $index => $name) {
-                    if (! filled($selection[$index] ?? null) || ($attributes[mb_strtolower((string) $name)] ?? null) !== mb_strtolower((string) $selection[$index])) {
+                    if (! filled($selection[$index] ?? null)
+                        || ($attributes[mb_strtolower((string) $name)] ?? null) !== mb_strtolower((string) $selection[$index])) {
                         return false;
                     }
                 }
@@ -57,27 +84,59 @@ final class GetProductPurchaseDataAction
                 return true;
             });
         }
-        $inventory = app(InventoryAvailability::class);
-        $canPurchase = $product->availability !== ProductAvailability::UNAVAILABLE && ($product->variants->isEmpty() || $selected !== null);
-        $offer = app(ResolveProductOfferAction::class)->execute($product, $selected);
-        $available = ($pool = $inventory->pool($product, $selected)) ? $inventory->available($pool) : null;
-        $offers = $variants->filter(function ($variant) use ($product, $inventory): bool {
-            $pool = $inventory->pool($product, $variant);
 
-            return ! $pool || $inventory->available($pool) > 0;
-        })->map(fn ($variant) => app(ResolveProductOfferAction::class)->execute($product, $variant));
+        $offer = $resolveOffer->execute($product, $selected);
+        $pool = $inventory->pool($product, $selected);
+        $selectedPoolKey = $pool ? ($pool instanceof ProductVariant ? 'variant:' : 'product:').$pool->id : null;
+        $available = $selectedPoolKey !== null
+            ? ($availableByPool[$selectedPoolKey] ??= $inventory->available($pool))
+            : null;
+        $offers = $variants
+            ->filter(fn (ProductVariant $variant): bool => $availableById[$variant->id])
+            ->map(fn (ProductVariant $variant) => $resolveOffer->execute($product, $variant));
+
         if (! $selected && $offers->isNotEmpty()) {
             $offer = $offers->sortBy(fn ($offer) => $offer->pricing->finalPrice())->first();
         }
 
-        return ['fields' => $fields, 'selectedVariant' => $selected, 'offer' => $offer, 'canPurchase' => $canPurchase && ($available === null || $available > 0), 'available' => $available, 'offers' => $offers];
+        // With 3+ characteristics, picking the complete combination is much faster
+        // and prevents the customer from assembling impossible selections.
+        $combinations = $variants->map(function (ProductVariant $variant) use ($availableById, $resolveOffer, $product): array {
+            $variantOffer = $resolveOffer->execute($product, $variant);
+            $attributes = [];
+            foreach ($variant->characteristics() as $name => $value) {
+                $attributes[] = ['name' => (string) $name, 'value' => (string) $value];
+            }
+
+            return [
+                'id' => $variant->id,
+                'attributes' => $attributes,
+                'price' => $variantOffer->pricing->finalPrice(),
+                'available' => $availableById[$variant->id],
+            ];
+        })->sortBy(fn (array $choice): int => $choice['available'] ? 0 : 1)->values()->all();
+
+        $canPurchase = $product->availability !== ProductAvailability::UNAVAILABLE
+            && ($product->variants->isEmpty() || $selected !== null)
+            && ($available === null || $available > 0);
+
+        return [
+            'fields' => $fields,
+            'selectionMode' => count($fields) >= 3 ? 'combinations' : 'attributes',
+            'combinations' => $combinations,
+            'selectedVariant' => $selected,
+            'offer' => $offer,
+            'canPurchase' => $canPurchase,
+            'available' => $available,
+            'offers' => $offers,
+        ];
     }
 
     private function canonicalAttributes(ProductVariant $variant): array
     {
         $attributes = [];
         foreach ($variant->characteristics() as $key => $value) {
-            $attributes[mb_strtolower((string) $key)] = mb_strtolower($value);
+            $attributes[mb_strtolower((string) $key)] = mb_strtolower((string) $value);
         }
 
         return $attributes;

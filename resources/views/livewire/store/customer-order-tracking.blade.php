@@ -75,7 +75,6 @@
             </ul>
             <dl class="mt-4 border-t border-store-border pt-4 text-sm">
                 <div class="flex justify-between py-2"><dt>Subtotal</dt><dd>{{ \App\Support\BrazilianMoney::display($order->subtotal_cents) }}</dd></div>
-                @if($order->discount_cents > 0)<div class="flex justify-between gap-4 py-2 text-green-700"><dt>Cupom {{ $order->coupon_code }}</dt><dd>- {{ \App\Support\BrazilianMoney::display($order->discount_cents) }}</dd></div>@endif
                 <div class="flex justify-between py-2"><dt>Frete</dt><dd>{{ $order->formattedShipping() }}</dd></div>
                 <div class="mt-2 flex justify-between border-t border-store-border pt-4 text-lg font-semibold"><dt>Total</dt><dd>{{ $order->formattedTotal() }}</dd></div>
             </dl>
@@ -136,16 +135,7 @@
             <section class="store-account-card">
                 <h2 class="font-semibold">Pagamento</h2>
                 <p class="mt-3"><span class="store-payment-status store-payment-status--{{ $order->payment_status->value }}">{{ $order->payment_status->label() }}</span></p>
-                @php($latestPayment = $order->payments->sortByDesc('id')->first())
-                @if($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::PENDING && $latestPayment?->gateway === 'asaas' && $latestPayment?->checkout_url && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($latestPayment->checkout_url, $latestPayment->environment))
-                    <a class="store-button mt-4 inline-flex" href="{{ $latestPayment->checkout_url }}" rel="noopener noreferrer">Concluir pagamento no Asaas</a>
-                @elseif(in_array($order->payment_status, [\App\Domain\Payment\Enums\PaymentStatus::FAILED, \App\Domain\Payment\Enums\PaymentStatus::CANCELLED], true) && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
-                    <form method="POST" action="{{ route('store.order.payment-retry', $order->number) }}" class="mt-4">
-                        @csrf
-                        <button class="store-button" type="submit">Tentar pagar novamente</button>
-                    </form>
-                @endif
-                @if($latestPayment?->is_demo)
+                @if($order->payments->last()?->is_demo)
                     <p class="mt-3 text-xs leading-5 text-store-muted">Pagamento simulado no ambiente de demonstração.</p>
                 @endif
             </section>

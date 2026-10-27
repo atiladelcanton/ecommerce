@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Livewire\Store;
 
 use App\Actions\Address\LookupPostalCodeAction;
-use App\Actions\Coupon\ApplyCouponAction;
-use App\Actions\Coupon\QuoteCouponAction;
 use App\Actions\Customer\CreateCustomerAddressAction;
 use App\Actions\Order\CreateInitialOrderAction;
 use App\Actions\Order\GetCheckoutSummaryAction;
@@ -27,20 +25,6 @@ final class CheckoutPage extends Component
 
     public ?string $postalCodeMessage = null;
 
-    public string $couponInput = '';
-
-    public function applyCoupon(ApplyCouponAction $action): void
-    {
-        $this->resetValidation('coupon');
-        $action->apply($this->couponInput);
-    }
-
-    public function removeCoupon(ApplyCouponAction $action): void
-    {
-        $action->remove();
-        $this->couponInput = '';
-    }
-
     public string $addressChoice = 'new';
 
     public array $savedAddresses = [];
@@ -58,7 +42,6 @@ final class CheckoutPage extends Component
     public function mount(GetCheckoutTokenAction $token, AuthFactory $auth): void
     {
         $this->checkoutToken = $token->execute();
-        $this->couponInput = app(ApplyCouponAction::class)->current() ?? '';
         $customer = $auth->guard('customer')->user();
         if (! $customer) {
             return;
@@ -174,14 +157,7 @@ final class CheckoutPage extends Component
             }
         }
 
-        // Only an explicitly applied coupon (session state) reaches the order.
-        $couponCode = app(ApplyCouponAction::class)->current();
-        if ($couponCode) {
-            $cart = app(\App\Actions\Cart\GetCartAction::class)->execute();
-            app(QuoteCouponAction::class)->execute($couponCode, array_values($cart['items']), $cart['subtotal']);
-        }
-        $input = array_merge($this->form, ['coupon_code' => $couponCode]);
-        $order = $requestFreight ? $action->requestShippingQuote($input, $this->checkoutToken) : $action->execute($input, $this->checkoutToken);
+        $order = $requestFreight ? $action->requestShippingQuote($this->form, $this->checkoutToken) : $action->execute($this->form, $this->checkoutToken);
 
         if ($customer && $this->addressChoice === 'new' && $this->saveNewAddress) {
             $createAddress->execute($customer, array_merge($this->form, [
@@ -191,29 +167,16 @@ final class CheckoutPage extends Component
         }
 
         $this->dispatch('cart-updated');
-        $payment = $order->payments()->latest('id')->first();
-        if ($payment && $payment->gateway === 'asaas' && ! $payment->is_demo && $payment->checkout_url && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($payment->checkout_url, $payment->environment)) {
-            $this->redirect($payment->checkout_url);
-            return;
-        }
-        if ($payment && ! $payment->is_demo) {
-            $this->redirectRoute('store.order.payment-status', ['number' => $order->number]);
-            return;
-        }
         $this->redirectRoute('store.order.confirmation', ['number' => $order->number]);
     }
 
     public function render(): View
     {
-        $couponCode = app(ApplyCouponAction::class)->current();
-        $summary = app(GetCheckoutSummaryAction::class)->execute(
-            is_string($this->form['postal_code'] ?? null) ? $this->form['postal_code'] : '',
-            is_string($this->form['shipping_option'] ?? null) ? $this->form['shipping_option'] : '',
-            $couponCode,
-        );
         return view('livewire.store.checkout-page', [
-            'couponCode' => $couponCode,
-            'summary' => $summary,
+            'summary' => app(GetCheckoutSummaryAction::class)->execute(
+                is_string($this->form['postal_code'] ?? null) ? $this->form['postal_code'] : '',
+                is_string($this->form['shipping_option'] ?? null) ? $this->form['shipping_option'] : '',
+            ),
             'states' => ValidateCheckoutData::STATES,
         ]);
     }

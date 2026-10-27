@@ -18,7 +18,7 @@ final class GetStoreContextAction
             'settings' => $settings,
             'storeName' => $settings?->store_name ?: config('app.name', 'Saba Equipamentos'),
             'whatsappUrl' => Links::whatsapp($settings?->whatsapp),
-            'navigationCategories' => Category::visibleInStore()->ordered()->get(['id', 'name', 'slug']),
+            'navigationCategories' => Category::active()->ordered()->get(['id', 'name', 'slug']),
         ];
     }
 }

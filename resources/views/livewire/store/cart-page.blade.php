@@ -55,19 +55,10 @@
 
             <aside class="store-cart-summary" aria-labelledby="cart-summary-title">
                 <h2 id="cart-summary-title">Resumo do carrinho</h2>
-                <div class="mb-5">
-                    <label for="cart-coupon" class="store-label">Possui um cupom de desconto?</label>
-                    <div class="mt-2 flex gap-2"><input id="cart-coupon" wire:model="couponInput" maxlength="64" placeholder="Ex.: BEMVINDO10" class="store-input min-w-0 flex-1" autocomplete="off">
-                        <button type="button" wire:click="applyCoupon" class="store-button">Aplicar</button></div>
-                    @if($couponCode)<p class="mt-2 text-sm">Cupom {{ $couponCode }} aplicado. <button type="button" wire:click="removeCoupon" class="store-text-link">Remover</button></p>@endif
-                    @if($couponError)<p class="mt-2 text-sm text-store-red">{{ $couponError }}</p>@endif
-                    @error('coupon')<p class="mt-2 text-sm text-store-red">{{ $message }}</p>@enderror
-                </div>
                 <dl>
                     <div><dt>Subtotal</dt><dd>{{ \App\Support\BrazilianMoney::display($cart['subtotal']) }}</dd></div>
                     <div><dt>Frete</dt><dd class="store-cart-shipping">Calculado no checkout</dd></div>
-                    @if($discount > 0)<div><dt>Desconto ({{ $couponCode }})</dt><dd>- {{ \App\Support\BrazilianMoney::display($discount) }}</dd></div>@endif
-                    <div class="store-cart-total"><dt>Total parcial</dt><dd aria-live="polite" aria-atomic="true">{{ \App\Support\BrazilianMoney::display($cart['subtotal'] - $discount) }}</dd></div>
+                    <div class="store-cart-total"><dt>Total parcial</dt><dd aria-live="polite" aria-atomic="true">{{ \App\Support\BrazilianMoney::display($cart['subtotal']) }}</dd></div>
                 </dl>
                 <a href="{{ url('/checkout') }}" class="store-button">Continuar para o checkout<x-heroicon-m-arrow-right class="size-4" aria-hidden="true" /></a>
             </aside>

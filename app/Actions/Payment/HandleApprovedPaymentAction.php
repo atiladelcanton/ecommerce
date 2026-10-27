@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Payment;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
-use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Actions\Order\TransitionOrderStatusAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
@@ -23,10 +22,10 @@ final class HandleApprovedPaymentAction
     public function execute(Order $order, Payment $payment): Order
     {
         return DB::transaction(function () use ($order, $payment): Order {
-            /** @var Order $lockedOrder */
-            $lockedOrder = Order::query()->lockForUpdate()->findOrFail($order->id);
             /** @var Payment $lockedPayment */
             $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
+            /** @var Order $lockedOrder */
+            $lockedOrder = Order::query()->lockForUpdate()->findOrFail($order->id);
 
             if ($lockedPayment->order_id !== $lockedOrder->id) {
                 throw ValidationException::withMessages(['payment' => 'O pagamento não pertence a este pedido.']);
@@ -34,11 +33,7 @@ final class HandleApprovedPaymentAction
             if ($lockedOrder->total_cents === null || $lockedOrder->shipping_cents === null) {
                 throw ValidationException::withMessages(['payment' => 'Defina o frete antes de aprovar o pagamento.']);
             }
-            if ($lockedOrder->status === OrderStatus::CANCELLED) {
-                throw ValidationException::withMessages(['payment' => 'Pedido cancelado com cobrança recebida. Revisão financeira necessária.']);
-            }
             app(ManageOrderInventoryAction::class)->consume($lockedOrder);
-            app(ManageCouponUsageAction::class)->consume($lockedOrder);
             if ($lockedPayment->status !== PaymentStatus::APPROVED) {
                 $lockedPayment->update(['status' => PaymentStatus::APPROVED]);
             }

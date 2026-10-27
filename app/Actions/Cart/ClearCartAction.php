@@ -13,6 +13,5 @@ final class ClearCartAction
     public function execute(): void
     {
         $this->cart->clear();
-        session()->forget('store.coupon_code');
     }
 }

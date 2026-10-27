@@ -43,7 +43,6 @@ final class ValidateCheckoutData
             'city' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', Rule::in(self::STATES)],
             'shipping_option' => ['required', 'string', 'max:255'],
-            'coupon_code' => ['nullable', 'string', 'max:64'],
         ], [
             'required' => 'Informe :attribute.',
             'string' => 'Informe um valor válido para :attribute.',

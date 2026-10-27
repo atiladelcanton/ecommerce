@@ -12,6 +12,6 @@ final class InventoryReservation extends Model
 
     protected function casts(): array
     {
-        return ['quantity' => 'integer', 'payment_hold' => 'boolean', 'expires_at' => 'immutable_datetime', 'consumed_at' => 'immutable_datetime', 'released_at' => 'immutable_datetime', 'restored_at' => 'immutable_datetime'];
+        return ['quantity' => 'integer', 'expires_at' => 'immutable_datetime', 'consumed_at' => 'immutable_datetime', 'released_at' => 'immutable_datetime', 'restored_at' => 'immutable_datetime'];
     }
 }

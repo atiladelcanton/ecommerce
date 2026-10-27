@@ -56,14 +56,6 @@ final class ViewOrder extends ViewRecord
 
     public bool $forceInvoiceDocumentOnNextLabelModal = false;
 
-    /** Refresh server state without reloading the browser or calling the provider API. */
-    public function refreshOrderStatus(): void
-    {
-        if (! $this->blockingOperationModalOpen) {
-            $this->record = $this->record->fresh();
-        }
-    }
-
     protected function getHeaderActions(): array
     {
         $order = $this->record;
@@ -349,28 +341,7 @@ final class ViewOrder extends ViewRecord
         } catch (ValidationException $exception) {
             $this->showBlockingValidation($exception, $errorTitle);
         } catch (\Throwable $exception) {
-            // Registrar contexto técnico suficiente para localizar a falha,
-            // sem payloads, tokens, dados do cliente ou stack trace completo.
-            $root = str_replace('\\', '/', base_path()).'/';
-            $file = str_replace('\\', '/', $exception->getFile());
-            $source = str_starts_with($file, $root) ? substr($file, strlen($root)) : '(external)';
-            $details = trim($exception->getMessage());
-            // Mensagens de bibliotecas podem incluir URLs ou dados sensíveis:
-            // nunca persistir a mensagem bruta quando não for de uma classe
-            // de erro de validação com texto controlado pela aplicação.
-            $isKnown = $exception instanceof \InvalidArgumentException
-                && in_array($details, [
-                    'Valor monetário inválido.',
-                    'Valor monetário inválido na resposta de frete.',
-                    'Valor monetário muito alto.',
-                ], true);
-            Log::warning('Order shipping operation failed', [
-                'order_id' => $this->record->id,
-                'exception_type' => $exception::class,
-                'source' => $source,
-                'line' => $exception->getLine(),
-                'known_error' => $isKnown ? $details : null,
-            ]);
+            Log::warning('Order shipping operation failed', ['order_id' => $this->record->id, 'exception_type' => $exception::class]);
             $this->showBlockingFailure($errorTitle);
         }
     }

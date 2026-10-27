@@ -121,8 +121,8 @@
                 </section>
 
                 <section class="rounded-xl border border-store-border bg-white p-5 sm:p-7" aria-labelledby="checkout-payment-heading">
-                    <h2 id="checkout-payment-heading" class="mb-3 text-lg font-semibold">Pagamento</h2>
-                    <p class="text-sm leading-6 text-store-muted">@if(app(\App\Infrastructure\Payments\PaymentGatewayRegistry::class)->active()) Você será encaminhado ao Asaas para concluir sua compra. O pedido será considerado pago somente após confirmação da cobrança. Seus itens ficarão reservados até o pagamento ser confirmado, reprovado ou a cobrança expirar. @else Ambiente de demonstração: nenhuma cobrança real será realizada. @endif</p>
+                    <h2 id="checkout-payment-heading" class="mb-3 text-lg font-semibold">Pagamento de demonstração</h2>
+                    <p class="text-sm leading-6 text-store-muted">Ao finalizar este pedido de teste, o pagamento será aprovado de forma simulada. Nenhuma cobrança será realizada.</p>
                 </section>
                 <a href="{{ route('store.cart') }}" class="store-text-link">← Voltar ao carrinho</a>
             </div>
@@ -140,18 +140,9 @@
                         </li>
                     @endforeach
                 </ul>
-                <section class="mt-6 border-t border-store-border pt-5">
-                    <label for="checkout-coupon" class="store-label">Cupom de desconto (opcional)</label>
-                    <div class="mt-2 flex gap-2"><input id="checkout-coupon" wire:model="couponInput" maxlength="64" class="store-input min-w-0 flex-1" placeholder="Digite seu cupom" autocomplete="off">
-                    <button type="button" wire:click="applyCoupon" class="store-button">Aplicar</button></div>
-                    @if($couponCode)<p class="mt-2 text-xs">Cupom {{ $couponCode }} aplicado. <button type="button" wire:click="removeCoupon" class="store-text-link">Remover</button></p>@endif
-                    @if($summary['couponError'])<p class="mt-2 text-xs text-store-red">{{ $summary['couponError'] }}</p>@endif
-                    @error('coupon')<p class="mt-2 text-xs text-store-red">{{ $message }}</p>@enderror
-                </section>
                 <dl class="mt-6 border-t border-store-border pt-4 text-sm">
                     <div class="flex justify-between gap-4 py-2"><dt>Subtotal</dt><dd>{{ \App\Support\BrazilianMoney::display($summary['cart']['subtotal']) }}</dd></div>
                     <div class="flex justify-between gap-4 py-2"><dt>Frete</dt><dd>{{ $summary['selectedShipping'] ? \App\Support\BrazilianMoney::display($summary['selectedShipping']->price) : 'Selecione a entrega' }}</dd></div>
-                    @if($summary['discount'] > 0)<div class="flex justify-between gap-4 py-2"><dt>Cupom {{ $couponCode }}</dt><dd>- {{ \App\Support\BrazilianMoney::display($summary['discount']) }}</dd></div>@endif
                     <div class="mt-4 flex justify-between gap-4 border-t border-store-border pt-5 text-lg font-semibold"><dt>Total</dt><dd aria-live="polite">{{ $summary['selectedShipping'] && $summary['totals'] ? \App\Support\BrazilianMoney::display($summary['totals']->total) : 'A definir' }}</dd></div>
                 </dl>
                 @if($summary['totalError'])<p class="mt-4 text-sm text-store-red" role="alert">{{ $summary['totalError'] }}</p>@endif
@@ -159,8 +150,8 @@
                     <button type="button" wire:click="requestShippingQuote" wire:loading.attr="disabled" class="store-button mt-6 w-full">Solicitar cotação de entrega</button>
                     <p class="mt-3 text-sm text-store-muted">Você revisará o frete e o total antes do pagamento. Nenhuma cobrança será realizada nesta solicitação.</p>
                 @else
-                <button type="submit" wire:loading.attr="disabled" wire:target="submit" @disabled($summary['shippingError'] || $summary['totalError'] || $summary['couponError'] || !$summary['selectedShipping']) class="store-button mt-6 w-full disabled:cursor-wait disabled:opacity-50">
-                    <span wire:loading.remove wire:target="submit">{{ app(\App\Infrastructure\Payments\PaymentGatewayRegistry::class)->active() ? 'Continuar para o pagamento' : 'Finalizar pedido de teste' }}</span>
+                <button type="submit" wire:loading.attr="disabled" wire:target="submit" @disabled($summary['shippingError'] || $summary['totalError'] || !$summary['selectedShipping']) class="store-button mt-6 w-full disabled:cursor-wait disabled:opacity-50">
+                    <span wire:loading.remove wire:target="submit">Finalizar pedido de teste</span>
                     <span wire:loading wire:target="submit">Finalizando pedido…</span>
                 </button>
                 @endif

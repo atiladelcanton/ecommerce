@@ -92,12 +92,38 @@ final class ImportCatalogUrlsAction
                     $imageUrls[] = $photo;
                     if (count($imageUrls) >= 12) break;
                 }
-                $fullChoices = $preset ? [] : $this->completeVariations->extract($html, $url);
+                $variationDetails = $preset
+                    ? ['options' => [], 'variants' => [], 'complete' => [], 'warnings' => []]
+                    : $this->completeVariations->extractDetailed($html, $url);
+
+                // Recuperação de dados: o extrator genérico já encontrou opções
+                // em alguns temas, mas o parser detalhado não formou os rascunhos.
+                // Reconciliar TODAS as opções evita criar uma combinação parcial
+                // quando a origem apresenta, por exemplo, Cor E Embalagem.
+                if (! $preset) {
+                    $allExtractedOptions = array_merge($variationDetails['options'], $detail['options']);
+                    $recovered = $this->completeVariations->fromCollectedOptions($allExtractedOptions);
+                    if ($variationDetails['variants'] === [] && $variationDetails['complete'] === []
+                        && $variationDetails['warnings'] === [] && $recovered['warnings'] === []) {
+                        $variationDetails['variants'] = $recovered['variants'];
+                        $variationDetails['complete'] = $recovered['complete'];
+                        if ($variationDetails['variants'] !== [] || $variationDetails['complete'] !== []) {
+                            $log('[VARIAÇÕES] Rascunhos recuperados das opções já coletadas pela página.');
+                        }
+                    } elseif ($recovered['warnings'] !== [] && $variationDetails['warnings'] === []
+                        && $variationDetails['complete'] === []) {
+                        // Se outra fonte evidenciou MAIS DE UM atributo, não
+                        // publicar rascunhos parciais com chaves incompletas.
+                        $variationDetails['variants'] = [];
+                        $variationDetails['warnings'] = $recovered['warnings'];
+                    }
+                }
                 $options = $this->options($preset, $detail['options']);
-                foreach ($fullChoices as $label) {
-                    $label = $this->clean($label, 255);
-                    if ($label !== '') {
-                        $options[] = ['name' => 'Variação', 'value' => $label];
+                foreach ($variationDetails['options'] as $entry) {
+                    $attribute = $this->clean((string) $entry['name'], 120);
+                    $value = $this->clean((string) $entry['value'], 255);
+                    if ($attribute !== '' && $value !== '') {
+                        $options[] = ['name' => $attribute, 'value' => $value];
                     }
                 }
                 // Repetição deve ser inofensiva inclusive quando a mesma opção vier de dois extratores.
@@ -106,7 +132,14 @@ final class ImportCatalogUrlsAction
                     $uniqueOptions[mb_strtolower($row['name'].'|'.$row['value'])] = $row;
                 }
                 $options = array_values($uniqueOptions);
-                $draftVariants = $this->draftVariants($preset, $fullChoices, $name);
+                $draftVariants = $preset
+                    ? $this->draftVariants($preset, [], $name)
+                    : ($variationDetails['variants'] !== []
+                        ? $variationDetails['variants']
+                        : $this->draftVariants(null, $variationDetails['complete'], $name));
+                foreach ($variationDetails['warnings'] as $warning) {
+                    $log('[VARIAÇÕES: ATENÇÃO] '.$warning);
+                }
                 $log(sprintf('[COLETA] %s => %s; imagens: %d; opções: %d; variantes completas: %d; %s', $name, $categoryName,
                     count($imageUrls), count($options), count($draftVariants), $technicalDescription !== '' ? '.short-description' : 'descrição alternativa'));
                 if ($dryRun) {
@@ -182,6 +215,16 @@ final class ImportCatalogUrlsAction
                         ]);
                     } else {
                         $sourceId = (int) $existingSource->id;
+                    }
+                    // Ao reimportar, atualiza também o diagnóstico da origem. Em versões
+                    // anteriores esse campo permanecia desatualizado após corrigir variantes.
+                    if ($existingSource) {
+                        DB::table('catalog_import_sources')->where('id', $sourceId)->update([
+                            'variant_details_status' => $draftVariants !== []
+                                ? 'variacoes_aguardando_revisao'
+                                : 'opcoes_nao_comprovam_combinacoes_vendaveis',
+                            'updated_at' => now(),
+                        ]);
                     }
                     $savedOptions = 0;
                     foreach ($options as $position => $option) {

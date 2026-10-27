@@ -88,3 +88,7 @@ Menu:
 - Logout
 
 Order detail includes current status, totals, items, shipping/tracking and status timeline.
+
+## Seletor de variações — 26/10/2026
+
+O componente `ProductPurchase` usa opções visuais responsivas no lugar de dropdowns. Para 1–2 características há botões compactos com indicação explícita de selecionado/desabilitado e amostras visuais de cores conhecidas; para 3+ características há cartões compactos de combinações completas, com preço por combinação, seleção com um clique e expansão quando existem mais de oito opções. O preço do produto e o link de WhatsApp continuam reativos. A seleção no navegador não determina preço/estoque da venda; a validação de carrinho e oferta é feita novamente no servidor.

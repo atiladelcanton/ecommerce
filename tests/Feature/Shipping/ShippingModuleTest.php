@@ -832,57 +832,6 @@ final class ShippingModuleTest extends TestCase
         $this->assertSame('purchase_in_progress', $shipment->fresh()->operation_phase);
     }
 
-    public function test_refresh_of_purchased_generated_label_uses_verified_order_details_without_rebuying(): void
-    {
-        $order = $this->order();
-        $this->api();
-        $shipment = $this->generate($order);
-        // Simulate the asynchronous state immediately after /generate.
-        $shipment->update([
-            'status' => ShipmentStatus::PURCHASED,
-            'generated_at' => null,
-            'metadata' => ['generation_requested_at' => now()->toIso8601String()],
-        ]);
-        $operationKey = $shipment->operation_key;
-        Http::fake([
-            '*/api/v2/me/orders/'.$shipment->external_id => Http::response([
-                'id' => $shipment->external_id,
-                'status' => 'released',
-                'generated_at' => now()->toIso8601String(),
-                'service_id' => 902,
-                'tags' => [['tag' => 'saba-operation:'.$operationKey]],
-                'tracking' => 'AB123456789BR',
-            ]),
-            '*/api/v2/me/cart' => fn () => self::fail('Não pode criar carrinho durante consulta'),
-            '*/api/v2/me/shipment/checkout' => fn () => self::fail('Não pode comprar etiqueta durante consulta'),
-            '*/api/v2/me/shipment/generate' => fn () => self::fail('Não pode gerar etiqueta novamente durante consulta'),
-        ]);
-
-        $updated = app(\App\Actions\Shipping\RefreshShipmentTrackingAction::class)->execute($shipment);
-
-        $this->assertSame(ShipmentStatus::LABEL_GENERATED, $updated->status);
-        $this->assertNotNull($updated->generated_at);
-        $this->assertSame('AB123456789BR', $updated->tracking_code);
-        $this->assertSame(OrderStatus::READY_TO_SHIP, $order->fresh()->status);
-        Http::assertSent(fn ($request) => str_contains($request->url(), '/api/v2/me/orders/'));
-    }
-
-    public function test_delayed_released_status_does_not_undo_generated_label(): void
-    {
-        $order = $this->order();
-        $this->api();
-        $shipment = $this->generate($order);
-        $this->assertSame(ShipmentStatus::LABEL_GENERATED, $shipment->status);
-
-        app(ProcessShippingWebhookAction::class)->execute('melhor_envio', [
-            'event' => 'order.released',
-            'data' => ['id' => $shipment->external_id],
-        ], 'late-released-event');
-
-        $this->assertSame(ShipmentStatus::LABEL_GENERATED, $shipment->fresh()->status);
-        $this->assertSame(OrderStatus::READY_TO_SHIP, $order->fresh()->status);
-    }
-
     public function test_reconciliation_rejects_another_operations_external_id(): void
     {
         $order = $this->order();

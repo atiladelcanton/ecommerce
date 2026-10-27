@@ -205,4 +205,186 @@ final class ImportCatalogUrlsTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $productId, 'price' => 9999, 'cost_price' => 4000,
             'stock' => 3, 'description' => 'Descrição revisada', 'is_active' => 1]);
     }
+    public function test_vnda_prod_option_data_items_imports_all_eight_pinus_sizes_without_requiring_visible_inputs(): void
+    {
+        $html = <<<'HTML'
+<html><body>
+<h1>QUADRO DE MADEIRA PINUS (MEDIDA EXTERNA)</h1>
+<div class="short-description">Quadro de madeira para serigrafia.</div>
+<div class="prod-option   option-input option-Tamanho" data-attribute-name="Tamanho"
+ data-prod-option="" data-attribute="2" data-selecao-style="input" data-qtd="8"
+ data-items="20x25 // 20x30 // 20x40 // 25x35 // 30x40 // 40x50 // 50x60 // 60x70"
+ style="order: 1;"></div>
+</body></html>
+HTML;
+        $url = 'https://8.8.8.8/produto/quadro-de-madeira-pinus-medida-externa-177';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $action = app(ImportCatalogUrlsAction::class);
+        $log = [];
+        $first = $action->execute([$url], ['no_images' => true], static function (string $message) use (&$log): void {
+            $log[] = $message;
+        });
+        $second = $action->execute([$url], ['no_images' => true], static function (string $message): void {});
+
+        $this->assertSame(1, $first['created']);
+        $this->assertSame(8, $first['variant_drafts']);
+        $this->assertSame(0, $second['variant_drafts']);
+        $this->assertDatabaseCount('products', 1);
+        $this->assertDatabaseCount('product_variants', 8);
+        $this->assertDatabaseCount('catalog_import_options', 8);
+        $this->assertDatabaseHas('categories', ['slug' => 'telas-e-quadros']);
+        $this->assertDatabaseHas('catalog_import_options', ['name' => 'Tamanho', 'value' => '60x70']);
+        $variants = DB::table('product_variants')->orderBy('sort_order')->get();
+        $this->assertSame('20x25', $variants[0]->value);
+        $this->assertSame('60x70', $variants[7]->value);
+        foreach ($variants as $variant) {
+            $this->assertSame('Tamanho', $variant->name);
+            $this->assertSame(['Tamanho' => $variant->value], json_decode($variant->attributes, true));
+            $this->assertSame(0, (int) $variant->is_active);
+            $this->assertSame(0, (int) $variant->stock);
+            $this->assertNull($variant->price);
+            $this->assertStringStartsWith('SABA-TQ-', $variant->sku);
+        }
+        $this->assertTrue(collect($log)->contains(fn (string $entry): bool => str_contains($entry, 'variantes completas: 8')));
+    }
+
+    public function test_attribute_name_is_dynamic_and_multiple_selectors_never_invent_combinations(): void
+    {
+        $html = <<<'HTML'
+<html><body><h1>TELA DE SERIGRAFIA</h1>
+<div class="prod-option option-input option-Gramatura" data-attribute-name="Gramatura"
+ data-items="90 fios // 120 fios"></div>
+<div class="prod-option option-input option-Cor" data-attribute-name="Cor"
+ data-items="Branco // Amarelo"></div>
+</body></html>
+HTML;
+        $url = 'https://8.8.8.8/produto/tela-de-serigrafia-876';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $warnings = [];
+        $stats = app(ImportCatalogUrlsAction::class)->execute([$url], ['no_images' => true],
+            static function (string $line) use (&$warnings): void { $warnings[] = $line; });
+        $this->assertSame(1, $stats['created']);
+        $this->assertSame(0, $stats['variant_drafts']);
+        $this->assertDatabaseCount('catalog_import_options', 4);
+        $this->assertDatabaseCount('product_variants', 0);
+        $this->assertDatabaseHas('catalog_import_options', ['name' => 'Gramatura', 'value' => '120 fios']);
+        $this->assertDatabaseHas('catalog_import_options', ['name' => 'Cor', 'value' => 'Amarelo']);
+        $this->assertTrue(collect($warnings)->contains(fn (string $line): bool => str_contains($line, 'não foram inventadas combinações')));
+    }
+
+    public function test_data_items_has_priority_over_partial_visible_controls_and_dry_run_writes_nothing(): void
+    {
+        $html = <<<'HTML'
+<html><body><h1>QUADRO DE MADEIRA PINUS</h1>
+<div class="prod-option option-input option-Tamanho" data-attribute-name="Tamanho"
+ data-items="20x25 // 20x30 // 20x40 // 25x35 // 30x40 // 40x50 // 50x60 // 60x70">
+   <label>20x25</label><label>20x30</label>
+</div></body></html>
+HTML;
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $logs = [];
+        $stats = app(ImportCatalogUrlsAction::class)->execute([
+            'https://8.8.8.8/produto/quadro-pinus-177',
+        ], ['dry_run' => true, 'no_images' => true], static function (string $line) use (&$logs): void { $logs[] = $line; });
+        $this->assertSame(0, $stats['created']);
+        $this->assertDatabaseCount('products', 0);
+        $this->assertDatabaseCount('product_variants', 0);
+        $this->assertTrue(collect($logs)->contains(fn (string $line): bool => str_contains($line, 'variantes completas: 8')));
+    }
+
+    public function test_data_items_understands_html_entities_and_prevents_duplicate_values(): void
+    {
+        $html = <<<'HTML'
+<html><body><div class="prod-option option-input option-Embalagem" data-attribute-name="Embalagem"
+ data-items="900ml // 3,6kg // 900ml // 5kg &amp; mais"></div></body></html>
+HTML;
+        $parsed = app(\App\Infrastructure\Catalog\CompleteProductVariationExtractor::class)->extractDetailed(
+            $html, 'https://www.telesilkonline.com.br/produto/exemplo-123'
+        );
+        $this->assertSame([
+            ['name' => 'Embalagem', 'value' => '900ml'],
+            ['name' => 'Embalagem', 'value' => '3,6kg'],
+            ['name' => 'Embalagem', 'value' => '5kg & mais'],
+        ], $parsed['options']);
+        $this->assertCount(3, $parsed['variants']);
+    }
+
+    public function test_fallback_uses_eight_sizes_from_generic_html_extractor_when_detailed_parser_misses_select_name(): void
+    {
+        // O nome "attributes[Tamanho]" era lido pelo CatalogHtmlExtractor,
+        // mas rejeitado pelo parser detalhado (que aceitava apenas "Tamanho").
+        $html = '<html><body><h1>QUADRO DE MADEIRA PINUS</h1>'
+            .'<div class="short-description">Quadro para serigrafia.</div>'
+            .'<select name="attributes[Tamanho]"><option>Selecione</option>'
+            .'<option>20x25</option><option>20x30</option><option>20x40</option>'
+            .'<option>25x35</option><option>30x40</option><option>40x50</option>'
+            .'<option>50x60</option><option>60x70</option></select></body></html>';
+        $url = 'https://8.8.8.8/produto/quadro-de-madeira-pinus-medida-externa-177';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $log = [];
+        $result = app(ImportCatalogUrlsAction::class)->execute([$url], ['no_images' => true],
+            static function (string $message) use (&$log): void { $log[] = $message; });
+
+        $this->assertSame(8, $result['variant_drafts']);
+        $this->assertDatabaseCount('product_variants', 8);
+        $this->assertSame(8, DB::table('catalog_import_options')->where('name', 'Tamanho')->count());
+        $this->assertTrue(collect($log)->contains(fn (string $message): bool => str_contains($message, 'Rascunhos recuperados')));
+    }
+
+    public function test_fallback_does_not_invent_size_color_cartesian_combinations(): void
+    {
+        $html = '<html><body><h1>TELA DE QUADRO</h1>'
+            .'<select name="attributes[Tamanho]"><option>20x25</option><option>30x40</option></select>'
+            .'<select name="attributes[Cor]"><option>Preto</option><option>Branco</option></select>'
+            .'</body></html>';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $log = [];
+        $stats = app(ImportCatalogUrlsAction::class)->execute([
+            'https://8.8.8.8/produto/tela-quadro-177',
+        ], ['no_images' => true], static function (string $message) use (&$log): void { $log[] = $message; });
+
+        $this->assertSame(0, $stats['variant_drafts']);
+        $this->assertDatabaseCount('product_variants', 0);
+        $this->assertDatabaseCount('catalog_import_options', 4);
+        $this->assertTrue(collect($log)->contains(fn (string $message): bool => str_contains($message, 'Revise as combinações reais')));
+    }
+
+    public function test_reimport_recovers_variants_missing_from_previous_version_without_duplication(): void
+    {
+        $url = 'https://8.8.8.8/produto/quadro-de-madeira-pinus-medida-externa-177';
+        $html = '<html><body><h1>QUADRO DE MADEIRA PINUS</h1>'
+            .'<div class="prod-option option-input option-Tamanho" data-attribute-name="Tamanho" '
+            .'data-qtd="8" data-items="20x25 // 20x30 // 20x40 // 25x35 // 30x40 // 40x50 // 50x60 // 60x70"></div>'
+            .'</body></html>';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $action = app(ImportCatalogUrlsAction::class);
+        $first = $action->execute([$url], ['no_images' => true], static function (string $line): void {});
+        $this->assertSame(8, $first['variant_drafts']);
+
+        // Simula o estado deixado por uma versão anterior: produto e proveniência
+        // persistidos, mas sem linhas em product_variants.
+        DB::table('product_variants')->delete();
+        $second = $action->execute([$url], ['no_images' => true], static function (string $line): void {});
+        $third = $action->execute([$url], ['no_images' => true], static function (string $line): void {});
+        $this->assertSame(8, $second['variant_drafts']);
+        $this->assertSame(0, $third['variant_drafts']);
+        $this->assertDatabaseCount('product_variants', 8);
+    }
+
+    public function test_dry_run_shows_planned_variations_even_when_table_counters_remain_zero(): void
+    {
+        $html = '<html><body><h1>QUADRO DE MADEIRA PINUS</h1>'
+            .'<div class="prod-option option-input option-Tamanho" data-attribute-name="Tamanho" '
+            .'data-items="20x25 // 20x30 // 20x40 // 25x35 // 30x40 // 40x50 // 50x60 // 60x70"></div>'
+            .'</body></html>';
+        Http::fake(['https://8.8.8.8/*' => Http::response($html, 200)]);
+        $messages = [];
+        $stats = app(ImportCatalogUrlsAction::class)->execute([
+            'https://8.8.8.8/produto/quadro-de-madeira-pinus-medida-externa-177',
+        ], ['dry_run' => true, 'no_images' => true], static function (string $line) use (&$messages): void { $messages[] = $line; });
+        $this->assertSame(0, $stats['variant_drafts']);
+        $this->assertTrue(collect($messages)->contains(fn (string $message): bool => str_contains($message, 'variantes completas: 8')));
+        $this->assertDatabaseCount('product_variants', 0);
+    }
+
 }

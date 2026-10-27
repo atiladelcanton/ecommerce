@@ -38,18 +38,6 @@ final class ProcessShippingWebhookAction
             }
             $last = $shipment->metadata['last_event_at'] ?? null;
             $stale = $last && $occurred->lt(Carbon::parse($last));
-            // O rastreamento pode responder "released" mesmo quando a
-            // geração já foi confirmada. Nunca regredir etapas logísticas.
-            $progress = [
-                ShipmentStatus::PURCHASED->value => 1,
-                ShipmentStatus::LABEL_GENERATED->value => 2,
-                ShipmentStatus::POSTED->value => 3,
-                ShipmentStatus::DELIVERED->value => 4,
-            ];
-            if ($status && isset($progress[$status->value], $progress[$shipment->status->value])
-                && $progress[$status->value] < $progress[$shipment->status->value]) {
-                $stale = true;
-            }
             // Terminal facts cannot be undone by delayed/generated/unknown events.
             if (! $stale && $status && ! $shipment->delivered_at && $shipment->status !== ShipmentStatus::CANCELLED) {
                 if (! $shipment->posted_at || in_array($status, [ShipmentStatus::DELIVERED, ShipmentStatus::UNDELIVERED, ShipmentStatus::PAUSED, ShipmentStatus::SUSPENDED], true)) {

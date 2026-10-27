@@ -69,6 +69,48 @@ final class ProductPurchase extends Component
         );
     }
 
+    /** Clickable options replace the former collection of dropdowns. */
+    public function selectOption(int $index, string $value): void
+    {
+        $product = app(GetCartProductAction::class)->execute($this->productId);
+        $data = app(GetProductPurchaseDataAction::class)->execute($product, array_slice($this->selectedAttributes, 0, $index));
+        if ($data['selectionMode'] !== 'attributes' || ! isset($data['fields'][$index])) {
+            return;
+        }
+
+        $option = collect($data['fields'][$index]['values'])
+            ->first(fn (array $choice): bool => $choice['value'] === $value && $choice['available']);
+        if (! $option) {
+            return;
+        }
+
+        $this->selectedAttributes = array_slice($this->selectedAttributes, 0, $index);
+        $this->selectedAttributes[$index] = $option['value'];
+        $this->syncSelectedVariant();
+    }
+
+    /** Select an already-existing complete variant with one click. */
+    public function selectCombination(int $variantId): void
+    {
+        $product = app(GetCartProductAction::class)->execute($this->productId);
+        $data = app(GetProductPurchaseDataAction::class)->execute($product);
+        if ($data['selectionMode'] !== 'combinations'
+            || ! collect($data['combinations'])->contains(fn (array $choice): bool => $choice['id'] === $variantId && $choice['available'])) {
+            return;
+        }
+
+        $variant = $product->variants->firstWhere('id', $variantId);
+        $attributes = [];
+        foreach ($variant->characteristics() as $name => $value) {
+            $attributes[mb_strtolower((string) $name)] = (string) $value;
+        }
+        $this->selectedAttributes = array_map(
+            fn (array $field): string => $attributes[mb_strtolower($field['name'])],
+            $data['fields'],
+        );
+        $this->syncSelectedVariant();
+    }
+
     public function updatedSelectedAttributes(mixed $value, ?string $key = null): void
     {
         if ($key === null) {
@@ -84,8 +126,16 @@ final class ProductPurchase extends Component
                 unset($this->selectedAttributes[$index]);
             }
         }
+        $this->syncSelectedVariant();
+    }
+
+    private function syncSelectedVariant(): void
+    {
         $this->previousAttributes = $this->selectedAttributes;
-        $data = app(GetProductPurchaseDataAction::class)->execute(app(GetCartProductAction::class)->execute($this->productId), $this->selectedAttributes);
+        $data = app(GetProductPurchaseDataAction::class)->execute(
+            app(GetCartProductAction::class)->execute($this->productId),
+            $this->selectedAttributes,
+        );
         $this->productVariantId = $data['selectedVariant']?->id;
         $this->resetValidation();
     }

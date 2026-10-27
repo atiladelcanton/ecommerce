@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
-use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Domain\Catalog\Enums\ProductAvailability;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductVariant;
@@ -22,7 +21,7 @@ final class ConfirmQuotedOrderAction
     {
         $authorized = app(GetQuotedOrderAction::class)->execute($number, $revision, $signedUrl);
 
-        $confirmed = DB::transaction(function () use ($authorized, $number, $revision, $signedUrl): Order {
+        return DB::transaction(function () use ($authorized, $number, $revision, $signedUrl): Order {
             $order = Order::query()->lockForUpdate()->findOrFail($authorized->id);
             // Recheck revision and expiry after acquiring the order lock.
             app(GetQuotedOrderAction::class)->execute($number, $revision, $signedUrl);
@@ -32,7 +31,7 @@ final class ConfirmQuotedOrderAction
             if ($order->payment_status === PaymentStatus::APPROVED) {
                 return $order;
             }
-            if ($order->status !== OrderStatus::RECEIVED || ! in_array($order->shipping_pricing_status, [ShippingPricingStatus::QUOTED, ShippingPricingStatus::CONFIRMED], true)) {
+            if ($order->status !== OrderStatus::RECEIVED || $order->shipping_pricing_status !== ShippingPricingStatus::QUOTED) {
                 throw ValidationException::withMessages(['payment' => 'Este pedido não está disponível para confirmação.']);
             }
             $items = $order->items()->orderBy('product_id')->get();
@@ -45,19 +44,11 @@ final class ConfirmQuotedOrderAction
                     throw ValidationException::withMessages(['stock' => 'Um dos itens não está mais disponível nessa configuração. Entre em contato com a loja.']);
                 }
             }
-            if ($order->coupon_id !== null) {
-                app(ManageCouponUsageAction::class)->reserve($order, $order->coupon, $order->discount_cents);
-            }
             app(ManageOrderInventoryAction::class)->reserve($order);
             $order->update(['shipping_pricing_status' => ShippingPricingStatus::CONFIRMED]);
-            $quote = $order->latestShippingQuote()->firstOrFail();
-            if (! $quote->accepted_at) {
-                $quote->update(['accepted_at' => now()]);
-            }
+            $order->latestShippingQuote()->firstOrFail()->update(['accepted_at' => now()]);
 
-            return $order;
+            return app(PayOrderAction::class)->execute($order);
         }, 3);
-
-        return app(PayOrderAction::class)->execute($confirmed);
     }
 }

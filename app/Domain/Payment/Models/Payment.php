@@ -18,8 +18,6 @@ final class Payment extends Model
         'status',
         'amount_cents',
         'is_demo',
-        'payment_integration_id', 'environment', 'idempotency_key', 'checkout_url',
-        'provider_status', 'status_detail', 'expires_at', 'last_checked_at', 'needs_review', 'review_reason',
     ];
 
     protected function casts(): array
@@ -28,7 +26,6 @@ final class Payment extends Model
             'status' => PaymentStatus::class,
             'amount_cents' => 'integer',
             'is_demo' => 'boolean',
-            'expires_at' => 'datetime', 'last_checked_at' => 'datetime', 'needs_review' => 'boolean',
         ];
     }
 

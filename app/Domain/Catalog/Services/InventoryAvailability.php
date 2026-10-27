@@ -27,7 +27,7 @@ final class InventoryAvailability
         $reserved = InventoryReservation::query()->where('product_id', $pool instanceof Product ? $pool->id : $pool->product_id)
             ->where('pool_type', $pool instanceof Product ? 'product' : 'variant')
             ->when($pool instanceof ProductVariant, fn ($q) => $q->where('product_variant_id', $pool->id))
-            ->whereNull('consumed_at')->whereNull('released_at')->where(fn ($q) => $q->where('expires_at', '>', now())->orWhere('payment_hold', true))
+            ->whereNull('consumed_at')->whereNull('released_at')->where('expires_at', '>', now())
             ->when($excludingItemId !== null, fn ($q) => $q->where('order_item_id', '!=', $excludingItemId))->sum('quantity');
 
         return max(0, (int) $pool->stock - (int) $reserved);
@@ -43,7 +43,7 @@ final class InventoryAvailability
 
     public function assertCanDelete(Product $product): void
     {
-        if (InventoryReservation::query()->where('product_id', $product->id)->whereNull('consumed_at')->whereNull('released_at')->where(fn ($q) => $q->where('expires_at', '>', now())->orWhere('payment_hold', true))->exists()) {
+        if (InventoryReservation::query()->where('product_id', $product->id)->whereNull('consumed_at')->whereNull('released_at')->where('expires_at', '>', now())->exists()) {
             throw ValidationException::withMessages(['product' => 'Este produto possui unidades reservadas. Cancele os pedidos ou aguarde o vencimento da reserva antes de excluir.']);
         }
     }

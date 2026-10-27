@@ -24,7 +24,7 @@ final class GetHomeDataAction
         return [
             'storeName' => StoreSetting::query()->find(StoreSetting::MAIN_ID)?->store_name ?: config('app.name', 'Saba Equipamentos'),
             'banners' => Banner::currentlyVisible()->ordered()->get(),
-            'categories' => Category::visibleInStore()->ordered()->get(['id', 'name', 'slug', 'image_path']),
+            'categories' => Category::active()->ordered()->get(['id', 'name', 'slug', 'image_path']),
             'featured' => $featured,
             'promotions' => $promotions,
         ];

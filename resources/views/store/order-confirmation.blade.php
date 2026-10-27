@@ -24,7 +24,6 @@
                 </ul>
                 <dl class="mt-4 border-t border-store-border pt-4 text-sm">
                     <div class="flex justify-between gap-4 py-2"><dt>Subtotal</dt><dd>{{ \App\Support\BrazilianMoney::display($order->subtotal_cents) }}</dd></div>
-                    @if($order->discount_cents > 0)<div class="flex justify-between gap-4 py-2 text-green-700"><dt>Cupom {{ $order->coupon_code }}</dt><dd>- {{ \App\Support\BrazilianMoney::display($order->discount_cents) }}</dd></div>@endif
                     <div class="flex justify-between gap-4 py-2"><dt>Frete</dt><dd>{{ $order->formattedShipping() }}</dd></div>
                     <div class="mt-3 flex justify-between gap-4 border-t border-store-border pt-4 text-lg font-semibold"><dt>Total</dt><dd>{{ $order->formattedTotal() }}</dd></div>
                 </dl>
@@ -54,14 +53,10 @@
                 <section class="rounded-xl border border-store-border bg-store-soft p-5 sm:p-6" aria-labelledby="confirmation-payment-heading">
                     <h2 id="confirmation-payment-heading" class="mb-3 font-semibold">Pagamento</h2>
                     @if($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::APPROVED)
-                        <p class="text-sm text-store-green">{{ $order->payments->contains('is_demo', true) ? 'Aprovado — ambiente de demonstração' : 'Pagamento aprovado' }}</p>
+                        <p class="text-sm text-store-green">Aprovado — ambiente de demonstração</p>
                     @else
-                        <p class="text-sm text-store-muted">{{ $order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE ? 'Aguardando cotação do frete. Nenhum pagamento foi realizado.' : 'Aguardando confirmação do pagamento.' }}</p>
-                        <p class="mt-3 text-sm">{{ $order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE ? 'Antes da cobrança, a reserva inicial dura 24 horas. A loja informará o frete.' : 'Durante a cobrança, o estoque permanece reservado até sua aprovação, recusa ou expiração confirmada.' }}</p>
-                        @php($checkoutPayment = $order->payments->where('gateway', 'asaas')->last())
-                        @if($checkoutPayment?->gateway === 'asaas' && $checkoutPayment?->checkout_url && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($checkoutPayment->checkout_url, $checkoutPayment->environment))
-                            <a href="{{ $checkoutPayment->checkout_url }}" rel="noopener noreferrer" class="store-button mt-4">Pagar com Asaas</a>
-                        @endif
+                        <p class="text-sm text-store-muted">Aguardando cotação do frete. Nenhum pagamento foi realizado.</p>
+                        <p class="mt-3 text-sm">Seus itens de pronta entrega ficam reservados por 24 horas. A SABA informará o frete e enviará o link para concluir a compra.</p>
                     @endif
                 </section>
             </div>

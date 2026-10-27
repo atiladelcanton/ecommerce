@@ -13,8 +13,5 @@ final readonly class PaymentResult
         public string $externalId,
         public PaymentStatus $status,
         public bool $isDemo,
-        public ?string $checkoutUrl = null,
-        public ?string $providerStatus = null,
-        public ?string $statusDetail = null,
     ) {}
 }
