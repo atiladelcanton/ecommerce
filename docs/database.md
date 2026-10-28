@@ -161,3 +161,10 @@ Incremental migrations extend `product_variants` with JSON `attributes`, a canon
 ## Cupons de desconto (27/10/2026)
 
 `coupons`: código único, descrição, `discount_type`, `value` (percentual inteiro ou valor fixo em centavos), `scope`, `minimum_subtotal_cents`, `maximum_discount_cents`, `usage_limit`, `allow_sale_items`, vigência e ativação. Os pivôs `coupon_categories` e `coupon_products` delimitam o alcance. `coupon_usages` acompanha estado reservado/consumido/liberado por pedido; `coupon_claims` aplica unicidade de CPF/CNPJ e limite enquanto reservado ou consumido. `orders.coupon_id`, `orders.coupon_code` e `orders.discount_cents` armazenam o desconto contratado. Ver `docs/coupons.md`.
+
+
+## Blog opcional (2026-10-28)
+
+A migration incremental `2026_10_28_000001_create_blog_posts_and_settings.php` adiciona duas colunas booleanas a `store_settings`, com default `false`: `blog_enabled` (rotas e menu públicos) e `blog_show_on_home` (seção de artigos na Home, dependente da primeira flag). O registro singleton e todos os dados anteriores permanecem intactos.
+
+A tabela `blog_posts` possui `id`, `author_id` opcional (FK para `users`, `nullOnDelete`), `title`, `slug` único, `excerpt`, `content` sanitizado, `cover_image`, `cover_alt`, `category` opcional, `tags` JSON, `seo_title`, `seo_description`, `status` (`draft` ou `published`), `published_at`, timestamps e índice `(status, published_at, id)`. Imagens usam caminhos relativos no disco `public`; apagar registro preserva o arquivo físico. Para mais detalhes, veja `docs/blog.md`.

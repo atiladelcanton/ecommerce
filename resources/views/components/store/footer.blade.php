@@ -10,7 +10,7 @@
 <footer class="store-container pt-16 pb-6">
     <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div><img src="{{ asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="150" height="44" class="w-36"><p class="mt-5 max-w-xs text-sm leading-7 text-store-muted">Conheça nosso catálogo, escolha suas opções e converse com nossa equipe quando precisar.</p></div>
-        <div><h2 class="font-semibold mb-5">Explore</h2><nav aria-label="Navegação do rodapé" class="flex flex-col gap-3 text-sm text-store-muted"><a href="{{ route('home') }}">Início</a><a href="{{ route('store.products') }}">Produtos</a><a href="{{ route('home') }}#categorias">Categorias</a></nav></div>
+        <div><h2 class="font-semibold mb-5">Explore</h2><nav aria-label="Navegação do rodapé" class="flex flex-col gap-3 text-sm text-store-muted"><a href="{{ route('home') }}">Início</a><a href="{{ route('store.products') }}">Produtos</a><a href="{{ route('home') }}#categorias">Categorias</a>@if($settings?->blog_enabled)<a href="{{ route('store.blog.index') }}">Blog</a>@endif</nav></div>
         <div><h2 class="font-semibold mb-5">Contato</h2><div class="flex flex-col gap-3 text-sm text-store-muted">
             @if($settings?->phone)<a href="tel:{{ preg_replace('/[^+0-9]/', '', $settings->phone) }}">{{ $settings->phone }}</a>@endif
             @if($whatsappUrl)<a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>@endif

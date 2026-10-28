@@ -1,0 +1,42 @@
+SABA EQUIPAMENTOS - CATEGORIAS E ETIQUETAS REUTILIZÁVEIS NO BLOG
+==============================================================
+Base: saba-blog-ia-projeto-completo.zip (28/10/2026).
+
+O QUE MUDA
+- Admin > Conteúdo > Postagens do blog > Criar/Editar.
+- Categoria editorial: lista pesquisável de categorias utilizadas anteriormente e ação
+  "Criar" para cadastrar nova categoria no próprio formulário.
+- Etiquetas: sugestões de etiquetas existentes ao digitar; você também pode
+  adicionar novas. As novas etiquetas são lembradas depois de salvar a postagem.
+- Categorias e etiquetas permanecem no vocabulário mesmo ao excluir postagens.
+- Os artigos atuais, URLs, conteúdo, imagens e configuração do blog não são alterados.
+- Nenhuma alteração no módulo de produtos, cupons, pagamentos, frete ou IA.
+
+INSTALAÇÃO LOCAL
+1) Faça backup do código e do banco.
+2) Extraia saba-blog-taxonomias-atualizacao.zip sobre a raiz do Laravel,
+   mesclando os diretórios e substituindo os arquivos correspondentes.
+3) Execute:
+      php artisan migrate --force
+      php artisan optimize:clear
+4) Acesse Conteúdo > Postagens do blog, crie/edite uma postagem e teste:
+   - criar uma categoria pelo botão do seletor;
+   - selecionar a mesma categoria em outra postagem;
+   - inserir uma nova etiqueta, salvar e reutilizar na postagem seguinte.
+5) Quando validar localmente, publique a atualização no servidor e execute os
+   mesmos comandos de migration e limpeza de cache.
+
+IMPORTANTE
+- Esta atualização precisa executar a migration NOVA:
+  database/migrations/2026_10_28_000002_create_blog_terms.php
+- A migration cria somente a tabela blog_terms; importa categorias e etiquetas
+  das postagens existentes; não cria nem altera blog_posts.
+- NÃO executar migrate:fresh, migrate:rollback ou excluir tabelas para instalar.
+- NÃO são necessários Node.js, npm, Redis, Composer update ou novo build Vite.
+- O ZIP incremental não contém .env, composer.json/lock ou public/build.
+
+VALIDAÇÃO NESTE AMBIENTE
+- php -l: todos os arquivos PHP alterados passaram.
+- O pacote ZIP foi verificado e aplicado em cópia limpa do ZIP-base.
+- PHPUnit não foi executado: o projeto entregue não inclui vendor/.
+  Executar no ambiente local: php artisan test --filter=BlogModuleTest

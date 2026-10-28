@@ -1,4 +1,4 @@
-@props(['categories', 'whatsappUrl', 'storeName'])
+@props(['categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false])
 <div class="store-announcement">
     <div class="store-container flex items-center justify-between gap-4 py-2">
         <span>Equipamentos, insumos e acessórios para serigrafia</span>
@@ -53,6 +53,9 @@
                     </div>
                 </div>
             </div>
+            @if($blogEnabled)
+                <a class="store-nav-link" href="{{ route('store.blog.index') }}" @if(request()->routeIs('store.blog.*')) aria-current="page" @endif>Blog</a>
+            @endif
             <a class="store-nav-link" href="{{ route('store.about') }}" @if(request()->routeIs('store.about')) aria-current="page" @endif>Quem Somos</a>
             <a class="store-nav-link" href="{{ route('store.contact') }}" @if(request()->routeIs('store.contact')) aria-current="page" @endif>Contato</a>
         </nav>
@@ -76,6 +79,9 @@
                 </ul>
                 <a href="{{ route('store.products', ['promocao' => 1]) }}">Promoções</a>
             </details>
+            @if($blogEnabled)
+                <a href="{{ route('store.blog.index') }}" @if(request()->routeIs('store.blog.*')) aria-current="page" @endif>Blog</a>
+            @endif
             <a href="{{ route('store.about') }}" @if(request()->routeIs('store.about')) aria-current="page" @endif>Quem Somos</a>
             <a href="{{ route('store.contact') }}" @if(request()->routeIs('store.contact')) aria-current="page" @endif>Contato</a>
             <a href="{{ auth('customer')->check() ? route('customer.dashboard') : route('customer.login') }}">

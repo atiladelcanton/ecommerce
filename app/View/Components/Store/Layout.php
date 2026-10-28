@@ -10,7 +10,7 @@ use Illuminate\View\Component;
 
 final class Layout extends Component
 {
-    public function __construct(public ?string $title = null, public ?string $description = null, public ?string $canonical = null, public ?string $image = null) {}
+    public function __construct(public ?string $title = null, public ?string $description = null, public ?string $canonical = null, public ?string $image = null, public string $ogType = 'website') {}
 
     public function render(): View
     {

@@ -40,7 +40,7 @@ final class AdminPanelProvider extends PanelProvider
             ->simplePageMaxContentWidth(Width::Medium)
             ->sidebarWidth('15.5rem')
             ->collapsibleNavigationGroups(false)
-            ->navigationGroups(['Painel', 'Catálogo', 'Vendas', 'Configurações'])
+            ->navigationGroups(['Painel', 'Catálogo', 'Conteúdo', 'Vendas', 'Configurações'])
             ->darkMode(false)
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_AFTER, fn (): string => view('filament.components.view-store-link')->render())
             ->viteTheme('resources/css/filament/admin/theme.css')

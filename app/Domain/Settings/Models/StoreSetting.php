@@ -32,7 +32,14 @@ final class StoreSetting extends Model
         'seo_title',
         'seo_description',
         'shipping_origin_zip_code',
+        'blog_enabled',
+        'blog_show_on_home',
     ];
+
+    protected function casts(): array
+    {
+        return ['blog_enabled' => 'boolean', 'blog_show_on_home' => 'boolean'];
+    }
 
     protected $hidden = ['singleton'];
 }

@@ -13,10 +13,11 @@
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $pageDescription }}">
     <meta property="og:url" content="{{ $canonical ?: url()->current() }}">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:locale" content="pt_BR">
     <meta property="og:image" content="{{ $image ?: asset('images/saba-logo.jpeg') }}">
     <link rel="icon" href="{{ asset('images/saba-logo.jpeg') }}">
+    <link rel="stylesheet" href="{{ asset('css/blog.css') }}">
     <link rel="stylesheet" href="{{ asset('fonts/filament/filament/inter/index.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -24,7 +25,7 @@
 </head>
 <body {{ $attributes->class(['store-body']) }}>
     <a href="#conteudo" class="store-skip">Pular para o conteúdo</a>
-    <x-store.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" />
+    <x-store.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" :blog-enabled="(bool) ($settings?->blog_enabled)" />
     <main id="conteudo">{{ $slot }}</main>
     <x-store.footer :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" />
     <x-store.toast-container />

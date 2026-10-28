@@ -32,5 +32,18 @@
         @if($promotions->isNotEmpty())
         <section class="store-section" data-section="promotions"><div class="store-section-heading"><div><p class="store-eyebrow text-store-red">Ofertas especiais</p><h2 class="store-title mt-2">Promoções</h2></div><a class="store-text-link" href="{{ route('store.products', ['promocao' => 1]) }}">Ver promoções →</a></div><div class="store-product-grid">@foreach($promotions as $product)<x-store.product-card :product="$product" />@endforeach</div></section>
         @endif
+        @if($latestBlogPosts->isNotEmpty())
+        <section class="store-section" data-section="latest-blog">
+            <div class="store-section-heading">
+                <div><p class="store-eyebrow">Conteúdo e novidades</p><h2 class="store-title mt-2">Últimas do Blog</h2></div>
+                <a class="store-text-link" href="{{ route('store.blog.index') }}">Ver todas as postagens →</a>
+            </div>
+            <div class="saba-blog-grid">
+                @foreach($latestBlogPosts as $post)
+                    <x-store.blog-card :post="$post" />
+                @endforeach
+            </div>
+        </section>
+        @endif
     </div>
 </x-store.layout>

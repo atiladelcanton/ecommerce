@@ -1,0 +1,18 @@
+SABA — IA no Blog (atualização incremental)
+
+1. Faça backup do código existente antes de copiar arquivos.
+2. Na raiz do Laravel, extraia saba-blog-ia-atualizacao.zip substituindo somente os arquivos contidos.
+3. Execute: php artisan optimize:clear
+4. Acesse Admin > Conteúdo > Postagens do blog > Criar/Editar.
+5. Clique em "Assistente de IA", escolha "Escrever" ou "Melhorar", revise a prévia, marque os campos e aplique.
+6. Revise o formulário e clique em Salvar para persistir. A IA não publica postagens automaticamente.
+
+Configuração: reaproveita Admin > Configurações > Inteligência Artificial (Groq).
+Não há migrations novas. Não é necessário executar npm ou composer no servidor.
+O servidor de produção permanece com PHP 8.3, sem Node.js e sem Redis.
+
+Testes incluídos: tests/Feature/AI/BlogAiAssistantTest.php
+Executar localmente (com vendor e DB de teste): php artisan test --filter=BlogAiAssistantTest
+Recomendado: php artisan test --filter='Blog|ProductAiAssistant'
+
+Atenção: não sobrescreva .env, composer.lock, public/build nem arquivos de storage.

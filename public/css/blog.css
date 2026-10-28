@@ -1,0 +1,52 @@
+/* SABA Blog: stylesheet independente de Vite para instalações sem Node.js. */
+.saba-blog-page {max-width:1400px;padding-top:1.75rem;padding-bottom:6rem}
+.saba-blog-breadcrumb {display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;color:#71717a;font-size:.875rem;line-height:1.5}
+.saba-blog-breadcrumb a:hover {color:#dc2626;text-decoration:underline}
+.saba-blog-breadcrumb span[aria-current] {max-width:55ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saba-blog-page-header {padding:3.5rem 0 3rem;max-width:880px}
+.saba-blog-page-header h1 {font-size:clamp(2.5rem,5vw,4.25rem);line-height:1.1;letter-spacing:-.04em;font-weight:750;margin:.6rem 0 1rem;color:#252529}
+.saba-blog-page-header > p:last-child {font-size:1.1rem;line-height:1.7;color:#71717a}
+.saba-blog-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:1.5rem}
+.saba-blog-card {min-width:0;overflow:hidden;border-radius:12px;background:#fff;border:1px solid #e4e4e7;transition:box-shadow .2s,border-color .2s,transform .2s}
+.saba-blog-card:hover {border-color:#dfb7b7;box-shadow:0 15px 30px #0000000c;transform:translateY(-2px)}
+.saba-blog-card-link {display:flex;flex-direction:column;height:100%;color:inherit;text-decoration:none}
+.saba-blog-card-cover {aspect-ratio:16/10;overflow:hidden;background:#f6f7f8}
+.saba-blog-card-cover img {width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.saba-blog-card:hover img {transform:scale(1.035)}
+.saba-blog-no-cover {height:100%;display:grid;place-items:center;background:linear-gradient(145deg,#fef2f2,#f5f5f6);color:#b91c1c;letter-spacing:.17em;font-weight:750;font-size:.9rem;text-transform:uppercase}
+.saba-blog-card-text {display:flex;flex:1;flex-direction:column;gap:.75rem;padding:1.45rem}
+.saba-blog-card-meta {display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;font-size:.78rem;font-weight:500;color:#71717a}
+.saba-blog-category {display:inline-flex;background:#fef2f2;color:#b91c1c;border-radius:5px;padding:.25rem .55rem;font-weight:700;font-size:.75rem}
+.saba-blog-card h3 {font-size:clamp(1.2rem,1.6vw,1.45rem);font-weight:700;line-height:1.35;letter-spacing:-.02em;color:#252529;overflow-wrap:anywhere}
+.saba-blog-card:hover h3 {color:#b91c1c}
+.saba-blog-excerpt {font-size:.925rem;color:#71717a;line-height:1.7;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.saba-blog-read {margin-top:auto;padding-top:.35rem;color:#b91c1c;font-weight:700;font-size:.875rem}
+.saba-blog-pagination {margin:3rem auto 0;max-width:900px}
+.saba-blog-empty {padding:5rem 2rem;text-align:center;border-radius:12px;background:#f6f7f8}
+.saba-blog-empty h2 {font-size:1.6rem;font-weight:700}
+.saba-blog-empty p {color:#71717a;margin:1rem 0 1.75rem}
+.saba-blog-article {max-width:900px;margin:2.6rem auto 0}
+.saba-blog-article-header h1 {font-size:clamp(2.1rem,4.4vw,3.7rem);font-weight:750;letter-spacing:-.04em;line-height:1.16;margin:1rem 0;overflow-wrap:anywhere}
+.saba-blog-lead {font-size:1.15rem;line-height:1.7;color:#52525b;margin:1rem 0}
+.saba-blog-article-meta {display:flex;align-items:center;gap:.6rem;color:#71717a;font-size:.875rem;margin-top:1.4rem}
+.saba-blog-featured-image {margin:2.5rem 0 3rem;overflow:hidden;border-radius:12px;background:#f6f7f8}
+.saba-blog-featured-image img {width:100%;height:auto;max-height:550px;object-fit:cover}
+.saba-blog-content {font-size:1.0625rem;line-height:1.85;color:#3f3f46;overflow-wrap:anywhere}
+.saba-blog-content p {margin:0 0 1.5rem}
+.saba-blog-content h2,.saba-blog-content h3,.saba-blog-content h4 {font-weight:750;line-height:1.3;letter-spacing:-.025em;color:#252529;margin:2rem 0 .9rem}
+.saba-blog-content h2 {font-size:1.9rem}.saba-blog-content h3 {font-size:1.45rem}.saba-blog-content h4 {font-size:1.2rem}
+.saba-blog-content a {color:#b91c1c;text-decoration:underline;text-underline-offset:3px}
+.saba-blog-content ul {list-style:disc;padding-left:1.6rem;margin:0 0 1.5rem}
+.saba-blog-content ol {list-style:decimal;padding-left:1.6rem;margin:0 0 1.5rem}
+.saba-blog-content li {margin:.45rem 0}
+.saba-blog-content blockquote {border-left:4px solid #dc2626;background:#fef2f2;padding:1.1rem 1.35rem;margin:1.6rem 0;border-radius:0 8px 8px 0}
+.saba-blog-content blockquote p:last-child {margin-bottom:0}
+.saba-blog-content hr {border:0;border-top:1px solid #e4e4e7;margin:2rem 0}
+.saba-blog-tags {display:flex;flex-wrap:wrap;gap:.5rem;padding-top:2rem;margin-top:2rem;border-top:1px solid #e4e4e7}
+.saba-blog-tags span {border:1px solid #e4e4e7;padding:.4rem .75rem;border-radius:99px;font-size:.8rem;color:#52525b}
+.saba-blog-back {margin-top:2rem;font-size:.95rem;font-weight:650;color:#b91c1c}
+.saba-blog-back a:hover {text-decoration:underline}
+@media(min-width:640px) {.saba-blog-grid {grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1100px) {.saba-blog-grid {grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:639px) {.saba-blog-page-header {padding:2.5rem 0}.saba-blog-featured-image {margin:1.75rem 0}.saba-blog-content {font-size:1rem}}
+@media(prefers-reduced-motion:reduce) {.saba-blog-card,.saba-blog-card-cover img {transition:none}.saba-blog-card:hover {transform:none}}

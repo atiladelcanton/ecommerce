@@ -1,0 +1,43 @@
+SABA EQUIPAMENTOS — BLOG OPCIONAL (28/10/2026)
+
+PACOTE INCREMENTAL: saba-blog-atualizacao.zip
+
+1. Faça backup do código e do banco de dados.
+2. Extraia o ZIP incremental e COPIE as pastas/arquivos para a raiz do projeto Laravel, mesclando e substituindo somente arquivos iguais.
+3. No servidor (na raiz do Laravel):
+
+   php artisan migrate --force
+   php artisan storage:link
+   php artisan optimize:clear
+   php artisan optimize
+
+   Se storage:link informar que o link já existe, não há problema.
+   Não use migrate:fresh, migrate:rollback ou migrate:refresh.
+
+4. Abra /admin -> Configurações -> Configurações da loja -> Blog:
+   [ ] Ativar blog no e-commerce
+   [ ] Exibir "Últimas do Blog" na página inicial
+
+   Ambas as opções começam DESATIVADAS.
+
+5. Em /admin -> Conteúdo -> Postagens do blog, clique em Nova postagem.
+   Crie um rascunho, edite texto e imagem, publique e teste /blog.
+   Em postagens com data futura, o artigo ficará oculto até chegar a hora, sem cron.
+
+6. Teste menu desktop/mobile, /blog, /blog/slug, SEO, home e desativação.
+
+ATENÇÃO
+- Não execute o antigo INSTALAR-ATUALIZACAO.sh de cupons para instalar este blog.
+- O blog não altera cupons, pedidos, frete ou pagamento.
+- Não copie ou substitua .env, composer.json, composer.lock nem banco de dados.
+- CSS em public/css/blog.css: NÃO precisa rodar npm ou Vite no servidor.
+- O pacote incremental não inclui public/build e não altera assets compilados existentes.
+- Este ZIP foi preparado a partir da versão completa corrigida enviada em 28/10/2026.
+- Se houver alterações locais posteriores nos mesmos arquivos, compare antes de sobrescrever.
+- O upload de imagens exige que o disco public esteja configurado e com permissões de escrita.
+- O editor tem formatação rica, mas não insere imagens dentro do corpo: use a imagem de destaque.
+
+PARA TESTAR LOCALMENTE (se vendor estiver instalado):
+   php artisan test --filter=BlogModuleTest
+
+LEIA TAMBÉM: docs/blog.md

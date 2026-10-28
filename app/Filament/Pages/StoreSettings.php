@@ -9,6 +9,7 @@ use App\Domain\Settings\Models\StoreSetting;
 use App\Filament\Support\CatalogForm;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -68,6 +69,16 @@ final class StoreSettings extends Page
                 TextInput::make('seo_title')->label('Título SEO')->maxLength(255),
                 Textarea::make('seo_description')->label('Descrição SEO')->maxLength(5000)->columnSpanFull(),
             ]),
+            Section::make('Blog')
+                ->description('Ative a área de conteúdos do site e escolha se deseja destacar as postagens na página inicial.')
+                ->schema([
+                    Toggle::make('blog_enabled')->label('Ativar blog no e-commerce')
+                        ->helperText('Mostra o link Blog nos menus e permite acesso às postagens publicadas. Desativado: /blog retorna página não encontrada.')
+                        ->default(false)->live(),
+                    Toggle::make('blog_show_on_home')->label('Exibir "Últimas do Blog" na página inicial')
+                        ->helperText('Opção independente: só aparece quando o blog também está ativo e existem postagens publicadas.')
+                        ->default(false),
+                ]),
             Section::make('Frete')->schema([
                 TextInput::make('shipping_origin_zip_code')->label('CEP de origem')->maxLength(9)->placeholder('00000-000'),
             ]),

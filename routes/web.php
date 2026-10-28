@@ -4,6 +4,7 @@ use App\Http\Controllers\Shipping\MelhorEnvioOAuthController;
 use App\Http\Controllers\Shipping\MelhorEnvioWebhookController;
 use App\Http\Controllers\Shipping\ShipmentLabelController;
 use App\Http\Controllers\Shipping\ShipmentLabelFileController;
+use App\Http\Controllers\Store\BlogController;
 use App\Http\Controllers\Store\CustomerAccountController;
 use App\Http\Controllers\Store\CustomerAddressController;
 use App\Http\Controllers\Store\CustomerAuthController;
@@ -22,6 +23,8 @@ Route::get('/pedido/{number}/confirmacao', OrderConfirmationController::class)->
 Route::get('/produto/{slug}', ProductController::class)->name('store.product');
 Route::get('/quem-somos', [InstitutionalController::class, 'about'])->name('store.about');
 Route::get('/contato', [InstitutionalController::class, 'contact'])->name('store.contact');
+Route::get('/blog', [BlogController::class, 'index'])->name('store.blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('store.blog.show');
 
 Route::middleware('guest:customer')->group(function (): void {
     Route::get('/entrar', [CustomerAuthController::class, 'loginForm'])->name('customer.login');
