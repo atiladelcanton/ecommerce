@@ -1,4 +1,7 @@
 <x-store.layout :canonical="route('home')" class="store-home">
+    @if(\App\Support\Storefront\Template::is(2))
+        @include('store.templates.warehouse.home')
+    @else
     <div class="store-container store-home-content">
         @if($banners->isNotEmpty())
             <h1 class="sr-only">Catálogo de produtos de {{ $storeName }}</h1>
@@ -46,4 +49,5 @@
         </section>
         @endif
     </div>
+    @endif
 </x-store.layout>

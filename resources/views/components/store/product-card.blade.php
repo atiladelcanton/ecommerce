@@ -1,4 +1,7 @@
 @props(['product'])
+@if(\App\Support\Storefront\Template::is(2))
+    @include('components.store.templates.warehouse.product-card', ['product' => $product])
+@else
 <article class="store-product-card group" data-product-id="{{ $product->id }}">
     <a href="{{ route('store.product', $product->slug) }}" class="store-product-card-link">
         <div class="store-product-card-image relative aspect-square bg-store-soft overflow-hidden">
@@ -12,3 +15,5 @@
         <div class="store-product-card-body"><p class="text-xs text-store-muted">{{ $product->category->name }}</p><h3 class="mt-2 font-medium leading-snug min-h-12">{{ $product->name }}</h3><div class="my-3"><x-store.availability-badge :availability="$product->availability" /></div><x-store.price :product="$product" /></div>
     </a>
 </article>
+
+@endif

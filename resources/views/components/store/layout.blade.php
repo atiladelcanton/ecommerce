@@ -1,4 +1,5 @@
 @php
+    $storefrontTemplate = \App\Support\Storefront\Template::active();
     $pageTitle = $title ? $title.' | '.$storeName : ($settings?->seo_title ?: $storeName);
     $pageDescription = $description ?: ($settings?->seo_description ?: 'Conheça o catálogo de produtos da '.$storeName.'.');
 @endphp
@@ -20,14 +21,25 @@
     <link rel="stylesheet" href="{{ asset('css/blog.css') }}">
     <link rel="stylesheet" href="{{ asset('fonts/filament/filament/inter/index.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if($storefrontTemplate === 2)
+        <link rel="stylesheet" href="{{ asset('css/storefront/templates/warehouse.css') }}">
+    @endif
     @livewireStyles
     @stack('head')
 </head>
-<body {{ $attributes->class(['store-body']) }}>
+<body {{ $attributes->class(['store-body', 'store-template-2' => $storefrontTemplate === 2]) }}>
     <a href="#conteudo" class="store-skip">Pular para o conteúdo</a>
-    <x-store.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" :blog-enabled="(bool) ($settings?->blog_enabled)" />
+    @if($storefrontTemplate === 2)
+        <x-store.templates.warehouse.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" :blog-enabled="(bool) ($settings?->blog_enabled)" />
+    @else
+        <x-store.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" :blog-enabled="(bool) ($settings?->blog_enabled)" />
+    @endif
     <main id="conteudo">{{ $slot }}</main>
-    <x-store.footer :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" />
+    @if($storefrontTemplate === 2)
+        <x-store.templates.warehouse.footer :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" />
+    @else
+        <x-store.footer :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" />
+    @endif
     <x-store.toast-container />
     @livewireScriptConfig
 </body>
