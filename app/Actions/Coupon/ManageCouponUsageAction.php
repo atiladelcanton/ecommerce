@@ -67,7 +67,13 @@ final class ManageCouponUsageAction
     public function consume(Order $order): void
     {
         $usage = CouponUsage::query()->where('order_id', $order->id)->first();
-        if (! $usage || $usage->status === 'consumed') {
+        if ($order->coupon_id === null) {
+            return;
+        }
+        if (! $usage) {
+            throw ValidationException::withMessages(['coupon' => 'A reserva deste cupom não foi encontrada. O pagamento exige revisão.']);
+        }
+        if ($usage->status === 'consumed') {
             return;
         }
         if ($usage->status === 'released') {

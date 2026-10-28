@@ -1,0 +1,7 @@
+SABA EQUIPAMENTOS — CORREÇÃO DE CUPONS (28/10/2026)
+
+Esta versão substitui a implementação duplicada de 27/10 e usa o esquema existente criado em 21/10.
+Não apague a tabela coupons, coupon_usages, coupon_claims, coupon_categories ou coupon_products.
+A migration duplicada não deve ser executada; o roteiro de atualização a isola automaticamente.
+
+Leia INSTALACAO-CUPONS.md e ATUALIZACAO-CUPONS-28-10.md antes de subir para produção.

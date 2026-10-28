@@ -9,6 +9,9 @@ use App\Actions\Cart\GetCartAction;
 use App\Actions\Catalog\ManageOrderInventoryAction;
 use App\Actions\Customer\LinkGuestOrdersToCustomerAction;
 use App\Actions\Shipping\QuoteShippingAction;
+use App\Actions\Coupon\QuoteCouponAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
+use App\Support\CheckoutCoupon;
 use App\Domain\Cart\CartItem;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductVariant;
@@ -71,7 +74,7 @@ final class CreateInitialOrderAction
                 }
                 $data = $this->validate->execute($input);
 
-                return DB::transaction(function () use ($data, $token, $owner, $requestFreight): Order {
+                return DB::transaction(function () use ($data, $input, $token, $owner, $requestFreight): Order {
                     $stored = $this->sessionCart->items();
                     if ($stored === []) {
                         throw ValidationException::withMessages(['cart' => 'Seu carrinho está vazio. Adicione produtos antes de finalizar.']);
@@ -101,7 +104,17 @@ final class CreateInitialOrderAction
                     } elseif (! $shipping) {
                         throw ValidationException::withMessages(['shipping_option' => 'Selecione uma forma de entrega disponível.']);
                     }
-                    $totals = $shipping ? new OrderTotals($cart['subtotal'], $shipping->price) : null;
+                    // The UI applies into the checkout token session; the optional
+                    // input code is retained for older server-side entry points.
+                    $couponCode = app(CheckoutCoupon::class)->get($token);
+                    if ($couponCode === null && is_string($input['coupon_code'] ?? null)) {
+                        $couponCode = trim($input['coupon_code']);
+                    }
+                    $coupon = $couponCode !== null && $couponCode !== ''
+                        ? app(QuoteCouponAction::class)->execute($couponCode, array_values($cart['items']), $cart['subtotal'])
+                        : null;
+                    $discount = $coupon['discount'] ?? 0;
+                    $totals = $shipping ? new OrderTotals($cart['subtotal'], $shipping->price, $discount) : null;
                     $order = Order::query()->create([
                         'customer_id' => $this->auth->guard('customer')->id(),
                         'checkout_token' => $token, 'checkout_session_hash' => $owner,
@@ -109,7 +122,8 @@ final class CreateInitialOrderAction
                         'customer_phone' => $data['phone'], 'customer_document' => $data['document'],
                         'status' => OrderStatus::PENDING, 'payment_status' => PaymentStatus::PENDING,
                         'subtotal_cents' => $cart['subtotal'], 'shipping_cents' => $totals?->shipping,
-                        'discount_cents' => 0, 'total_cents' => $totals?->total,
+                        'discount_cents' => $discount, 'total_cents' => $totals?->total,
+                        'coupon_id' => $coupon['coupon']->id ?? null, 'coupon_code' => $coupon['coupon']->code ?? null,
                         'shipping_pricing_status' => $requestFreight ? ShippingPricingStatus::AWAITING_QUOTE : null,
                         'shipping_option_id' => $shipping?->id ?? 'manual:pending',
                         'shipping_provider' => $shipping?->provider ?? 'manual',
@@ -140,6 +154,11 @@ final class CreateInitialOrderAction
                         'from_status' => null, 'to_status' => OrderStatus::PENDING, 'description' => 'Pedido criado.',
                     ]);
                     app(ManageOrderInventoryAction::class)->reserve($order);
+                    if ($coupon !== null) {
+                        // Locks the coupon and reserves the CPF/CNPJ claim in the
+                        // order transaction, including assisted-shipping requests.
+                        app(ManageCouponUsageAction::class)->reserve($order, $coupon['coupon'], $discount);
+                    }
                     if (! $requestFreight) {
                         $order = app(PayOrderAction::class)->execute($order);
                     }
@@ -174,6 +193,7 @@ final class CreateInitialOrderAction
         if ($this->session->get(GetCheckoutTokenAction::SESSION_KEY) === $token) {
             $this->clearCart->execute();
             $this->session->forget(GetCheckoutTokenAction::SESSION_KEY);
+            app(CheckoutCoupon::class)->forget($token);
         }
 
         return $order;

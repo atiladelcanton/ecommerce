@@ -12,46 +12,59 @@ use Illuminate\Validation\ValidationException;
 
 final class SaveCouponAction
 {
-    public function execute(array $data, ?Coupon $coupon = null): Coupon
+    public function execute(array $input, ?Coupon $existing = null): Coupon
     {
-        $data['code'] = QuoteCouponAction::normalize((string) ($data['code'] ?? ''));
-        $data['product_ids'] ??= [];
-        $data['category_ids'] ??= [];
-        $data = Validator::make($data, [
-            'code' => ['required', 'regex:/\A[A-Z0-9_-]{3,64}\z/', Rule::unique('coupons', 'code')->ignore($coupon?->id)],
+        $input['code'] = QuoteCouponAction::normalize((string) ($input['code'] ?? ''));
+        $input['allow_sale_items'] = (bool) ($input['allow_sale_items'] ?? false);
+        $input['is_active'] = (bool) ($input['is_active'] ?? false);
+        $input['category_ids'] = $input['category_ids'] ?? [];
+        $input['product_ids'] = $input['product_ids'] ?? [];
+        $data = Validator::make($input, [
+            'code' => ['required', 'string', 'between:3,64', 'regex:/^[A-Z0-9_-]+$/D', Rule::unique('coupons', 'code')->ignore($existing?->id)],
             'description' => ['nullable', 'string', 'max:255'],
             'discount_type' => ['required', Rule::in(['percentage', 'fixed'])],
-            'percentage_value' => ['required_if:discount_type,percentage', 'nullable', 'integer', 'between:1,100'],
-            'fixed_value_cents' => ['required_if:discount_type,fixed', 'nullable', 'integer', 'min:1'],
+            'value' => ['required', 'integer', 'min:1'],
             'scope' => ['required', Rule::in(['all', 'categories', 'products'])],
-            'product_ids' => ['array'], 'product_ids.*' => ['integer', 'distinct', 'exists:products,id'],
-            'category_ids' => ['array'], 'category_ids.*' => ['integer', 'distinct', 'exists:categories,id'],
-            'minimum_subtotal_cents' => ['nullable', 'integer', 'min:1'],
+            'category_ids' => ['array'],
+            'category_ids.*' => ['integer', 'distinct', 'exists:categories,id'],
+            'product_ids' => ['array'],
+            'product_ids.*' => ['integer', 'distinct', 'exists:products,id'],
+            'minimum_subtotal_cents' => ['nullable', 'integer', 'min:0'],
             'maximum_discount_cents' => ['nullable', 'integer', 'min:1'],
             'usage_limit' => ['nullable', 'integer', 'min:1'],
-            'is_active' => ['boolean'], 'allow_sale_items' => ['boolean'],
-            'starts_at' => ['nullable', 'date'], 'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
-        ], [
-            'code.unique' => 'Já existe um cupom com este código.',
-            'code.regex' => 'Utilize 3 a 64 letras, números, hífens ou sublinhados.',
-        ])->validate();
-        if ($data['scope'] === 'products' && $data['product_ids'] === []) {
-            throw ValidationException::withMessages(['product_ids' => 'Escolha pelo menos um produto para este cupom.']);
-        }
-        if ($data['scope'] === 'categories' && $data['category_ids'] === []) {
-            throw ValidationException::withMessages(['category_ids' => 'Escolha pelo menos uma categoria para este cupom.']);
-        }
-        return DB::transaction(function () use ($data, $coupon): Coupon {
-            $values = collect($data)->only([
-                'code', 'description', 'discount_type', 'scope', 'minimum_subtotal_cents', 'maximum_discount_cents',
-                'usage_limit', 'allow_sale_items', 'is_active', 'starts_at', 'ends_at',
-            ])->all();
-            $values['value'] = $data['discount_type'] === 'percentage' ? $data['percentage_value'] : $data['fixed_value_cents'];
-            $saved = $coupon ?? new Coupon;
-            $saved->fill($values)->save();
-            $saved->products()->sync($data['scope'] === 'products' ? $data['product_ids'] : []);
-            $saved->categories()->sync($data['scope'] === 'categories' ? $data['category_ids'] : []);
-            return $saved->refresh();
-        });
+            'allow_sale_items' => ['boolean'],
+            'is_active' => ['boolean'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+        ])->after(function ($validator) use ($input): void {
+            if (($input['discount_type'] ?? null) === 'percentage' && (int) ($input['value'] ?? 0) > 100) {
+                $validator->errors()->add('value', 'O percentual deve estar entre 1 e 100.');
+            }
+            foreach (['categories' => 'category_ids', 'products' => 'product_ids'] as $scope => $field) {
+                if (($input['scope'] ?? null) === $scope && empty($input[$field])) {
+                    $validator->errors()->add($field, 'Selecione ao menos um item para o alcance do cupom.');
+                }
+            }
+        })->validate();
+
+        return DB::transaction(function () use ($data, $existing): Coupon {
+            $coupon = $existing ? Coupon::query()->lockForUpdate()->findOrFail($existing->id) : new Coupon;
+            if ($coupon->exists) {
+                $claims = $coupon->claims()->count();
+                if ($claims > 0 && $data['code'] !== $coupon->code) {
+                    throw ValidationException::withMessages(['code' => 'O código de um cupom reservado ou utilizado não pode ser alterado.']);
+                }
+                if (($data['usage_limit'] ?? null) !== null && $data['usage_limit'] < $claims) {
+                    throw ValidationException::withMessages(['usage_limit' => 'O limite não pode ser inferior às reservas e utilizações existentes.']);
+                }
+            }
+            $data['usage_limit'] = $data['usage_limit'] ?? null;
+            $attrs = array_diff_key($data, array_flip(['category_ids', 'product_ids']));
+            $attrs['minimum_subtotal_cents'] = $attrs['minimum_subtotal_cents'] ?? null;
+            $coupon->fill($attrs)->save();
+            $coupon->categories()->sync($data['scope'] === 'categories' ? $data['category_ids'] : []);
+            $coupon->products()->sync($data['scope'] === 'products' ? $data['product_ids'] : []);
+            return $coupon->refresh();
+        }, 3);
     }
 }

@@ -15,6 +15,12 @@ final class CreateCoupon extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        $data['value'] = $data['discount_type'] === 'percentage' ? $data['percentage_value'] : $data['fixed_value_cents'];
         return app(SaveCouponAction::class)->execute($data);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return self::getResource()::getUrl('edit', ['record' => $this->getRecord()]);
     }
 }

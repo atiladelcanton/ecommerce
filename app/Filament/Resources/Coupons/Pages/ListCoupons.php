@@ -14,6 +14,6 @@ final class ListCoupons extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()->label('Novo cupom')];
+        return [CreateAction::make()->label('Criar cupom')->icon('heroicon-o-plus')];
     }
 }

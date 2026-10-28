@@ -265,3 +265,7 @@ Do not introduce independent visual styles per module.
 - Use `BrazilianMoney::display()` for administrative monetary listings. Preserve precision with strings and integer cents; do not use float, parseFloat or floating-point formatting for money.
 - Product cost must be >= 0; selling price is required and > 0; optional promotional price must be > 0 and strictly lower than selling price. These rules belong in the existing Catalog validation/domain layer and must return friendly Portuguese field errors.
 - Reuse this same input and formatter for future order, cash-flow, shipping, discount and payment amounts; do not implement different monetary masks per module.
+
+## Approved increment — coupons (2026-10-27)
+
+The previously excluded coupon feature is now explicitly approved and implemented. See `docs/coupons.md`. Keep monetary calculations in integer cents, usage accounting transaction-safe, and checkout coupon state on the server. This approval does not authorize a broader promotions or affiliate platform.

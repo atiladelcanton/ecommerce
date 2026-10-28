@@ -156,3 +156,8 @@ Incremental migrations extend `product_variants` with JSON `attributes`, a canon
 `orders.shipping_pricing_status` distinguishes awaiting_quote, quoted and confirmed; legacy/automatic orders remain null. Shipping/total cents are nullable while freight is unknown. `order_shipping_quotes` stores immutable numbered revisions, admin author, carrier/service/instructions/estimate, integer-cent price, expiry, acceptance and supersession. Order items/prices and addresses are frozen before manual freight is negotiated.
 
 `inventory_reservations` has one unique row per order item, the product/variant stock pool, quantity and lifecycle timestamps (expires, consumed, released, restored). Stock stays physical on the catalog; available stock subtracts unexpired reservations. Only newly created orders participate. Reservation creation, payment consumption and commercial cancellation lock the order and stock pools in a consistent order. Made-to-order products do not consume immediate physical stock.
+
+
+## Cupons de desconto (27/10/2026)
+
+`coupons`: código único, descrição, `discount_type`, `value` (percentual inteiro ou valor fixo em centavos), `scope`, `minimum_subtotal_cents`, `maximum_discount_cents`, `usage_limit`, `allow_sale_items`, vigência e ativação. Os pivôs `coupon_categories` e `coupon_products` delimitam o alcance. `coupon_usages` acompanha estado reservado/consumido/liberado por pedido; `coupon_claims` aplica unicidade de CPF/CNPJ e limite enquanto reservado ou consumido. `orders.coupon_id`, `orders.coupon_code` e `orders.discount_cents` armazenam o desconto contratado. Ver `docs/coupons.md`.

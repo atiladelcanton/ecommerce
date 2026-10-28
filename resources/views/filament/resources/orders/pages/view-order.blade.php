@@ -176,7 +176,7 @@
             <dl class="ml-auto mt-5 max-w-sm border-t border-zinc-200 pt-4 text-sm">
                 <div class="flex justify-between py-1.5"><dt class="text-zinc-500">Subtotal</dt><dd>{{ \App\Support\BrazilianMoney::display($order->subtotal_cents) }}</dd></div>
                 <div class="flex justify-between py-1.5"><dt class="text-zinc-500">Frete</dt><dd>{{ $order->formattedShipping() }}</dd></div>
-                @if($order->discount_cents > 0)<div class="flex justify-between py-1.5 text-green-700"><dt>Desconto</dt><dd>- {{ \App\Support\BrazilianMoney::display($order->discount_cents) }}</dd></div>@endif
+                @if($order->discount_cents > 0)<div class="flex justify-between py-1.5 text-green-700"><dt>Desconto @if($order->coupon_code)({{ $order->coupon_code }})@endif</dt><dd>- {{ \App\Support\BrazilianMoney::display($order->discount_cents) }}</dd></div>@endif
                 <div class="mt-2 flex justify-between border-t border-zinc-200 pt-3 text-base font-bold"><dt>Total</dt><dd>{{ $order->formattedTotal() }}</dd></div>
             </dl>
         </section>

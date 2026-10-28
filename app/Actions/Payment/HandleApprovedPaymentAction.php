@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Payment;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Actions\Order\TransitionOrderStatusAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
@@ -34,6 +35,7 @@ final class HandleApprovedPaymentAction
                 throw ValidationException::withMessages(['payment' => 'Defina o frete antes de aprovar o pagamento.']);
             }
             app(ManageOrderInventoryAction::class)->consume($lockedOrder);
+            app(ManageCouponUsageAction::class)->consume($lockedOrder);
             if ($lockedPayment->status !== PaymentStatus::APPROVED) {
                 $lockedPayment->update(['status' => PaymentStatus::APPROVED]);
             }

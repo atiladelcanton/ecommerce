@@ -6,6 +6,9 @@ namespace App\Livewire\Store;
 
 use App\Actions\Address\LookupPostalCodeAction;
 use App\Actions\Customer\CreateCustomerAddressAction;
+use App\Actions\Coupon\QuoteCouponAction;
+use App\Actions\Cart\GetCartAction;
+use App\Support\CheckoutCoupon;
 use App\Actions\Order\CreateInitialOrderAction;
 use App\Actions\Order\GetCheckoutSummaryAction;
 use App\Actions\Order\GetCheckoutTokenAction;
@@ -25,6 +28,10 @@ final class CheckoutPage extends Component
 
     public ?string $postalCodeMessage = null;
 
+    public string $couponCode = '';
+
+    public ?string $couponMessage = null;
+
     public string $addressChoice = 'new';
 
     public array $savedAddresses = [];
@@ -42,6 +49,7 @@ final class CheckoutPage extends Component
     public function mount(GetCheckoutTokenAction $token, AuthFactory $auth): void
     {
         $this->checkoutToken = $token->execute();
+        $this->couponCode = app(CheckoutCoupon::class)->get($this->checkoutToken) ?? '';
         $customer = $auth->guard('customer')->user();
         if (! $customer) {
             return;
@@ -127,6 +135,24 @@ final class CheckoutPage extends Component
         $this->resetValidation(['street', 'neighborhood', 'city', 'state']);
     }
 
+    public function applyCoupon(QuoteCouponAction $validate, GetCartAction $cart): void
+    {
+        $this->resetValidation('coupon');
+        $summary = $cart->execute();
+        $offer = $validate->execute($this->couponCode, array_values($summary['items']), $summary['subtotal']);
+        app(CheckoutCoupon::class)->set($this->checkoutToken, $offer['coupon']->code);
+        $this->couponCode = $offer['coupon']->code;
+        $this->couponMessage = 'Cupom aplicado com sucesso.';
+    }
+
+    public function removeCoupon(): void
+    {
+        app(CheckoutCoupon::class)->forget($this->checkoutToken);
+        $this->couponCode = '';
+        $this->couponMessage = 'Cupom removido.';
+        $this->resetValidation('coupon');
+    }
+
     public function submit(CreateInitialOrderAction $action, CreateCustomerAddressAction $createAddress): void
     {
         $this->completeCheckout($action, $createAddress, false);
@@ -176,6 +202,7 @@ final class CheckoutPage extends Component
             'summary' => app(GetCheckoutSummaryAction::class)->execute(
                 is_string($this->form['postal_code'] ?? null) ? $this->form['postal_code'] : '',
                 is_string($this->form['shipping_option'] ?? null) ? $this->form['shipping_option'] : '',
+                app(CheckoutCoupon::class)->get($this->checkoutToken),
             ),
             'states' => ValidateCheckoutData::STATES,
         ]);

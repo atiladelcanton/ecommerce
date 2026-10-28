@@ -5,34 +5,30 @@ declare(strict_types=1);
 namespace App\Actions\Coupon;
 
 use App\Actions\Cart\GetCartAction;
-use Illuminate\Contracts\Session\Session;
+use App\Actions\Order\GetCheckoutTokenAction;
+use App\Support\CheckoutCoupon;
 use Illuminate\Validation\ValidationException;
 
+/** Shares the same checkout-token session state as the Livewire checkout. */
 final class ApplyCouponAction
 {
-    public const SESSION_KEY = 'store.coupon_code';
-
-    public function __construct(private readonly Session $session) {}
-
     public function apply(string $code): void
     {
         $cart = app(GetCartAction::class)->execute();
         if ($cart['items'] === []) {
             throw ValidationException::withMessages(['coupon' => 'Adicione produtos antes de aplicar um cupom.']);
         }
-        $code = QuoteCouponAction::normalize($code);
-        app(QuoteCouponAction::class)->execute($code, array_values($cart['items']), $cart['subtotal']);
-        $this->session->put(self::SESSION_KEY, $code);
+        $offer = app(QuoteCouponAction::class)->execute($code, array_values($cart['items']), $cart['subtotal']);
+        app(CheckoutCoupon::class)->set(app(GetCheckoutTokenAction::class)->execute(), $offer['coupon']->code);
     }
 
     public function remove(): void
     {
-        $this->session->forget(self::SESSION_KEY);
+        app(CheckoutCoupon::class)->forget(app(GetCheckoutTokenAction::class)->execute());
     }
 
     public function current(): ?string
     {
-        $code = $this->session->get(self::SESSION_KEY);
-        return is_string($code) && $code !== '' ? $code : null;
+        return app(CheckoutCoupon::class)->get(app(GetCheckoutTokenAction::class)->execute());
     }
 }

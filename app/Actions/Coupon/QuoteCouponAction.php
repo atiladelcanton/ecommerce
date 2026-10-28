@@ -30,6 +30,9 @@ final class QuoteCouponAction
         if (! $coupon->is_active || ($coupon->starts_at && now()->lt($coupon->starts_at)) || ($coupon->ends_at && now()->gt($coupon->ends_at))) {
             throw ValidationException::withMessages(['coupon' => 'Este cupom está inativo ou fora do prazo de validade.']);
         }
+        if ($coupon->usage_limit !== null && $coupon->claims()->count() >= $coupon->usage_limit) {
+            throw ValidationException::withMessages(['coupon' => 'Este cupom atingiu o limite de utilizações.']);
+        }
         if ($coupon->minimum_subtotal_cents !== null && $subtotal < $coupon->minimum_subtotal_cents) {
             throw ValidationException::withMessages(['coupon' => 'O valor mínimo de compra para este cupom ainda não foi atingido.']);
         }
@@ -55,8 +58,10 @@ final class QuoteCouponAction
                 throw ValidationException::withMessages(['coupon' => 'Cupom com percentual inválido.']);
             }
             $discount = intdiv($eligible, 100) * $coupon->value + intdiv(($eligible % 100) * $coupon->value, 100);
-        } else {
+        } elseif ($coupon->discount_type === 'fixed' && $coupon->value > 0) {
             $discount = min($eligible, $coupon->value);
+        } else {
+            throw ValidationException::withMessages(['coupon' => 'Cupom com valor inválido.']);
         }
         if ($coupon->maximum_discount_cents !== null) {
             $discount = min($discount, $coupon->maximum_discount_cents);

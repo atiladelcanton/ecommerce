@@ -140,8 +140,26 @@
                         </li>
                     @endforeach
                 </ul>
-                <dl class="mt-6 border-t border-store-border pt-4 text-sm">
+                <div class="mt-6 border-t border-store-border pt-5">
+                    <label for="checkout-coupon" class="store-label">Tem um cupom de desconto?</label>
+                    @if($summary['coupon'])
+                        <div class="mt-2 flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm">
+                            <span class="font-semibold text-green-800">{{ $summary['coupon']->code }} aplicado</span>
+                            <button type="button" wire:click="removeCoupon" class="store-text-link" aria-label="Remover cupom">Remover</button>
+                        </div>
+                    @else
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <input id="checkout-coupon" type="text" wire:model="couponCode" maxlength="40" autocomplete="off" placeholder="Digite seu cupom" class="store-input min-w-0 flex-1 uppercase" aria-describedby="checkout-coupon-error">
+                            <button type="button" wire:click="applyCoupon" wire:loading.attr="disabled" wire:target="applyCoupon" class="store-button-secondary shrink-0">Aplicar</button>
+                        </div>
+                    @endif
+                    @error('coupon')<p id="checkout-coupon-error" class="mt-2 text-sm text-store-red" role="alert">{{ $message }}</p>@enderror
+                    @if($summary['couponError'])<p class="mt-2 text-sm text-store-red" role="alert">{{ $summary['couponError'] }}</p>@endif
+                    @if($couponMessage && !$summary['couponError'])<p class="mt-2 text-xs text-store-muted" role="status">{{ $couponMessage }}</p>@endif
+                </div>
+                <dl class="mt-5 border-t border-store-border pt-4 text-sm">
                     <div class="flex justify-between gap-4 py-2"><dt>Subtotal</dt><dd>{{ \App\Support\BrazilianMoney::display($summary['cart']['subtotal']) }}</dd></div>
+                    @if($summary['coupon'])<div class="flex justify-between gap-4 py-2 font-semibold text-green-700"><dt>Desconto ({{ $summary['coupon']->code }})</dt><dd>− {{ \App\Support\BrazilianMoney::display($summary['discount']) }}</dd></div>@endif
                     <div class="flex justify-between gap-4 py-2"><dt>Frete</dt><dd>{{ $summary['selectedShipping'] ? \App\Support\BrazilianMoney::display($summary['selectedShipping']->price) : 'Selecione a entrega' }}</dd></div>
                     <div class="mt-4 flex justify-between gap-4 border-t border-store-border pt-5 text-lg font-semibold"><dt>Total</dt><dd aria-live="polite">{{ $summary['selectedShipping'] && $summary['totals'] ? \App\Support\BrazilianMoney::display($summary['totals']->total) : 'A definir' }}</dd></div>
                 </dl>
@@ -150,7 +168,7 @@
                     <button type="button" wire:click="requestShippingQuote" wire:loading.attr="disabled" class="store-button mt-6 w-full">Solicitar cotação de entrega</button>
                     <p class="mt-3 text-sm text-store-muted">Você revisará o frete e o total antes do pagamento. Nenhuma cobrança será realizada nesta solicitação.</p>
                 @else
-                <button type="submit" wire:loading.attr="disabled" wire:target="submit" @disabled($summary['shippingError'] || $summary['totalError'] || !$summary['selectedShipping']) class="store-button mt-6 w-full disabled:cursor-wait disabled:opacity-50">
+                <button type="submit" wire:loading.attr="disabled" wire:target="submit" @disabled($summary['shippingError'] || $summary['totalError'] || $summary['couponError'] || !$summary['selectedShipping']) class="store-button mt-6 w-full disabled:cursor-wait disabled:opacity-50">
                     <span wire:loading.remove wire:target="submit">Finalizar pedido de teste</span>
                     <span wire:loading wire:target="submit">Finalizando pedido…</span>
                 </button>

@@ -1,36 +1,27 @@
-# Cupons de desconto digitados — SABA
+# Cupons SABA — estrutura preservada (28/10/2026)
 
-## Regras aprovadas
+A tabela `coupons` e as tabelas `coupon_categories`, `coupon_products`, `coupon_usages` e `coupon_claims` foram criadas pela migration `2026_10_21_000001_create_coupons.php`. **Não recriar o esquema existente.** A migration conflitante de 27/10 foi retirada de `database/migrations`.
 
-- Não há promoções automáticas. Apenas códigos informados deliberadamente no carrinho/checkout.
-- Um cupom por pedido e **uma utilização por CPF/CNPJ**, independentemente de login, conta ou e-mail. Os documentos são normalizados e protegidos por hash HMAC persistente. Não existe verificação governamental da identidade: o cadastro do checkout precisa informar o próprio documento.
-- Tipos: percentual inteiro ou valor fixo em centavos. Aplicação: toda a loja, categoria(s) ou produto(s), incluindo suas variações. Frete não participa do desconto.
-- Por padrão, produtos com promoção já aplicada não acumulam desconto. É possível habilitar por cupom.
-- Compra mínima, desconto máximo, vigência, ativação e limite global de utilizações são configuráveis.
-- O desconto é recalculado no backend durante a transação de criação do pedido, com os mesmos preços/variantes usados nos snapshots. As informações enviadas pelo navegador nunca definem o valor final.
-- O cupom aplicado é guardado temporariamente na sessão (`store.coupon_code`). A sessão é limpa após fechar o pedido ou limpar o carrinho.
-- Pedidos guardam `coupon_code`, `coupon_id` e o valor concedido em `discount_cents`; a mudança posterior no cadastro do cupom não altera pedidos históricos.
+## Admin (Filament)
 
-## Uso único com checkout assíncrono
+Em Vendas → Cupons de desconto, os campos correspondem ao banco original:
+- Código único (`code`, normalizado); descrição opcional.
+- `discount_type`: `percentage` ou `fixed`; valor em `value` (percentual inteiro ou centavos, respectivamente).
+- `scope`: `all`, `categories` ou `products`; pivôs existentes definem os itens contemplados.
+- Opcional: subtotal mínimo `minimum_subtotal_cents`, teto `maximum_discount_cents`, `usage_limit`, validade e ativação.
+- `allow_sale_items` determina se itens com preço promocional participam do cálculo.
+- Histórico e reservas são preservados. O contador de reservas/usos é obtido de `coupon_claims`, não de `used_count`.
 
-- `coupon_usages`: um histórico por pedido, com estados `reserved`, `consumed`, `released`.
-- `coupon_claims`: uma reivindicação ativa/consumida única por cupom + HMAC do CPF/CNPJ. A constraint única previne disputa entre duas requisições simultâneas.
-- Em pedido pendente ou pagamento remoto pendente, `coupon_claims` é mantida. A aprovação marca `consumed` e a reivindicação permanece (mesmo em caso de cancelamento comercial ou reembolso posterior, pois a campanha já foi usada).
-- Recusa definitiva da inicialização, expiração/cancelamento confirmado pelo gateway ou cancelamento comercial **não pago** libera o uso. Falhas HTTP incertas não liberam.
-- Em frete assistido e outros pedidos sem cobrança remota, o job `saba:expire-unused-coupons` remove reivindicações abandonadas após 24h. Aceitar posteriormente a cotação exige revalidar o cupom e re-reservar utilização, ou informar a impossibilidade.
-- Repetir uma cobrança após recusa requer nova reserva do benefício, sem ultrapassar uso único ou limites globais.
+## Checkout
 
-## Painel Filament
+O botão Aplicar verifica o cupom com `QuoteCouponAction`, baseado nos itens e preços atuais calculados no backend. A sessão usa o token do checkout. Na criação do pedido, a validação é refeita após travar os produtos, e `ManageCouponUsageAction::reserve()` grava uso reservado e claim por CPF/CNPJ. A claim é única no banco. Um segundo pedido não pode usar o mesmo código com o mesmo CPF/CNPJ, mesmo com outro e-mail.
 
-**Catálogo → Cupons de desconto:** Código, descrição, tipo/valor, aplicação e vínculos, permitir promoções, compra mínima, limite máximo, quantidade total, vigência e ativação. Ao criar, o cupom começa inativo.
+Um desconto incide somente sobre itens elegíveis, não sobre o frete. Um cupom que zere todo o subtotal é recusado pelo fluxo atual, pois o gateway hospedado exige itens positivos. A regra de frete sob consulta preserva desconto e reserva; a aprovação de pagamento consome a reserva uma única vez. A rejeição/cancelamento terminal libera claims reservadas. Consumos confirmados permanecem históricos.
 
-## Deploy
+## Produção
 
-1. Backup do banco e do repositório.
-2. Aplicar arquivos do pacote e executar `./vendor/bin/sail artisan migrate` (incremental).
-3. `./vendor/bin/sail artisan optimize:clear` e `./vendor/bin/sail artisan queue:restart`.
-4. Garantir o scheduler em operação (inclusive `saba:expire-unused-coupons`).
-5. Executar `./vendor/bin/sail artisan test --filter=CouponCheckoutTest`, a suíte total, Pint e build antes de publicar.
-6. Criar cupom inativo, testar em sandbox e ativar no painel apenas após validar.
+Sem novas migrations de cupom. Mantenha `.env`, `APP_KEY` e banco de produção; não rode `migrate:fresh`. O `APP_KEY` participa do hash dos documentos. Há um comando `php artisan saba:expire-coupon-reservations` agendado a cada 5 minutos, mas o cron precisa executar `php artisan schedule:run` a cada minuto. Essa rotina não libera claims com cobranças remotas pendentes.
 
-A cobrança no Asaas recebe o total já descontado, representado por linha-resumo quando o desconto é aplicado para manter a soma exata dos itens. Não envolve API de cupons no gateway.
+Servidor sem Node: esta correção altera apenas PHP, Blade já existente, testes e documentação. Não exige novo build Vite; o build anterior é preservado no ZIP completo. Servidor sem Redis: use `CACHE_STORE=file` e `QUEUE_CONNECTION=database` quando apropriado.
+
+Os testes de integração requerem Composer/vendor e banco isolado. Os fluxos de pagamento hospedado dependem da configuração e homologação do gateway do ambiente; não foram verificados diretamente nesta entrega.

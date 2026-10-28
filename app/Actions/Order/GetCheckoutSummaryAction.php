@@ -6,6 +6,7 @@ namespace App\Actions\Order;
 
 use App\Actions\Cart\GetCartAction;
 use App\Actions\Shipping\QuoteShippingAction;
+use App\Actions\Coupon\QuoteCouponAction;
 use App\Domain\Order\OrderTotals;
 use App\Domain\Settings\Models\StoreSetting;
 use App\Domain\Shipping\Data\ShippingOption;
@@ -15,7 +16,7 @@ final class GetCheckoutSummaryAction
 {
     public function __construct(private readonly GetCartAction $cart, private readonly QuoteShippingAction $shipping) {}
 
-    public function execute(string $postalCode = '', string $selected = 'standard'): array
+    public function execute(string $postalCode = '', string $selected = 'standard', ?string $couponCode = null): array
     {
         $cart = $this->cart->execute();
         $options = [];
@@ -30,10 +31,22 @@ final class GetCheckoutSummaryAction
             }
         }
 
+        $coupon = null;
+        $discount = 0;
+        $couponError = null;
+        if ($couponCode !== null) {
+            try {
+                $offer = app(QuoteCouponAction::class)->execute($couponCode, array_values($cart['items']), $cart['subtotal']);
+                $coupon = $offer['coupon'];
+                $discount = $offer['discount'];
+            } catch (ValidationException $exception) {
+                $couponError = $exception->validator->errors()->first();
+            }
+        }
         $totals = null;
         $totalError = $cart['stockError'] ?? null;
         try {
-            $totals = new OrderTotals($cart['subtotal'], $shipping?->price ?? 0);
+            $totals = new OrderTotals($cart['subtotal'], $shipping?->price ?? 0, $discount);
         } catch (ValidationException $exception) {
             $totalError = $exception->validator->errors()->first();
         }
@@ -45,6 +58,9 @@ final class GetCheckoutSummaryAction
             'shippingOptions' => $options,
             'selectedShipping' => $shipping,
             'totals' => $totals,
+            'coupon' => $coupon,
+            'couponError' => $couponError,
+            'discount' => $discount,
             'totalError' => $totalError,
             'shippingError' => $shippingError,
         ];

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Catalog\ManageOrderInventoryAction;
+use App\Actions\Coupon\ManageCouponUsageAction;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
@@ -82,6 +83,9 @@ final class TransitionOrderStatusAction
                 }
 
                 app(ManageOrderInventoryAction::class)->cancel($locked);
+                if ($locked->payment_status !== PaymentStatus::APPROVED) {
+                    app(ManageCouponUsageAction::class)->release($locked);
+                }
 
                 $locked->cancellation_reason = $reason;
                 $locked->cancelled_at = now();

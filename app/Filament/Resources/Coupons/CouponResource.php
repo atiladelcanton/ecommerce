@@ -23,6 +23,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 final class CouponResource extends Resource
@@ -30,38 +31,45 @@ final class CouponResource extends Resource
     protected static ?string $model = Coupon::class;
     protected static ?string $modelLabel = 'cupom';
     protected static ?string $pluralModelLabel = 'Cupons de desconto';
-    protected static string|\UnitEnum|null $navigationGroup = 'Catálogo';
+    protected static string|\UnitEnum|null $navigationGroup = 'Vendas';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-ticket';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
     protected static ?string $recordTitleAttribute = 'code';
 
     public static function form(Schema $schema): Schema
     {
         return $schema->columns(1)->components([
-            Section::make('Cupom')->columns(['default' => 1, 'lg' => 2])->schema([
-                TextInput::make('code')->label('Código digitado pelo cliente')->required()->maxLength(64)->helperText('Letras, números, hífen e _; o código será salvo em maiúsculas.'),
+            Section::make('Informações do cupom')->columns(['default' => 1, 'lg' => 2])->schema([
+                TextInput::make('code')->label('Código')->required()->maxLength(64),
                 TextInput::make('description')->label('Descrição interna')->maxLength(255),
-                Select::make('discount_type')->label('Tipo de desconto')->options(['percentage' => 'Percentual', 'fixed' => 'Valor fixo'])->required()->live()->default('percentage'),
-                TextInput::make('percentage_value')->label('Desconto (%)')->integer()->minValue(1)->maxValue(100)->visible(fn (Get $get): bool => $get('discount_type') === 'percentage'),
-                BrazilianMoneyInput::make('fixed_value_cents')->label('Desconto (R$)')->visible(fn (Get $get): bool => $get('discount_type') === 'fixed'),
-                Toggle::make('is_active')->label('Cupom ativo')->default(false),
-            ]),
-            Section::make('Produtos elegíveis')->columns(['default' => 1, 'lg' => 2])->schema([
-                Select::make('scope')->label('Aplicação')->options(['all' => 'Toda a loja', 'categories' => 'Categorias selecionadas', 'products' => 'Produtos selecionados'])->required()->default('all')->live(),
-                Toggle::make('allow_sale_items')->label('Aplicar também em produtos promocionais')->default(false),
-                Select::make('category_ids')->label('Categorias')->multiple()->searchable()
-                    ->options(fn (): array => Category::query()->orderBy('name')->pluck('name', 'id')->all())
-                    ->visible(fn (Get $get): bool => $get('scope') === 'categories')->columnSpanFull(),
-                Select::make('product_ids')->label('Produtos')->multiple()->searchable()
-                    ->options(fn (): array => Product::query()->orderBy('name')->pluck('name', 'id')->all())
-                    ->visible(fn (Get $get): bool => $get('scope') === 'products')->columnSpanFull(),
+                Select::make('discount_type')->label('Tipo de desconto')
+                    ->options(['percentage' => 'Percentual', 'fixed' => 'Valor fixo'])
+                    ->required()->live()->default('percentage'),
+                TextInput::make('percentage_value')->label('Percentual (%)')->integer()->minValue(1)->maxValue(100)
+                    ->required()->visible(fn (Get $get): bool => $get('discount_type') === 'percentage'),
+                // O banco usa uma única coluna value para percentual ou centavos.
+                BrazilianMoneyInput::make('fixed_value_cents')->label('Valor fixo do desconto')
+                    ->required()->visible(fn (Get $get): bool => $get('discount_type') === 'fixed'),
+                Select::make('scope')->label('Aplicável a')->options([
+                    'all' => 'Todos os produtos', 'categories' => 'Categorias selecionadas', 'products' => 'Produtos selecionados',
+                ])->default('all')->required()->live(),
+                Select::make('category_ids')->label('Categorias contempladas')->multiple()->searchable()
+                    ->options(fn () => Category::query()->orderBy('name')->pluck('name', 'id')->all())
+                    ->visible(fn (Get $get): bool => $get('scope') === 'categories')
+                    ->required(fn (Get $get): bool => $get('scope') === 'categories')->columnSpanFull(),
+                Select::make('product_ids')->label('Produtos contemplados')->multiple()->searchable()
+                    ->options(fn () => Product::query()->orderBy('name')->pluck('name', 'id')->all())
+                    ->visible(fn (Get $get): bool => $get('scope') === 'products')
+                    ->required(fn (Get $get): bool => $get('scope') === 'products')->columnSpanFull(),
+                Toggle::make('allow_sale_items')->label('Permitir produtos já em promoção')->default(false),
             ]),
             Section::make('Limites e validade')->columns(['default' => 1, 'lg' => 2])->schema([
-                BrazilianMoneyInput::make('minimum_subtotal_cents')->label('Compra mínima (R$)')->helperText('Opcional, sem o frete.'),
-                BrazilianMoneyInput::make('maximum_discount_cents')->label('Desconto máximo (R$)')->helperText('Opcional.'),
-                TextInput::make('usage_limit')->label('Limite total de utilizações')->integer()->minValue(1)->helperText('Vazio significa sem limite geral; cada CPF/CNPJ pode usar uma única vez.'),
-                DateTimePicker::make('starts_at')->label('Início')->seconds(false),
-                DateTimePicker::make('ends_at')->label('Término')->seconds(false),
+                BrazilianMoneyInput::make('minimum_subtotal_cents')->label('Subtotal mínimo')->helperText('Calculado sobre os produtos, sem frete.'),
+                BrazilianMoneyInput::make('maximum_discount_cents')->label('Desconto máximo')->helperText('Opcional, em reais.'),
+                TextInput::make('usage_limit')->label('Limite total de utilizações')->integer()->minValue(1),
+                DateTimePicker::make('starts_at')->label('Válido a partir de')->seconds(false),
+                DateTimePicker::make('ends_at')->label('Válido até')->seconds(false),
+                Toggle::make('is_active')->label('Cupom ativo')->default(false),
             ]),
         ]);
     }
@@ -69,16 +77,19 @@ final class CouponResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('code')->label('Código')->searchable()->sortable(),
-            TextColumn::make('discount_type')->label('Desconto')->formatStateUsing(fn (string $state, Coupon $record): string =>
-                $state === 'percentage' ? $record->value.'%' : BrazilianMoney::display($record->value)),
-            TextColumn::make('scope')->label('Aplicação')->formatStateUsing(fn (string $state): string => match ($state) {
-                'all' => 'Toda a loja', 'products' => 'Produtos', 'categories' => 'Categorias', default => $state,
-            }),
-            TextColumn::make('claims_count')->label('Usos/reservas')->counts('claims'),
+            TextColumn::make('code')->label('Código')->searchable()->sortable()->weight('bold'),
+            TextColumn::make('discount_type')->label('Tipo')->formatStateUsing(fn (string $state): string => $state === 'percentage' ? 'Percentual' : 'Valor fixo'),
+            TextColumn::make('value')->label('Desconto')->formatStateUsing(fn ($state, Coupon $record): string => $record->discount_type === 'percentage' ? $record->value.'%' : BrazilianMoney::display($record->value)),
+            TextColumn::make('scope')->label('Aplicação')->formatStateUsing(fn (string $state): string => match ($state) { 'categories' => 'Categorias', 'products' => 'Produtos', default => 'Toda a loja' }),
+            TextColumn::make('claims_count')->counts('claims')->label('Usos e reservas'),
+            TextColumn::make('usage_limit')->label('Limite')->placeholder('Sem limite'),
             IconColumn::make('is_active')->label('Ativo')->boolean(),
-            TextColumn::make('ends_at')->label('Término')->dateTime('d/m/Y H:i')->placeholder('Sem prazo'),
-        ])->recordActions([EditAction::make()->iconButton()])->defaultSort('created_at', 'desc');
+            TextColumn::make('ends_at')->label('Expira em')->dateTime('d/m/Y H:i')->placeholder('Sem vencimento'),
+        ])->filters([
+            TernaryFilter::make('is_active')->label('Situação')->trueLabel('Ativo')->falseLabel('Inativo')->placeholder('Todos'),
+        ])->defaultSort('created_at', 'desc')->recordActions([
+            EditAction::make()->iconButton()->tooltip('Editar cupom'),
+        ]);
     }
 
     public static function getPages(): array
