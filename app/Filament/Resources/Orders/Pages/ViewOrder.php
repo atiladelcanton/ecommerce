@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Orders\Pages;
 
 use App\Actions\Order\TransitionOrderStatusAction;
+use App\Domain\Access\AdminPermissions;
 use App\Actions\Shipping\CancelShipmentAction;
 use App\Actions\Shipping\GenerateShipmentLabelAction;
 use App\Actions\Shipping\GetOrderShippingQuoteLinkAction;
@@ -333,6 +334,7 @@ final class ViewOrder extends ViewRecord
 
     private function perform(callable $operation, string $message, string $errorTitle = 'Não foi possível concluir a operação'): void
     {
+        abort_unless(AdminPermissions::check(AdminPermissions::SALES_ORDERS), 403);
         try {
             $operation();
             $this->record = $this->record->refresh();

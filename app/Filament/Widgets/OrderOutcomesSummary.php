@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Support\BrazilianMoney;
@@ -11,6 +13,11 @@ use Filament\Widgets\Widget;
 
 final class OrderOutcomesSummary extends Widget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_ORDERS);
+    }
+
     protected string $view = 'filament.widgets.order-outcomes-summary';
 
     protected int|string|array $columnSpan = [

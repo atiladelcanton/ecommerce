@@ -16,6 +16,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use App\Domain\Access\AdminPermissions;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -37,8 +38,14 @@ final class AiSettings extends Page
 
     public ?array $data = [];
 
+    public static function canAccess(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SETTINGS_AI);
+    }
+
     public function mount(): void
     {
+        abort_unless(self::canAccess(), 403);
         $settings = AiSetting::current();
         $state = $settings->toArray();
         $state['api_key'] = null;

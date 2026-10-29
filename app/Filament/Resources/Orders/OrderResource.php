@@ -13,6 +13,8 @@ use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Support\BrazilianMoney;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use App\Domain\Access\AdminPermissions;
+use App\Filament\Support\RestrictsResourceByGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -23,6 +25,13 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class OrderResource extends Resource
 {
+    use RestrictsResourceByGroup;
+
+    protected static function permissionKey(): string
+    {
+        return AdminPermissions::SALES_ORDERS;
+    }
+
     protected static ?string $model = Order::class;
 
     protected static ?string $modelLabel = 'pedido';

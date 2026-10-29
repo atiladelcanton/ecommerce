@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
@@ -13,6 +15,11 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 final class OrdersOverview extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_ORDERS);
+    }
+
     protected int|string|array $columnSpan = 'full';
 
     protected function getColumns(): int

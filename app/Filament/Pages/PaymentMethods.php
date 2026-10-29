@@ -13,6 +13,7 @@ use App\Infrastructure\Payments\AsaasGateway;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
+use App\Domain\Access\AdminPermissions;
 use Filament\Pages\Page;
 use Illuminate\Validation\ValidationException;
 
@@ -48,8 +49,7 @@ final class PaymentMethods extends Page
 
     public static function canAccess(): bool
     {
-        $user = auth('web')->user();
-        return $user instanceof User && $user->canAccessPanel(Filament::getPanel('admin'));
+        return AdminPermissions::check(AdminPermissions::SETTINGS_PAYMENTS);
     }
 
     public function mount(): void

@@ -1,0 +1,35 @@
+/* SABA: tenant-managed identity, applies after Vite and per-template styles.
+   Values come from server-validated #RRGGBB in Storefront\Appearance. */
+.store-body .store-announcement {
+    background: var(--color-store-secondary);
+    color: var(--color-store-secondary-contrast);
+}
+.store-template-2 .wh-promo-bar {
+    background: var(--color-store-secondary);
+    color: var(--color-store-secondary-contrast);
+}
+.store-template-2 .wh-promo-inner a { color: inherit; }
+.store-body .store-button {
+    background: var(--color-store-button);
+    color: var(--color-store-button-text);
+}
+.store-body .store-button:hover,
+.store-body .store-button:focus-visible {
+    background: var(--color-store-button-hover);
+    color: var(--color-store-button-hover-text);
+}
+.store-template-2 .wh-categories-trigger {
+    background: var(--color-store-button);
+    color: var(--color-store-button-text);
+}
+.store-template-2 .wh-categories-trigger:hover,
+.store-template-2 .wh-categories-trigger:focus-visible {
+    background: var(--color-store-button-hover);
+    color: var(--color-store-button-hover-text);
+}
+
+/* Keep primary-background badges readable even with light merchant colors. */
+.store-body .store-cart-badge,
+.store-body .store-discount {
+    color: var(--color-store-primary-contrast);
+}

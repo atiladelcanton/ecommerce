@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Payment\AsaasWebhookController;
 use App\Http\Controllers\Shipping\MelhorEnvioOAuthController;
 use App\Http\Controllers\Shipping\MelhorEnvioWebhookController;
 use App\Http\Controllers\Shipping\ShipmentLabelController;
@@ -55,6 +56,11 @@ Route::middleware('auth:web')->prefix('admin/shipping/melhor-envio')->group(func
     Route::get('/connect', [MelhorEnvioOAuthController::class, 'connect'])->name('admin.shipping.melhor-envio.connect');
     Route::get('/callback', [MelhorEnvioOAuthController::class, 'callback'])->name('admin.shipping.melhor-envio.callback');
 });
+
+// Webhook público do Asaas: autenticação pelo cabeçalho asaas-access-token no controller.
+// Não deve exigir login; o provedor envia notificações diretamente para esta URL.
+Route::post('/webhooks/payments/asaas', AsaasWebhookController::class)
+    ->name('webhooks.payments.asaas');
 
 Route::post('/webhooks/shipping/melhor-envio', MelhorEnvioWebhookController::class)
     ->name('webhooks.shipping.melhor-envio');

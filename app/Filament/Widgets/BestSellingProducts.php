@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Order\Models\OrderItem;
 use App\Domain\Payment\Enums\PaymentStatus;
 use Filament\Widgets\Widget;
@@ -11,6 +13,11 @@ use Illuminate\Support\Collection;
 
 final class BestSellingProducts extends Widget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::CATALOG_PRODUCTS);
+    }
+
     protected string $view = 'filament.widgets.best-selling-products';
 
     protected int|string|array $columnSpan = [

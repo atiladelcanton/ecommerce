@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use Filament\Widgets\ChartWidget;
 
 final class OrdersByStatusChart extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_ORDERS);
+    }
+
     protected ?string $heading = 'Pedidos por status';
 
     protected ?string $description = 'Distribuição atual do fluxo operacional.';

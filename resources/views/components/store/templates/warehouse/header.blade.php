@@ -1,4 +1,4 @@
-@props(['categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false])
+@props(['categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false, 'logoUrl' => null])
 <div class="wh-promo-bar">
     <div class="store-container wh-promo-inner">
         <span>Bem-vindo à {{ $storeName }}</span>
@@ -9,7 +9,7 @@
 <header class="wh-header store-header" x-data="storeHeader" @keydown.escape="closeCategories()">
     <div class="store-container wh-mainbar">
         <a href="{{ route('home') }}" class="wh-logo" aria-label="{{ $storeName }} — início">
-            <img src="{{ asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="180" height="66">
+            <img src="{{ ($logoUrl ?: asset('images/saba-logo.jpeg')) }}" alt="{{ $storeName }}" width="180" height="66">
         </a>
         <div id="wh-header-search" class="wh-search" x-show="desktop || searchOpen" x-cloak>
             <livewire:store.search-autocomplete />

@@ -168,3 +168,7 @@ Incremental migrations extend `product_variants` with JSON `attributes`, a canon
 A migration incremental `2026_10_28_000001_create_blog_posts_and_settings.php` adiciona duas colunas booleanas a `store_settings`, com default `false`: `blog_enabled` (rotas e menu públicos) e `blog_show_on_home` (seção de artigos na Home, dependente da primeira flag). O registro singleton e todos os dados anteriores permanecem intactos.
 
 A tabela `blog_posts` possui `id`, `author_id` opcional (FK para `users`, `nullOnDelete`), `title`, `slug` único, `excerpt`, `content` sanitizado, `cover_image`, `cover_alt`, `category` opcional, `tags` JSON, `seo_title`, `seo_description`, `status` (`draft` ou `published`), `published_at`, timestamps e índice `(status, published_at, id)`. Imagens usam caminhos relativos no disco `public`; apagar registro preserva o arquivo físico. Para mais detalhes, veja `docs/blog.md`.
+
+## Identidade visual por instalação (2026-10-29)
+
+Migration incremental adiciona `store_settings.logo_path` (VARCHAR nullable, logo no disco `public` em `store/branding/`) e `color_primary`, `color_secondary`, `color_button` (CHAR(7) nullable). HEX validado na Action; coluna `null` significa a cor padrão do template ativo. Nenhuma tabela, restrição de negócio ou selecionador de template é adicionada ao banco.

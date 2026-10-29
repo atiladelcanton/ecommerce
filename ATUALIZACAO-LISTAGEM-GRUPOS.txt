@@ -1,0 +1,27 @@
+SABA E-commerce — Correção visual da listagem "Grupos de acesso"
+
+O que foi corrigido
+- A coluna de permissões não repete mais "Todos" nem valores numéricos como "8, 8, 8".
+- A listagem exibe grupo, tipo (Padrão/Personalizado), número de usuários e resumo de acessos.
+- Novo botão "Ver acessos" com quadro de permissões permitidas/bloqueadas, agrupadas por área.
+- Grupos Administrador e Operacional continuam protegidos; apenas grupos personalizados podem ser editados.
+- Nenhuma regra de autorização, usuário, tabela ou migration foi modificada.
+
+INSTALAÇÃO (versão incremental)
+1. Faça um backup dos arquivos do projeto.
+2. Extraia saba-grupos-listagem-atualizacao.zip e copie TODAS as pastas para a raiz
+   do projeto Laravel, substituindo os arquivos com os mesmos caminhos.
+3. Execute:
+
+   php artisan optimize:clear
+
+4. Recarregue Admin > Acessos > Grupos de acesso.
+5. Clique em "Ver acessos" nos grupos Administrador e Operacional e confira
+   as permissões. Opcionalmente, crie um grupo personalizado de teste.
+
+Não precisa executar migration, npm, composer ou nenhum script .sh.
+O pacote não contém .env nem altera as configurações atuais do servidor.
+
+Verificação efetuada: php -l nos arquivos PHP do projeto, teste isolado
+sobre os resumos de permissões e integridade do ZIP. Os testes PHPUnit
+completos requerem as dependências (vendor) no ambiente de execução.

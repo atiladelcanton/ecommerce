@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Finance\Enums\CashFlowType;
 use App\Domain\Finance\Models\CashFlowEntry;
 use App\Support\BrazilianMoney;
@@ -12,6 +14,11 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 final class FinanceOverview extends StatsOverviewWidget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_FINANCE);
+    }
+
     protected function getStats(): array
     {
         $range = [now()->startOfMonth(), now()->endOfMonth()];

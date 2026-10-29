@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Actions\Order\TransitionOrderStatusAction;
+use App\Domain\Access\AdminPermissions;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
@@ -54,6 +55,11 @@ final class OrdersKanban extends Page
 
     public string $cancellationReason = '';
 
+    public static function canAccess(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_ORDERS);
+    }
+
     public static function getNavigationBadge(): ?string
     {
         $count = Order::query()->whereIn('status', [
@@ -101,7 +107,7 @@ final class OrdersKanban extends Page
 
     public function moveOrder(int $orderId, string $target): void
     {
-        abort_unless(ShippingMethods::canAccess(), 403);
+        abort_unless(self::canAccess(), 403);
         $status = OrderStatus::tryFrom($target);
         if (! $status) {
             return;
@@ -157,7 +163,7 @@ final class OrdersKanban extends Page
 
     public function confirmCancellation(): void
     {
-        abort_unless(ShippingMethods::canAccess(), 403);
+        abort_unless(self::canAccess(), 403);
 
         $data = $this->validate([
             'cancelOrderId' => ['required', 'integer', 'exists:orders,id'],
@@ -217,7 +223,7 @@ final class OrdersKanban extends Page
 
     public function confirmShipping(): void
     {
-        abort_unless(ShippingMethods::canAccess(), 403);
+        abort_unless(self::canAccess(), 403);
         $data = $this->validate([
             'shippingOrderId' => ['required', 'integer', 'exists:orders,id'],
             'carrier' => ['required', 'string', 'max:120'],

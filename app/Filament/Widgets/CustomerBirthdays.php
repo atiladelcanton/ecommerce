@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Customer\Models\Customer;
 use Filament\Widgets\Widget;
 
 final class CustomerBirthdays extends Widget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_CUSTOMERS);
+    }
+
     protected string $view = 'filament.widgets.customer-birthdays';
 
     protected int|string|array $columnSpan = [

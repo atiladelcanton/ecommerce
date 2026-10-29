@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Shipping;
 use App\Actions\Shipping\DownloadShipmentLabelAction;
 use App\Actions\Shipping\PrintShipmentLabelAction;
 use App\Domain\Shipping\Models\Shipment;
-use App\Filament\Pages\ShippingMethods;
+use App\Domain\Access\AdminPermissions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -24,7 +24,7 @@ final class ShipmentLabelFileController extends Controller
         DownloadShipmentLabelAction $download,
         PrintShipmentLabelAction $print,
     ): Response|RedirectResponse|View {
-        abort_unless(ShippingMethods::canAccess(), 403);
+        abort_unless(AdminPermissions::check(AdminPermissions::SALES_ORDERS), 403);
 
         try {
             $file = $download->execute($shipment, $format);

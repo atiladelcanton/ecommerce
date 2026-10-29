@@ -1,0 +1,24 @@
+HOTFIX ASAAS — correção das datas e campos de revisão de pagamentos
+
+Erro corrigido:
+    Call to a member function format() on string
+    resources/views/filament/pages/payment-methods.blade.php:53
+
+Causa: Payment::expires_at não era convertido para datetime no Model.
+
+Mudanças:
+    - Cast datetime para expires_at e last_checked_at;
+    - Cast boolean para needs_review;
+    - Campos Asaas da tabela payments incluídos em fillable para que os updates
+      existentes de revisão e histórico possam funcionar;
+    - Testes de regressão.
+
+Instalação:
+    1) Faça backup do arquivo app/Domain/Payment/Models/Payment.php.
+    2) Extraia o ZIP na raiz do Laravel e substitua o arquivo correspondente.
+    3) Execute: php artisan optimize:clear
+    4) Reabra /admin/payment-methods.
+
+Sem migrations, sem alterações em .env ou em credenciais, sem npm build.
+Para os testes automatizados (se configurados):
+    php artisan test --filter=PaymentCastsTest

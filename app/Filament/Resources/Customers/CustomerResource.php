@@ -11,6 +11,8 @@ use App\Filament\Resources\Customers\Pages\ViewCustomer;
 use App\Support\BrazilianData;
 use App\Support\BrazilianMoney;
 use Filament\Actions\ViewAction;
+use App\Domain\Access\AdminPermissions;
+use App\Filament\Support\RestrictsResourceByGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -20,6 +22,13 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class CustomerResource extends Resource
 {
+    use RestrictsResourceByGroup;
+
+    protected static function permissionKey(): string
+    {
+        return AdminPermissions::SALES_CUSTOMERS;
+    }
+
     protected static ?string $model = Customer::class;
 
     protected static ?string $modelLabel = 'cliente';

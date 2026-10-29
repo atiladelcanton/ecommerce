@@ -92,3 +92,7 @@ Order detail includes current status, totals, items, shipping/tracking and statu
 ## Seletor de variações — 26/10/2026
 
 O componente `ProductPurchase` usa opções visuais responsivas no lugar de dropdowns. Para 1–2 características há botões compactos com indicação explícita de selecionado/desabilitado e amostras visuais de cores conhecidas; para 3+ características há cartões compactos de combinações completas, com preço por combinação, seleção com um clique e expansão quando existem mais de oito opções. O preço do produto e o link de WhatsApp continuam reativos. A seleção no navegador não determina preço/estoque da venda; a validação de carrinho e oferta é feita novamente no servidor.
+
+## Identidade visual parametrizável (2026-10-29)
+
+O lojista pode definir a logo e as cores `color_primary`, `color_secondary` e `color_button` em **Configurações da loja → Identidade visual**. São opcionais e persistidas no registro único `store_settings`. A apresentação pública usa `App\Support\Storefront\Appearance` para sanitizar/derivar variáveis CSS aplicadas no `<body>` e `public/css/storefront/appearance.css` depois dos estilos do Vite. O cabeçalho, rodapé, favicon e OG padrão leem a logo no disco público, mantendo a marca SABA como fallback. Templates 1 e 2 têm padrões distintos. A escolha de template continua exclusivamente no comando Artisan, via `.env`. O painel Filament permanece com a identidade própria e não é temático. Não é necessário rebuild de assets ao alterar cores ou logo.

@@ -14,6 +14,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use App\Domain\Access\AdminPermissions;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Support\Enums\Width;
@@ -35,13 +36,12 @@ final class ShippingMethods extends Page
 
     public static function canAccess(): bool
     {
-        $user = auth('web')->user();
-
-        return $user instanceof User && $user->canAccessPanel(Filament::getPanel('admin'));
+        return AdminPermissions::check(AdminPermissions::SETTINGS_SHIPPING);
     }
 
     public function mount(): void
     {
+        abort_unless(self::canAccess(), 403);
         foreach (['success', 'error'] as $key) {
             if (session()->has($key)) {
                 Notification::make()->title((string) session()->pull($key))->status($key === 'success' ? 'success' : 'danger')->send();

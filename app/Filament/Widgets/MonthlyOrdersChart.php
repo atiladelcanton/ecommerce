@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Order\Models\Order;
 use Filament\Widgets\ChartWidget;
 
 final class MonthlyOrdersChart extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_ORDERS);
+    }
+
     protected ?string $heading = 'Evolução de pedidos';
 
     protected ?string $description = 'Quantidade de pedidos criados nos últimos 12 meses.';

@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Shipping;
 
 use App\Actions\Shipping\PrintShipmentLabelAction;
 use App\Domain\Shipping\Models\Shipment;
-use App\Filament\Pages\ShippingMethods;
+use App\Domain\Access\AdminPermissions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -17,7 +17,7 @@ final class ShipmentLabelController extends Controller
 {
     public function __invoke(Request $request, Shipment $shipment, PrintShipmentLabelAction $action): RedirectResponse|View
     {
-        abort_unless(ShippingMethods::canAccess(), 403);
+        abort_unless(AdminPermissions::check(AdminPermissions::SALES_ORDERS), 403);
 
         try {
             $url = $action->execute($shipment, 'pdf');

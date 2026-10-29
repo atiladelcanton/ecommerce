@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Finance\Enums\CashFlowType;
 use App\Domain\Finance\Models\CashFlowEntry;
 use Filament\Widgets\ChartWidget;
 
 final class CashFlowMonthlyChart extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_FINANCE);
+    }
+
     protected ?string $heading = 'Histórico financeiro mensal';
 
     protected ?string $description = 'Entradas e saídas dos últimos 12 meses.';

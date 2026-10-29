@@ -155,3 +155,8 @@ Verificação da máscara: `./vendor/bin/sail node --test tests/JavaScript/brazi
 ## Descrição rica dos produtos
 
 `description` usa o RichEditor nativo, em largura total dentro da Section Informações. A coluna TEXT existente armazena HTML; não há migration, editor externo, anexos ou custom blocks. Ferramentas: H2/H3, negrito, itálico, sublinhado, listas, citação, links e desfazer/refazer. Emojis são texto. `ProductDescription` sanitiza o conteúdo na hidratação/deidratação do formulário e novamente na renderização pública, permitindo apenas texto e estrutura editorial. Scripts, eventos, estilos arbitrários, imagens, iframes, SVG e esquemas de links perigosos não são renderizados. A sanitização usa o componente Symfony já instalado, sem mudar o sanitizador global do Filament.
+
+
+## Identidade visual da loja (2026-10-29)
+
+A seção **Identidade visual** em Configurações da loja permite ao administrador salvar logo e cores primária, secundária e de botões. Os valores são opcionais e cada template define seus padrões. Logo no disco público em `store/branding`. Validação HEX e caminho restrito na Action. A renderização usa variáveis CSS no layout público e CSS estático adicional, sem rebuild Vite. Não se altera a identidade do painel Filament nem se permite trocar o template pelo admin.

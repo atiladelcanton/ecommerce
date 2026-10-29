@@ -22,6 +22,10 @@ final class UpdateStoreSettingsAction
         }
         $rules = [
             'store_name' => ['required', 'string', 'max:255'],
+            'logo_path' => ['nullable', 'string', 'max:255', 'regex:/^store\/branding\/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp)$/i'],
+            'color_primary' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'color_secondary' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'color_button' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'cnpj' => ['nullable', 'string', 'max:20'],
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9 ()\-.]+$/'],
             'whatsapp' => ['nullable', 'string', 'max:30', 'regex:/^\+?[0-9 ()\-.]+$/'],
@@ -40,6 +44,12 @@ final class UpdateStoreSettingsAction
         foreach (['instagram_url', 'facebook_url', 'youtube_url'] as $field) {
             $rules[$field] = ['nullable', 'url:http,https', 'max:2048'];
         }
+        foreach (['color_primary', 'color_secondary', 'color_button'] as $field) {
+            if (is_string($data[$field] ?? null)) {
+                $data[$field] = strtoupper($data[$field]);
+            }
+        }
+
         $validated = Validator::make($data, $rules, [
             'required' => 'O campo :attribute é obrigatório.',
             'regex' => 'O formato de :attribute é inválido.',

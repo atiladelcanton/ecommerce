@@ -19,6 +19,8 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use App\Domain\Access\AdminPermissions;
+use App\Filament\Support\RestrictsResourceByGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -31,6 +33,13 @@ use Illuminate\Database\Eloquent\Model;
 
 final class CashFlowEntryResource extends Resource
 {
+    use RestrictsResourceByGroup;
+
+    protected static function permissionKey(): string
+    {
+        return AdminPermissions::SALES_FINANCE;
+    }
+
     protected static ?string $model = CashFlowEntry::class;
 
     protected static ?string $modelLabel = 'lançamento';
@@ -45,7 +54,7 @@ final class CashFlowEntryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return \Illuminate\Support\Facades\Schema::hasTable('cash_flow_entries');
+        return AdminPermissions::check(self::permissionKey()) && \Illuminate\Support\Facades\Schema::hasTable('cash_flow_entries');
     }
 
     public static function canCreate(): bool
@@ -102,12 +111,12 @@ final class CashFlowEntryResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return $record instanceof CashFlowEntry && ! $record->isAutomatic();
+        return self::canViewAny() && $record instanceof CashFlowEntry && ! $record->isAutomatic();
     }
 
     public static function canDelete(Model $record): bool
     {
-        return $record instanceof CashFlowEntry && ! $record->isAutomatic();
+        return self::canViewAny() && $record instanceof CashFlowEntry && ! $record->isAutomatic();
     }
 
     public static function getPages(): array

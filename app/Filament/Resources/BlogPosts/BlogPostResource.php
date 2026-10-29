@@ -21,6 +21,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use App\Domain\Access\AdminPermissions;
+use App\Filament\Support\RestrictsResourceByGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -33,6 +35,13 @@ use Livewire\Component;
 
 final class BlogPostResource extends Resource
 {
+    use RestrictsResourceByGroup;
+
+    protected static function permissionKey(): string
+    {
+        return AdminPermissions::CONTENT_BLOG;
+    }
+
     protected static ?string $model = BlogPost::class;
 
     protected static ?string $modelLabel = 'postagem';

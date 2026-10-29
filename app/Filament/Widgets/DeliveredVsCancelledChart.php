@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use Filament\Widgets\ChartWidget;
@@ -11,6 +13,11 @@ use Illuminate\Support\Carbon;
 
 final class DeliveredVsCancelledChart extends ChartWidget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_ORDERS);
+    }
+
     protected ?string $heading = 'Pedidos concluídos x cancelados';
 
     protected ?string $description = 'Desfechos dos pedidos nos últimos 12 meses, considerando a data da entrega ou do cancelamento.';

@@ -7,10 +7,13 @@ namespace App\Filament\Pages;
 use App\Actions\Settings\UpdateStoreSettingsAction;
 use App\Domain\Settings\Models\StoreSetting;
 use App\Filament\Support\CatalogForm;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use App\Domain\Access\AdminPermissions;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -31,8 +34,14 @@ final class StoreSettings extends Page
 
     public ?array $data = [];
 
+    public static function canAccess(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SETTINGS_STORE);
+    }
+
     public function mount(): void
     {
+        abort_unless(self::canAccess(), 403);
         $this->form->fill(StoreSetting::query()->find(StoreSetting::MAIN_ID)?->toArray() ?? []);
     }
 
@@ -46,6 +55,23 @@ final class StoreSettings extends Page
                 TextInput::make('economic_activity_code')->label('CNAE')->maxLength(20),
                 TextInput::make('cnpj')->label('CNPJ')->maxLength(20),
             ]),
+            Section::make('Identidade visual')
+                ->description('Personalize a marca da sua loja. O modelo de template continua sendo definido exclusivamente pelo responsável técnico.')
+                ->columns(['default' => 1, 'lg' => 3])
+                ->schema([
+                    FileUpload::make('logo_path')->label('Logotipo da loja')->image()
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                        ->disk('public')->directory('store/branding')->visibility('public')->maxSize(5120)
+                        ->preventFilePathTampering(allowFilePathUsing: static fn (string $file): bool => StoreSetting::query()->whereKey(StoreSetting::MAIN_ID)->where('logo_path', $file)->exists())
+                        ->helperText('JPG, PNG ou WebP, até 5 MB. Preferencialmente imagem horizontal com fundo transparente. Remova para restaurar a logo padrão.')
+                        ->columnSpanFull(),
+                    ColorPicker::make('color_primary')->label('Cor primária')
+                        ->helperText('Destaques, links, ícones e promoções. Deixe vazio para usar a cor original do template.'),
+                    ColorPicker::make('color_secondary')->label('Cor secundária')
+                        ->helperText('Faixas superiores e elementos de apoio. Deixe vazio para usar a cor original.'),
+                    ColorPicker::make('color_button')->label('Cor dos botões')
+                        ->helperText('Botões de compra e ações principais. O texto recebe contraste automático.'),
+                ]),
             Section::make('Contato')->columns(['default' => 1, 'lg' => 3])->schema([
                 TextInput::make('phone')->label('Telefone')->type('tel')->inputMode('tel')->maxLength(30),
                 TextInput::make('whatsapp')->label('WhatsApp')->type('tel')->inputMode('tel')->maxLength(30)->helperText('Inclua código do país e DDD.'),

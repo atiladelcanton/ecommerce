@@ -26,6 +26,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use App\Domain\Access\AdminPermissions;
+use App\Filament\Support\RestrictsResourceByGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Text;
@@ -45,6 +47,13 @@ use Livewire\Component;
 
 final class ProductResource extends Resource
 {
+    use RestrictsResourceByGroup;
+
+    protected static function permissionKey(): string
+    {
+        return AdminPermissions::CATALOG_PRODUCTS;
+    }
+
     protected static ?string $model = Product::class;
 
     protected static ?string $modelLabel = 'produto';

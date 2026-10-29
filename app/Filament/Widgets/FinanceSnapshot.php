@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Access\AdminPermissions;
+
 use App\Domain\Finance\Enums\CashFlowType;
 use App\Domain\Finance\Models\CashFlowEntry;
 use Filament\Widgets\Widget;
 
 final class FinanceSnapshot extends Widget
 {
+    public static function canView(): bool
+    {
+        return AdminPermissions::check(AdminPermissions::SALES_FINANCE);
+    }
+
     protected string $view = 'filament.widgets.finance-snapshot';
 
     protected int|string|array $columnSpan = [

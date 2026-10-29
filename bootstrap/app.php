@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
+            'webhooks/payments/asaas',
             'webhooks/shipping/*',
         ]);
         $middleware->redirectGuestsTo(fn ($request) => $request->is('admin/*')

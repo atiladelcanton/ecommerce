@@ -17,6 +17,8 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use App\Domain\Access\AdminPermissions;
+use App\Filament\Support\RestrictsResourceByGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -28,6 +30,13 @@ use Filament\Tables\Table;
 
 final class CouponResource extends Resource
 {
+    use RestrictsResourceByGroup;
+
+    protected static function permissionKey(): string
+    {
+        return AdminPermissions::SALES_COUPONS;
+    }
+
     protected static ?string $model = Coupon::class;
     protected static ?string $modelLabel = 'cupom';
     protected static ?string $pluralModelLabel = 'Cupons de desconto';

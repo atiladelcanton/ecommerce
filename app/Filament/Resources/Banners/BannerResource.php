@@ -15,6 +15,8 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use App\Domain\Access\AdminPermissions;
+use App\Filament\Support\RestrictsResourceByGroup;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -29,13 +31,20 @@ use Livewire\Component;
 
 final class BannerResource extends Resource
 {
+    use RestrictsResourceByGroup;
+
+    protected static function permissionKey(): string
+    {
+        return AdminPermissions::CONTENT_BANNERS;
+    }
+
     protected static ?string $model = Banner::class;
 
     protected static ?string $modelLabel = 'banner';
 
     protected static ?string $pluralModelLabel = 'Banners';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Conteúdo';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-photo';
 

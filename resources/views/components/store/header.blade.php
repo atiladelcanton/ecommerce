@@ -1,4 +1,4 @@
-@props(['categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false])
+@props(['categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false, 'logoUrl' => null])
 <div class="store-announcement">
     <div class="store-container flex items-center justify-between gap-4 py-2">
         <span>Equipamentos, insumos e acessórios para serigrafia</span>
@@ -8,14 +8,14 @@
 <header class="store-header" x-data="storeHeader" @keydown.escape="closeCategories()">
     <div class="store-container store-header-main">
         <a href="{{ route('home') }}" aria-label="{{ $storeName }} — Início" class="store-header-logo">
-            <img src="{{ asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="192" height="56">
+            <img src="{{ ($logoUrl ?: asset('images/saba-logo.jpeg')) }}" alt="{{ $storeName }}" width="192" height="56">
         </a>
         <div id="header-search" class="store-header-search" x-show="desktop || searchOpen" x-cloak>
             <livewire:store.search-autocomplete />
         </div>
         <a class="store-header-contact" href="{{ $whatsappUrl ?: route('store.contact') }}" @if($whatsappUrl) target="_blank" rel="noopener noreferrer" @endif>
             <x-heroicon-o-chat-bubble-oval-left-ellipsis class="size-6 shrink-0" />
-            <span><span class="store-header-contact-caption">Fale com a SABA</span><span>{{ $whatsappUrl ? 'WhatsApp' : 'Contato' }}</span></span>
+            <span><span class="store-header-contact-caption">Fale com {{ $storeName }}</span><span>{{ $whatsappUrl ? 'WhatsApp' : 'Contato' }}</span></span>
         </a>
         <a class="store-header-account" href="{{ auth('customer')->check() ? route('customer.dashboard') : route('customer.login') }}" aria-label="{{ auth('customer')->check() ? 'Minha conta' : 'Entrar na minha conta' }}">
             <x-heroicon-o-user class="size-6" aria-hidden="true" />

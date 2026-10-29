@@ -1,4 +1,4 @@
-@props(['settings', 'storeName', 'whatsappUrl'])
+@props(['settings', 'storeName', 'whatsappUrl', 'logoUrl' => null])
 @if($whatsappUrl)
 <section class="bg-store-soft border-y border-store-border">
     <div class="store-container py-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -9,7 +9,7 @@
 @endif
 <footer class="store-container pt-16 pb-6">
     <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-        <div><img src="{{ asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="150" height="44" class="w-36"><p class="mt-5 max-w-xs text-sm leading-7 text-store-muted">Conheça nosso catálogo, escolha suas opções e converse com nossa equipe quando precisar.</p></div>
+        <div><img src="{{ ($logoUrl ?: asset('images/saba-logo.jpeg')) }}" alt="{{ $storeName }}" width="150" height="44" class="w-36"><p class="mt-5 max-w-xs text-sm leading-7 text-store-muted">Conheça nosso catálogo, escolha suas opções e converse com nossa equipe quando precisar.</p></div>
         <div><h2 class="font-semibold mb-5">Explore</h2><nav aria-label="Navegação do rodapé" class="flex flex-col gap-3 text-sm text-store-muted"><a href="{{ route('home') }}">Início</a><a href="{{ route('store.products') }}">Produtos</a><a href="{{ route('home') }}#categorias">Categorias</a>@if($settings?->blog_enabled)<a href="{{ route('store.blog.index') }}">Blog</a>@endif</nav></div>
         <div><h2 class="font-semibold mb-5">Contato</h2><div class="flex flex-col gap-3 text-sm text-store-muted">
             @if($settings?->phone)<a href="tel:{{ preg_replace('/[^+0-9]/', '', $settings->phone) }}">{{ $settings->phone }}</a>@endif
@@ -17,7 +17,7 @@
             @if($settings?->email)<a class="break-words" href="mailto:{{ $settings->email }}">{{ $settings->email }}</a>@endif
             @if($settings?->city)<span>{{ $settings->city }}{{ $settings->state ? ' / '.$settings->state : '' }}</span>@endif
         </div></div>
-        <div><h2 class="font-semibold mb-5">Acompanhe a SABA</h2><div class="flex flex-col gap-3 text-sm text-store-muted">
+        <div><h2 class="font-semibold mb-5">Acompanhe {{ $storeName }}</h2><div class="flex flex-col gap-3 text-sm text-store-muted">
             @foreach(['instagram_url' => 'Instagram', 'facebook_url' => 'Facebook', 'youtube_url' => 'YouTube'] as $field => $label)
                 @if($settings?->{$field})<a href="{{ $settings->{$field} }}" target="_blank" rel="noopener noreferrer">{{ $label }} ↗</a>@endif
             @endforeach

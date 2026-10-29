@@ -22,3 +22,13 @@ Artisan::command('saba:expire-coupon-reservations', function (): void {
 })->purpose('Liberar reservas de cupons abandonadas e sem cobrança pendente');
 
 Schedule::command('saba:expire-coupon-reservations')->everyFiveMinutes()->withoutOverlapping();
+
+
+// Usar somente no terminal do servidor por quem administra a instalação.
+// Permite recuperar acesso se a primeira conta for criada depois da migration.
+Artisan::command('saba:grant-admin {email}', function (string $email): void {
+    $group = \App\Domain\Access\Models\AdminGroup::query()->where('slug', 'administrador')->firstOrFail();
+    $user = \App\Models\User::query()->where('email', $email)->firstOrFail();
+    $user->update(['admin_group_id' => $group->id]);
+    $this->info('Acesso de Administrador concedido a '.$user->email.'.');
+})->purpose('Atribuir acesso de administrador a uma conta existente via terminal');
