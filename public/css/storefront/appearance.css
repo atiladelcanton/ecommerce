@@ -33,3 +33,9 @@
 .store-body .store-discount {
     color: var(--color-store-primary-contrast);
 }
+/* New themes share the exact same merchant color variables. */
+.store-template-3 .ct-announcement,.store-template-4 .ct-announcement,.store-template-5 .ct-announcement{background:var(--color-store-secondary);color:var(--color-store-secondary-contrast)}
+.store-template-3 .ct-product-card .store-discount,.store-template-4 .ct-product-card .store-discount,.store-template-5 .ct-product-card .store-discount{background:var(--color-store-red);color:var(--color-store-primary-contrast)}
+.store-template-3 .ct-product-card .ct-product-view,.store-template-4 .ct-product-card .ct-product-view,.store-template-5 .ct-product-card .ct-product-view{color:var(--color-store-red)}
+.store-template-3 .store-button,.store-template-4 .store-button,.store-template-5 .store-button{background:var(--color-store-button);color:var(--color-store-button-text)}
+.store-template-3 .store-button:hover,.store-template-4 .store-button:hover,.store-template-5 .store-button:hover{background:var(--color-store-button-hover);color:var(--color-store-button-hover-text)}

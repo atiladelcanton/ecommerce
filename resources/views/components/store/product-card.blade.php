@@ -1,6 +1,8 @@
 @props(['product'])
 @if(\App\Support\Storefront\Template::is(2))
     @include('components.store.templates.warehouse.product-card', ['product' => $product])
+@elseif(in_array(\App\Support\Storefront\Template::active(), [3, 4, 5], true))
+    @include('components.store.templates.creative.product-card', ['product' => $product, 'theme' => \App\Support\Storefront\Template::active()])
 @else
 <article class="store-product-card group" data-product-id="{{ $product->id }}">
     <a href="{{ route('store.product', $product->slug) }}" class="store-product-card-link">

@@ -14,6 +14,7 @@ final class StoreSetting extends Model
 
     protected $fillable = [
         'store_name',
+        'template_id',
         'logo_path',
         'color_primary',
         'color_secondary',
@@ -42,7 +43,7 @@ final class StoreSetting extends Model
 
     protected function casts(): array
     {
-        return ['blog_enabled' => 'boolean', 'blog_show_on_home' => 'boolean'];
+        return ['template_id' => 'integer', 'blog_enabled' => 'boolean', 'blog_show_on_home' => 'boolean'];
     }
 
     protected $hidden = ['singleton'];

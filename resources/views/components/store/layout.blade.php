@@ -25,21 +25,27 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @if($storefrontTemplate === 2)
         <link rel="stylesheet" href="{{ asset('css/storefront/templates/warehouse.css') }}">
+    @elseif(in_array($storefrontTemplate, [3, 4, 5], true))
+        <link rel="stylesheet" href="{{ asset('css/storefront/templates/creative.css') }}">
     @endif
     <link rel="stylesheet" href="{{ asset('css/storefront/appearance.css') }}">
     @livewireStyles
     @stack('head')
 </head>
-<body {{ $attributes->class(['store-body', 'store-template-2' => $storefrontTemplate === 2]) }} style="{{ $appearance['css'] }}">
+<body {{ $attributes->class(['store-body', 'store-template-2' => $storefrontTemplate === 2, 'store-template-3' => $storefrontTemplate === 3, 'store-template-4' => $storefrontTemplate === 4, 'store-template-5' => $storefrontTemplate === 5]) }} style="{{ $appearance['css'] }}">
     <a href="#conteudo" class="store-skip">Pular para o conteúdo</a>
     @if($storefrontTemplate === 2)
         <x-store.templates.warehouse.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" :logo-url="$logoUrl" :blog-enabled="(bool) ($settings?->blog_enabled)" />
+    @elseif(in_array($storefrontTemplate, [3, 4, 5], true))
+        <x-store.templates.creative.header :template="$storefrontTemplate" :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" :logo-url="$logoUrl" :blog-enabled="(bool) ($settings?->blog_enabled)" />
     @else
         <x-store.header :categories="$navigationCategories" :whatsapp-url="$whatsappUrl" :store-name="$storeName" :logo-url="$logoUrl" :blog-enabled="(bool) ($settings?->blog_enabled)" />
     @endif
     <main id="conteudo">{{ $slot }}</main>
     @if($storefrontTemplate === 2)
         <x-store.templates.warehouse.footer :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" :logo-url="$logoUrl" />
+    @elseif(in_array($storefrontTemplate, [3, 4, 5], true))
+        <x-store.templates.creative.footer :template="$storefrontTemplate" :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" :logo-url="$logoUrl" />
     @else
         <x-store.footer :settings="$settings" :store-name="$storeName" :whatsapp-url="$whatsappUrl" :logo-url="$logoUrl" />
     @endif

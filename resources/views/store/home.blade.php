@@ -1,6 +1,12 @@
 <x-store.layout :canonical="route('home')" class="store-home">
     @if(\App\Support\Storefront\Template::is(2))
         @include('store.templates.warehouse.home')
+    @elseif(\App\Support\Storefront\Template::is(3))
+        @include('store.templates.horizonte.home')
+    @elseif(\App\Support\Storefront\Template::is(4))
+        @include('store.templates.essencia.home')
+    @elseif(\App\Support\Storefront\Template::is(5))
+        @include('store.templates.pulso.home')
     @else
     <div class="store-container store-home-content">
         @if($banners->isNotEmpty())

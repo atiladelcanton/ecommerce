@@ -56,7 +56,7 @@ final class StoreSettings extends Page
                 TextInput::make('cnpj')->label('CNPJ')->maxLength(20),
             ]),
             Section::make('Identidade visual')
-                ->description('Personalize a marca da sua loja. O modelo de template continua sendo definido exclusivamente pelo responsável técnico.')
+                ->description('Personalize a marca da sua loja. A escolha do tema é feita em Configurações → Temas da loja. As cores e o logotipo são configurados aqui.')
                 ->columns(['default' => 1, 'lg' => 3])
                 ->schema([
                     FileUpload::make('logo_path')->label('Logotipo da loja')->image()

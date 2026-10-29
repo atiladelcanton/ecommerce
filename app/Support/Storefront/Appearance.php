@@ -25,16 +25,21 @@ final class Appearance
     public static function forTemplate(?StoreSetting $settings, int $template): array
     {
         // Preserve each template's original visual identity if the merchant has not customized it.
-        $defaults = $template === 2
-            ? ['primary' => '#156583', 'secondary' => '#29353E', 'button' => '#156583']
-            : ['primary' => '#DC2626', 'secondary' => '#DC2626', 'button' => '#DC2626'];
+        $themes = [
+            1 => ['primary' => '#DC2626', 'secondary' => '#DC2626', 'button' => '#DC2626'],
+            2 => ['primary' => '#156583', 'secondary' => '#29353E', 'button' => '#156583'],
+            3 => ['primary' => '#217C9B', 'secondary' => '#14384E', 'button' => '#217C9B'],
+            4 => ['primary' => '#8B624B', 'secondary' => '#292523', 'button' => '#292523'],
+            5 => ['primary' => '#DBE938', 'secondary' => '#171717', 'button' => '#171717'],
+        ];
+        $defaults = $themes[$template] ?? $themes[1];
 
         $primary = self::validHex($settings?->color_primary) ?? $defaults['primary'];
         $secondary = self::validHex($settings?->color_secondary) ?? $defaults['secondary'];
         $button = self::validHex($settings?->color_button) ?? $defaults['button'];
         $contrastButton = self::contrast($button);
         $primaryDark = self::validHex($settings?->color_primary) === null
-            ? ($template === 2 ? '#104D67' : '#B91C1C')
+            ? self::darken($primary)
             : self::darken($primary);
 
         // Strictly validated colors only: safe for inline CSS, no untrusted CSS values.
