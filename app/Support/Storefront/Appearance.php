@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Support\Storefront;
 
 use App\Domain\Settings\Models\StoreSetting;
-use Illuminate\Support\Facades\Storage;
 
 /** Validated branding shared with the public storefront and administrative panel. */
 final class Appearance
@@ -16,7 +15,11 @@ final class Appearance
         $path = $settings?->logo_path;
 
         if (is_string($path) && preg_match('~^store/branding/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp)$~i', $path)) {
-            return Storage::disk('public')->url($path);
+            // Public local files belong to the current installation.
+            // A root-relative URL avoids leaking APP_URL from a cloned .env
+            // (which could otherwise point to a different client's domain).
+            // The public/storage symlink is still required on the web server.
+            return '/storage/'.$path;
         }
 
         return null;

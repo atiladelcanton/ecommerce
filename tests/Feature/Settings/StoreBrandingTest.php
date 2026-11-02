@@ -28,7 +28,7 @@ final class StoreBrandingTest extends TestCase
         ]);
 
         $settings = StoreSetting::query()->findOrFail(StoreSetting::MAIN_ID);
-        $url = Storage::disk('public')->url('store/branding/logo.png');
+        $url = '/storage/store/branding/logo.png';
 
         $this->assertSame('Loja Exemplo', StoreBrand::currentName());
         $this->assertSame($url, Appearance::logoUrl($settings));

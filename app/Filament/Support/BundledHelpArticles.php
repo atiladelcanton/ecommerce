@@ -641,6 +641,14 @@ Nunca compartilhe **API Key do Asaas, Groq ou Client Secret do Melhor Envio**, s
 - [ ] Homologuei uma compra e confirmei que a comissão só passou a **prevista** depois do pagamento aprovado.
 - [ ] Conferi e aprovei a comissão, realizei o Pix fora do sistema e registrei o repasse com referência.
 - [ ] Testei cancelamentos e estornos para não aprovar repasses indevidos.
+
+## Conferência do pagamento de teste no localhost
+
+- [ ] O arquivo `.env` local contém `APP_ENV=local` e `PAYMENT_GATEWAY=fake`.
+- [ ] Executei `php artisan optimize:clear` após mudar o `.env`.
+- [ ] O checkout exibe **Pagamento de demonstração** e **Finalizar pedido de teste**.
+- [ ] Confirmei que o pedido simulado foi registrado e aprovado sem criar cobrança Asaas.
+- [ ] Para testar o Asaas Sandbox, usei URL HTTPS pública, credenciais de homologação e webhook configurado; **não confundi** esse teste com a simulação local.
 ARTICLE_CHECKLISTS_END,
             'clientes' => <<<'ARTICLE_CLIENTES_END'
 ## Consulta de clientes
@@ -742,6 +750,18 @@ Desativar o blog não exclui os textos escritos no painel.
 2. Abra a loja pública e atualize a página.
 3. Confira nome, logo e botões no desktop e no celular. Abra também o `/admin` e veja se a marca do painel mudou.
 4. Se o WhatsApp abrir número errado, revise DDI/DDD; se o frete falhar, revise principalmente o CEP de origem, peso e dimensões do produto.
+
+## Ao instalar a loja em outro domínio: logo com erro 404
+
+Se a loja foi copiada de outra instalação, é necessário configurar **cada instalação separadamente**. A logo é um arquivo da loja atual; ela não deve depender da pasta nem do domínio da loja anterior.
+
+1. Avise o responsável técnico para verificar o `APP_URL` da instalação atual e o link `public/storage`.
+2. Após enviar a logo, clique em **Salvar**. Se aparecer 404, tente abrir a imagem em outra aba para confirmar o erro.
+3. O técnico pode executar `php artisan loja:diagnosticar` na pasta da loja para verificar o destino dos uploads e a existência do arquivo. Esse comando não altera dados.
+4. O diretório `public/storage` deve apontar para `storage/app/public` **da mesma instalação**. Caso a cópia tenha trazido um link antigo, o técnico deve substituir somente o link simbólico, sem apagar as imagens armazenadas.
+5. Se o painel de outra loja mostrar erro 403, o técnico deve conferir o banco de dados, as sessões e o grupo administrativo da conta. Alterar a logo não concede nem remove permissões.
+
+> **Segurança:** não compartilhe `.env`, senhas ou tokens para solicitar ajuda. Nunca utilize `php artisan migrate:fresh` para resolver erros de logo ou de acesso.
 ARTICLE_CONFIGURAR_LOJA_END,
             'criar-asaas' => <<<'ARTICLE_CRIAR_ASAAS_END'
 ## 1. Criar sua conta Asaas
@@ -1349,6 +1369,24 @@ A integração operacional configurável do projeto é o **Asaas**, com **checko
 8. Configure no Asaas a URL exibida pelo SABA e os eventos listados no quadro do formulário.
 9. Só então marque **Ativar Asaas no checkout**, salve e faça um teste ponta a ponta.
 
+## Como finalizar pedidos de teste no computador local
+
+Se você usa o e-commerce no endereço `http://localhost` (por exemplo, porta 8081), **não use o checkout real do Asaas** sem configurar antes um endereço HTTPS público. O Asaas exige retorno seguro e, para receber as notificações, seu sistema precisa estar acessível pela internet.
+
+**Para testar produtos, cupons, frete e pedidos sem cobrar ninguém:**
+
+1. No arquivo `.env` da sua instalação de desenvolvimento, confira `APP_ENV=local`.
+2. Configure `PAYMENT_GATEWAY=fake` (se a linha não existir, adicione-a).
+3. No terminal, execute `php artisan optimize:clear`.
+4. Reabra `/checkout`. A página deve mostrar **Pagamento de demonstração** e o botão **Finalizar pedido de teste**.
+5. Finalize uma compra fictícia. O e-commerce criará o pedido e **aprovará o pagamento de forma simulada**, sem chamar a API do Asaas. Confira no painel administrativo a situação do pedido.
+
+**Atenção:** o modo de demonstração atualiza pedidos, estoque e cupons **na base de dados desse ambiente**, mesmo sem dinheiro real. Use produtos e pedidos de teste e nunca execute testes na base de produção. O modo fake só é permitido em ambientes locais/de desenvolvimento ou na suíte de testes, não em produção.
+
+Mesmo que uma conta Asaas esteja marcada como ativa no administrativo, a opção `PAYMENT_GATEWAY=fake` tem prioridade **somente na instalação local**. Para realmente testar o **Asaas Sandbox**, mude para `PAYMENT_GATEWAY=asaas`, configure credenciais Sandbox, use uma URL pública HTTPS (com túnel ou homologação), limpe o cache e teste o webhook. O botão deixará de informar que é demonstração.
+
+**Se um pagamento anterior falhou:** depois de corrigir a configuração, tente finalizar o mesmo checkout novamente. Uma rejeição definitiva pode ser tentada novamente; uma criação de cobrança com resultado **inconclusivo** não pode ser repetida sem antes confirmar no Asaas que não existe cobrança remota.
+
 ## Eventos Asaas esperados pelo sistema
 
 O quadro do administrativo informa a URL exata do webhook, além dos eventos **CHECKOUT_CREATED**, **CHECKOUT_PAID**, **CHECKOUT_CANCELED** e **CHECKOUT_EXPIRED**. Configure **todos os eventos indicados** e o mesmo token nos dois sistemas.
@@ -1586,6 +1624,8 @@ O painel é o centro de operação da sua loja: **Catálogo** organiza produtos,
 6. Em **Configurações → Meios de Entrega**, configure **Melhor Envio** e/ou **retirada na loja**. Use o Sandbox até validar o fluxo de frete.
 7. Em **Configurações → Meios de Pagamento**, conecte e teste a conta **Asaas**. Teste em Sandbox antes de habilitar cobranças reais.
 8. Faça uma compra completa de teste: produto → carrinho → endereço → frete → checkout → recebimento de pagamento → preparação → envio/retirada → entrega.
+   - No computador local, use `APP_ENV=local` e `PAYMENT_GATEWAY=fake` no `.env`, execute `php artisan optimize:clear` e confira **Finalizar pedido de teste**. Esse teste não utiliza o Asaas, mas atualiza estoque e pedidos locais.
+   - Para testar o Asaas Sandbox de verdade, utilize uma URL pública **HTTPS** e configure os webhooks. Veja o tutorial **Pagamentos**.
 9. Confira na loja pública as páginas de produto, carrinho, contato e seus dados comerciais.
 
 ### Onde encontro cada coisa?
@@ -1693,6 +1733,26 @@ O administrador **não troca templates**. Ele altera logo e cores em Configuraç
 - Ambiente de testes ligado em loja que deveria cobrar de verdade.
 
 Guarde número do pedido, data/hora, tela da operação e mensagem de erro **sem expor chaves, senhas, tokens ou documentos completos**.
+
+### Logo nova faz upload, mas abre 404 após copiar o sistema para outra loja
+
+Isso pode acontecer quando `public/storage` ficou apontando para o diretório da instalação antiga ou quando o servidor não publica os arquivos desse diretório.
+
+1. Confirme que o técnico configurou o domínio correto em `APP_URL` e que o endereço da loja aponta para a pasta `public` do seu próprio projeto.
+2. Peça que o técnico execute `php artisan loja:diagnosticar` **na pasta de cada loja** e compare os resultados. O comando é somente leitura.
+3. O arquivo precisa existir em `storage/app/public/store/branding` e ser acessível pelo link `public/storage` **da mesma loja**.
+4. Não apague a pasta de imagens. Se o problema for um link simbólico antigo, remova somente o link após confirmar seu destino e refaça-o com `php artisan storage:link`.
+5. Depois da correção, atualize a página forçando a recarga. Caso persista, o servidor pode estar bloqueando o acesso a links simbólicos.
+
+### Admin retorna 403 depois de criar uma segunda loja
+
+O erro 403 é uma **negação de acesso**, não um erro da logo. No sistema atual, somente usuários associados a grupos administrativos podem entrar no `/admin`.
+
+1. Primeiro, faça login novamente em uma janela privativa, no domínio correto.
+2. Solicite ao técnico uma comparação dos arquivos `.env` **sem revelar senhas**: as duas lojas devem possuir `APP_URL`, banco e cookie de sessão adequados a cada instalação.
+3. Execute `php artisan loja:diagnosticar` nas duas pastas. Verifique se o grupo Administrador existe e se há contas sem grupo.
+4. Se o usuário estiver sem grupo, somente o responsável técnico deve restaurar o grupo correto da conta legítima, depois de conferir o banco. Não desligue a proteção do Filament para contornar o erro.
+5. **Não execute `migrate:fresh` nem `key:generate` como tentativa de correção**: podem causar perda de dados ou invalidar credenciais criptografadas.
 ARTICLE_PROBLEMAS_END,
             'produtos' => <<<'ARTICLE_PRODUTOS_END'
 ## Como cadastrar um produto na loja

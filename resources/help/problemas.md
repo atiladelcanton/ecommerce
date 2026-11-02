@@ -74,3 +74,23 @@ O administrador **não troca templates**. Ele altera logo e cores em Configuraç
 - Ambiente de testes ligado em loja que deveria cobrar de verdade.
 
 Guarde número do pedido, data/hora, tela da operação e mensagem de erro **sem expor chaves, senhas, tokens ou documentos completos**.
+
+### Logo nova faz upload, mas abre 404 após copiar o sistema para outra loja
+
+Isso pode acontecer quando `public/storage` ficou apontando para o diretório da instalação antiga ou quando o servidor não publica os arquivos desse diretório.
+
+1. Confirme que o técnico configurou o domínio correto em `APP_URL` e que o endereço da loja aponta para a pasta `public` do seu próprio projeto.
+2. Peça que o técnico execute `php artisan loja:diagnosticar` **na pasta de cada loja** e compare os resultados. O comando é somente leitura.
+3. O arquivo precisa existir em `storage/app/public/store/branding` e ser acessível pelo link `public/storage` **da mesma loja**.
+4. Não apague a pasta de imagens. Se o problema for um link simbólico antigo, remova somente o link após confirmar seu destino e refaça-o com `php artisan storage:link`.
+5. Depois da correção, atualize a página forçando a recarga. Caso persista, o servidor pode estar bloqueando o acesso a links simbólicos.
+
+### Admin retorna 403 depois de criar uma segunda loja
+
+O erro 403 é uma **negação de acesso**, não um erro da logo. No sistema atual, somente usuários associados a grupos administrativos podem entrar no `/admin`.
+
+1. Primeiro, faça login novamente em uma janela privativa, no domínio correto.
+2. Solicite ao técnico uma comparação dos arquivos `.env` **sem revelar senhas**: as duas lojas devem possuir `APP_URL`, banco e cookie de sessão adequados a cada instalação.
+3. Execute `php artisan loja:diagnosticar` nas duas pastas. Verifique se o grupo Administrador existe e se há contas sem grupo.
+4. Se o usuário estiver sem grupo, somente o responsável técnico deve restaurar o grupo correto da conta legítima, depois de conferir o banco. Não desligue a proteção do Filament para contornar o erro.
+5. **Não execute `migrate:fresh` nem `key:generate` como tentativa de correção**: podem causar perda de dados ou invalidar credenciais criptografadas.

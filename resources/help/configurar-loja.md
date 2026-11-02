@@ -52,3 +52,15 @@ Desativar o blog não exclui os textos escritos no painel.
 2. Abra a loja pública e atualize a página.
 3. Confira nome, logo e botões no desktop e no celular. Abra também o `/admin` e veja se a marca do painel mudou.
 4. Se o WhatsApp abrir número errado, revise DDI/DDD; se o frete falhar, revise principalmente o CEP de origem, peso e dimensões do produto.
+
+## Ao instalar a loja em outro domínio: logo com erro 404
+
+Se a loja foi copiada de outra instalação, é necessário configurar **cada instalação separadamente**. A logo é um arquivo da loja atual; ela não deve depender da pasta nem do domínio da loja anterior.
+
+1. Avise o responsável técnico para verificar o `APP_URL` da instalação atual e o link `public/storage`.
+2. Após enviar a logo, clique em **Salvar**. Se aparecer 404, tente abrir a imagem em outra aba para confirmar o erro.
+3. O técnico pode executar `php artisan loja:diagnosticar` na pasta da loja para verificar o destino dos uploads e a existência do arquivo. Esse comando não altera dados.
+4. O diretório `public/storage` deve apontar para `storage/app/public` **da mesma instalação**. Caso a cópia tenha trazido um link antigo, o técnico deve substituir somente o link simbólico, sem apagar as imagens armazenadas.
+5. Se o painel de outra loja mostrar erro 403, o técnico deve conferir o banco de dados, as sessões e o grupo administrativo da conta. Alterar a logo não concede nem remove permissões.
+
+> **Segurança:** não compartilhe `.env`, senhas ou tokens para solicitar ajuda. Nunca utilize `php artisan migrate:fresh` para resolver erros de logo ou de acesso.
