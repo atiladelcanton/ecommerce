@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class Coupon extends Model
 {
     protected $fillable = [
-        'code', 'description', 'discount_type', 'value', 'scope',
+        'influencer_id', 'code', 'description', 'discount_type', 'value', 'scope',
         'minimum_subtotal_cents', 'maximum_discount_cents', 'usage_limit',
         'allow_sale_items', 'is_active', 'starts_at', 'ends_at',
     ];
@@ -21,6 +21,7 @@ final class Coupon extends Model
     protected function casts(): array
     {
         return [
+            'influencer_id' => 'integer',
             'value' => 'integer',
             'minimum_subtotal_cents' => 'integer',
             'maximum_discount_cents' => 'integer',
@@ -30,6 +31,11 @@ final class Coupon extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
         ];
+    }
+
+    public function influencer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Domain\Influencer\Models\Influencer::class);
     }
 
     public function products(): BelongsToMany

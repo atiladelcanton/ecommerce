@@ -33,6 +33,10 @@ final class PublishOrderShippingQuoteAction
             if ($order->status !== OrderStatus::RECEIVED || $order->payment_status === PaymentStatus::APPROVED || $order->shipping_pricing_status === null) {
                 throw ValidationException::withMessages(['shipping' => 'Somente pedidos aguardando conclusão podem receber uma cotação manual.']);
             }
+            if ($order->shipping_pricing_status === ShippingPricingStatus::CONFIRMED
+                || $order->payments()->where('status', PaymentStatus::PENDING->value)->exists()) {
+                throw ValidationException::withMessages(['shipping' => 'O cliente já aceitou a proposta ou existe cobrança pendente. Resolva o pagamento antes de alterar o frete.']);
+            }
             $totals = new OrderTotals($order->subtotal_cents, $data['price_cents'], $order->discount_cents);
             $last = $order->shippingQuotes()->first();
             $order->shippingQuotes()->whereNull('superseded_at')->whereNull('accepted_at')->update(['superseded_at' => now()]);

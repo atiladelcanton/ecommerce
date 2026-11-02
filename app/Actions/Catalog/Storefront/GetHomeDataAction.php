@@ -9,6 +9,7 @@ use App\Domain\Catalog\Models\Banner;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Settings\Models\StoreSetting;
+use App\Support\Storefront\StoreBrand;
 
 final class GetHomeDataAction
 {
@@ -28,7 +29,7 @@ final class GetHomeDataAction
             : collect();
 
         return [
-            'storeName' => $settings?->store_name ?: config('app.name', 'Saba Equipamentos'),
+            'storeName' => StoreBrand::name($settings),
             'latestBlogPosts' => $latestPosts,
             'banners' => Banner::currentlyVisible()->ordered()->get(),
             'categories' => Category::active()->ordered()->get(['id', 'name', 'slug', 'image_path']),

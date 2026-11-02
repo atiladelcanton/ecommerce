@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->redirectGuestsTo(fn ($request) => $request->is('admin/*')
             ? route('filament.admin.auth.login')
-            : route('customer.login'));
+            : ($request->is('influencers*') ? route('influencers.login') : route('customer.login')));
         $middleware->redirectUsersTo(fn ($request) => $request->is('admin/*')
             ? route('filament.admin.pages.dashboard')
             : route('customer.dashboard'));

@@ -98,7 +98,7 @@ final class Product extends Model
     {
         $available = ProductOfferQuery::availableVariant();
 
-        return $query->whereRaw('((NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.id) AND products.promotional_price > 0 AND products.promotional_price < products.price) OR EXISTS (SELECT 1 FROM product_variants pv WHERE '.$available.' AND (pv.promotional_price > 0 OR (pv.price IS NULL AND products.promotional_price > 0))))');
+        return $query->whereRaw('((NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = products.id AND pv.is_active = 1) AND products.promotional_price > 0 AND products.promotional_price < products.price) OR EXISTS (SELECT 1 FROM product_variants pv WHERE '.$available.' AND (pv.promotional_price > 0 OR (pv.price IS NULL AND products.promotional_price > 0))))');
     }
 
     public function reservations(): HasMany

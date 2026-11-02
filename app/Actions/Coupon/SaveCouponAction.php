@@ -20,6 +20,7 @@ final class SaveCouponAction
         $input['category_ids'] = $input['category_ids'] ?? [];
         $input['product_ids'] = $input['product_ids'] ?? [];
         $data = Validator::make($input, [
+            'influencer_id' => ['nullable', 'integer', 'exists:influencers,id'],
             'code' => ['required', 'string', 'between:3,64', 'regex:/^[A-Z0-9_-]+$/D', Rule::unique('coupons', 'code')->ignore($existing?->id)],
             'description' => ['nullable', 'string', 'max:255'],
             'discount_type' => ['required', Rule::in(['percentage', 'fixed'])],
@@ -50,6 +51,10 @@ final class SaveCouponAction
         return DB::transaction(function () use ($data, $existing): Coupon {
             $coupon = $existing ? Coupon::query()->lockForUpdate()->findOrFail($existing->id) : new Coupon;
             if ($coupon->exists) {
+                // Attribution may not be rewritten after the first reservation or use.
+                if ($coupon->usages()->exists() && (int) ($data['influencer_id'] ?? 0) !== (int) ($coupon->influencer_id ?? 0)) {
+                    throw ValidationException::withMessages(['influencer_id' => 'Não é possível trocar o influenciador após o primeiro pedido com este cupom.']);
+                }
                 $claims = $coupon->claims()->count();
                 if ($claims > 0 && $data['code'] !== $coupon->code) {
                     throw ValidationException::withMessages(['code' => 'O código de um cupom reservado ou utilizado não pode ser alterado.']);

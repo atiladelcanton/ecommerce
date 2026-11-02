@@ -5,7 +5,7 @@
             <x-store.hero-carousel :banners="$banners" />
         @else
             <div class="store-container ct-hero-inner">
-                <p class="ct-kicker">Bem-vindo à {{ $storeName }}</p>
+                <p class="ct-kicker">Conheça {{ $storeName }}</p>
                 <h1>Novas possibilidades para suas compras.</h1>
                 <p>Encontre produtos selecionados para o dia a dia e escolha com tranquilidade.</p>
                 <a href="{{ route('store.products') }}" class="store-button">Ver produtos <x-heroicon-o-arrow-right class="size-5" /></a>

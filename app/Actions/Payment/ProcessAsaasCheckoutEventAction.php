@@ -69,13 +69,17 @@ final class ProcessAsaasCheckoutEventAction
                 $event->update(['payment_id' => $locked->id, 'processed_at' => now()]);
                 return;
             }
-            // Checkout event items are authoritative only after validating their
-            // integer-cent total against the immutable order amount.
-            $items = $checkout['items'] ?? null;
-            if (! is_array($items) || $items === [] || $this->sumItems($items) !== $locked->amount_cents) {
-                $this->flag($locked, 'Valor ou itens divergentes no evento Asaas. Conferência financeira necessária.');
-                $event->update(['payment_id' => $locked->id, 'processed_at' => now()]);
-                return;
+            // Never accept PAID without verifying the authoritative amount.
+            // Terminal CANCELED/EXPIRED notifications can omit the checkout items;
+            // their authenticated checkout identity is sufficient to release a hold.
+            if ($expectedStatus === 'PAID') {
+                $items = $checkout['items'] ?? null;
+                if (! is_array($items) || $items === [] || $this->sumItems($items) !== $locked->amount_cents
+                    || $locked->amount_cents !== $order->total_cents) {
+                    $this->flag($locked, 'Valor ou itens divergentes no evento Asaas. Conferência financeira necessária.');
+                    $event->update(['payment_id' => $locked->id, 'processed_at' => now()]);
+                    return;
+                }
             }
             if (str_starts_with($locked->external_id, 'initiating-')) {
                 $locked->external_id = $event->external_id;

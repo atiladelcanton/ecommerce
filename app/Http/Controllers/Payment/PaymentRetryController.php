@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Payment;
 use App\Actions\Order\PayOrderAction;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
+use App\Domain\Shipping\Enums\ShippingPricingStatus;
 use App\Infrastructure\Payments\AsaasGateway;
 use Illuminate\Http\RedirectResponse;
 
@@ -21,6 +22,10 @@ final class PaymentRetryController
         abort_unless($authorized, 404);
         if ($order->payment_status === PaymentStatus::APPROVED) {
             return redirect()->route('store.order.payment-status', ['number' => $order->number]);
+        }
+        if ($order->shipping_pricing_status !== null && $order->shipping_pricing_status !== ShippingPricingStatus::CONFIRMED) {
+            return redirect()->route('store.order.payment-status', ['number' => $order->number])
+                ->with('payment_notice', 'Aguarde a cotação e aceite o frete antes de pagar.');
         }
         $action->execute($order);
         $payment = $order->payments()->latest('id')->first();

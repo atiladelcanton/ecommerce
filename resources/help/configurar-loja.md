@@ -14,12 +14,16 @@ Abra **[Configurações → Configurações da loja](/admin/store-settings)**. O
 2. Escolha a **cor primária** para destaques, links e elementos importantes.
 3. Escolha a **cor secundária** para faixas e elementos complementares.
 4. Escolha a **cor dos botões**, que será aplicada às principais ações de compra.
-5. **Salve** e abra a loja pública em outra aba para conferir em computador e celular.
-6. Para voltar à cor padrão, deixe o campo de cor vazio. Ao remover o logotipo personalizado, a loja volta ao logo padrão disponível no template.
+5. **Clique em Salvar**. A logo cadastrada passa a aparecer tanto na **loja pública** (cabeçalho e rodapé) quanto no **painel /admin**, inclusive na tela de login. O nome exibido no painel também acompanha o campo **Nome da loja**.
+6. Abra a loja pública e o painel em outras abas para conferir o resultado. Atualize as páginas após salvar.
+7. Para voltar à cor padrão, deixe o campo de cor vazio. Se remover o logotipo, o sistema mostra **o nome da loja como texto**, em vez de uma logo de outra empresa.
+8. Para trocar a imagem, envie a nova logo e salve novamente. A loja e o painel devem passar a exibir a mesma imagem.
+
+> **Dica:** o logotipo deve estar em armazenamento público. Se a imagem não abrir, confira se o administrador técnico executou `php artisan storage:link`, se o arquivo foi salvo e se o diretório de arquivos está acessível. A imagem antiga ainda pode aparecer temporariamente por cache do navegador; atualize a página forçando o recarregamento.
 
 A cor do texto dos botões é selecionada para manter contraste. Em algumas seções, a aparência também depende do template em uso.
 
-> **Importante:** não existe seletor de templates para o lojista. Só a equipe técnica pode executar `php artisan switch:template --template=1` ou `--template=2` na instalação correspondente.
+> **Importante:** a escolha de tema fica em **[Configurações → Temas da loja](/admin/store-templates)** para quem tem permissão de administrar as configurações. O grupo Operacional não pode trocar o tema. A troca do tema não apaga nome, logotipo ou cores cadastrados.
 
 ## Contato, endereço e canais
 
@@ -46,5 +50,5 @@ Desativar o blog não exclui os textos escritos no painel.
 
 1. Clique em **Salvar**.
 2. Abra a loja pública e atualize a página.
-3. Confira nome, logo e botões no desktop e no celular.
+3. Confira nome, logo e botões no desktop e no celular. Abra também o `/admin` e veja se a marca do painel mudou.
 4. Se o WhatsApp abrir número errado, revise DDI/DDD; se o frete falhar, revise principalmente o CEP de origem, peso e dimensões do produto.

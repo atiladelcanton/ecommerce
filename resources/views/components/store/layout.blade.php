@@ -18,8 +18,12 @@
     <meta property="og:url" content="{{ $canonical ?: url()->current() }}">
     <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:locale" content="pt_BR">
-    <meta property="og:image" content="{{ $image ?: $logoUrl }}">
-    <link rel="icon" href="{{ $logoUrl }}">
+    @if($image || $logoUrl)
+        <meta property="og:image" content="{{ $image ?: $logoUrl }}">
+    @endif
+    @if($logoUrl)
+        <link rel="icon" href="{{ $logoUrl }}">
+    @endif
     <link rel="stylesheet" href="{{ asset('css/blog.css') }}">
     <link rel="stylesheet" href="{{ asset('fonts/filament/filament/inter/index.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])

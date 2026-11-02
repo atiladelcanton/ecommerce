@@ -1,6 +1,6 @@
 <div class="product-purchase">
     <div class="product-detail-price" aria-live="polite">
-        @if($product->variants->isNotEmpty() && ! $selectedVariant)
+        @if($product->variants->where('is_active', true)->isNotEmpty() && ! $selectedVariant)
             <p class="text-sm text-store-muted">A partir de</p>
         @endif
         @if($offer->pricing->hasPromotion())
@@ -110,7 +110,7 @@
     </button>
     @if(! $canPurchase)
         <p class="store-cart-feedback">
-            @if($product->variants->isNotEmpty() && ! $selectedVariant)
+            @if($product->variants->where('is_active', true)->isNotEmpty() && ! $selectedVariant)
                 {{ $combinations === [] && $fields === [] ? 'Nenhuma opção disponível no momento.' : 'Escolha uma opção disponível para comprar.' }}
             @else
                 Produto sem estoque disponível para compra.
@@ -120,7 +120,7 @@
 
     @if($quoteUrl || $variantQuoteUrls)
         <a class="store-button product-detail-quote"
-            @if($product->variants->isNotEmpty())
+            @if($product->variants->where('is_active', true)->isNotEmpty())
                 href="{{ $selectedVariant ? ($variantQuoteUrls[$selectedVariant->id] ?? '#') : '#' }}"
                 aria-disabled="{{ $selectedVariant ? 'false' : 'true' }}"
                 @if(! $selectedVariant) onclick="event.preventDefault()" @endif

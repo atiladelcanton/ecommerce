@@ -1,8 +1,8 @@
-<x-store.layout title="Contato" description="Consulte os canais de contato da SABA." :canonical="route('store.contact')">
+<x-store.layout title="Contato" :description="'Consulte os canais de contato de '.\App\Support\Storefront\StoreBrand::currentName().'.'" :canonical="route('store.contact')">
     <div class="store-container store-institutional-page">
         <x-store.breadcrumb :items="[['label' => 'Contato']]" />
         <section class="store-institutional-intro">
-            <p class="store-eyebrow">Fale com a SABA</p>
+            <p class="store-eyebrow">Fale com {{ \App\Support\Storefront\StoreBrand::currentName() }}</p>
             <h1>Contato</h1>
             <p>Converse com nossa equipe sobre produtos, pedidos e dúvidas sobre o catálogo.</p>
         </section>

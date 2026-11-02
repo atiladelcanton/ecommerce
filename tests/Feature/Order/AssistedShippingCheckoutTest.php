@@ -134,31 +134,27 @@ final class AssistedShippingCheckoutTest extends TestCase
         $quote = $this->publish($order);
         $link = app(GetOrderShippingQuoteLinkAction::class)->execute($quote);
         Livewire::test(ShippingQuoteCheckout::class, ['number' => $order->number, 'revision' => $quote->revision, 'signedUrl' => $link])
-            ->assertSee('Confirmar pedido e pagamento de teste')->call('confirmPayment')->assertHasNoErrors()->assertSee('Pedido confirmado');
+            ->assertSee('Aceitar frete e ir para pagamento')->call('confirmPayment')->assertHasNoErrors()->assertRedirect();
         $this->assertDatabaseCount('payments', 1);
     }
 
-    public function test_gateway_failure_rolls_back_stock_consumption_and_quote_acceptance(): void
+    public function test_unconfigured_gateway_does_not_create_payment_or_consume_stock(): void
     {
         [$product, $order] = $this->request();
         $quote = $this->publish($order);
         $link = app(GetOrderShippingQuoteLinkAction::class)->execute($quote);
-        $this->app->instance(PaymentGateway::class, new class implements PaymentGateway
-        {
-            public function createPayment(PaymentRequest $request): PaymentResult
-            {
-                return new PaymentResult('fake', 'rejected-test', PaymentStatus::FAILED, true);
-            }
-        });
+        config(['payments.default' => 'not-configured']);
         try {
-            app(ConfirmQuotedOrderAction::class)->execute($order->number, 1, $link);
-            self::fail('A rejected payment must not consume stock');
+            app(ConfirmQuotedOrderAction::class)->execute($order->number, $quote->revision, $link);
+            self::fail('A payment provider must be configured.');
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey('payment', $exception->errors());
         }
         $this->assertSame(5, $product->fresh()->stock);
-        $this->assertSame(ShippingPricingStatus::QUOTED, $order->fresh()->shipping_pricing_status);
-        $this->assertNull($quote->fresh()->accepted_at);
+        // Acceptance is durable: once the buyer accepted, do not reprice
+        // the order merely because an external payment provider is offline.
+        $this->assertSame(ShippingPricingStatus::CONFIRMED, $order->fresh()->shipping_pricing_status);
+        $this->assertNotNull($quote->fresh()->accepted_at);
         $this->assertNull(InventoryReservation::query()->sole()->consumed_at);
         $this->assertDatabaseCount('payments', 0);
     }

@@ -59,6 +59,12 @@ final class TransitionOrderStatusAction
                 throw ValidationException::withMessages(['status' => 'O cliente precisa confirmar o frete e o pagamento.']);
             }
             if ($to === OrderStatus::CANCELLED) {
+                // A hosted checkout may still settle after a manual order cancellation.
+                // Request its cancellation at the provider and wait for terminal webhook.
+                if ($locked->payments()->where('gateway', 'asaas')
+                    ->where('status', PaymentStatus::PENDING->value)->exists()) {
+                    throw ValidationException::withMessages(['status' => 'Existe uma cobrança Asaas pendente. Solicite o cancelamento no Asaas e aguarde a confirmação antes de cancelar este pedido.']);
+                }
                 $reason = filled($cancellationReason) ? trim((string) $cancellationReason) : null;
                 if ($reason !== null && mb_strlen($reason) > 1000) {
                     throw ValidationException::withMessages(['cancellation_reason' => 'O motivo do cancelamento deve ter no máximo 1.000 caracteres.']);
@@ -89,6 +95,7 @@ final class TransitionOrderStatusAction
 
                 $locked->cancellation_reason = $reason;
                 $locked->cancelled_at = now();
+                app(\App\Domain\Influencer\Services\SyncInfluencerCommission::class)->execute($locked, 'cancelled');
             }
             $mode = OrderShipping::mode($locked);
             if ($contingency && ! filled($description)) {

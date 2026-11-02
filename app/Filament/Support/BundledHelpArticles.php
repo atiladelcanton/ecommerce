@@ -17,6 +17,119 @@ final class BundledHelpArticles
         static $articles = null;
 
         return $articles ??= [
+            'influenciadores' => <<<'ARTICLE_INFLUENCIADORES_END'
+## Para que serve o módulo Influenciadores?
+
+Ele permite que a loja tenha parceiros que divulgam **cupons de desconto**. Quando um cliente usa o cupom de um influenciador, o e-commerce registra o pedido e calcula a comissão conforme as regras configuradas.
+
+Você não precisa abrir uma conta Nuvemshop nem conectar outro aplicativo: **o painel de influenciadores funciona dentro desta instalação do e-commerce**, no endereço `/influencers`. Ele é separado do `/admin` e de **Minha conta** dos compradores.
+
+## 1. Cadastre o influenciador
+
+1. Entre em **Vendas → Influenciadores** no painel administrativo.
+2. Clique em **Novo influenciador**.
+3. Digite o nome e o e-mail que o parceiro utilizará para acessar seu painel.
+4. Crie uma senha inicial com **pelo menos dez caracteres**. Compartilhe-a por um canal seguro.
+5. No campo **Comissão (%)**, informe a porcentagem desejada: `5` equivale a **5%**, `7,5` a **7,5%** e `10` a **10%**. O limite é 100%.
+6. Opcionalmente, informe Instagram, TikTok e chave Pix. Não é necessário fornecer dados bancários para acompanhar vendas.
+7. Deixe **Influenciador ativo** ligado e salve.
+
+**Atenção:** o cadastro **não cria automaticamente um cupom**. O influenciador precisa ter um ou mais cupons vinculados.
+
+## 2. Aproveite a tela de cupons já existente
+
+1. Acesse **Vendas → Cupons de desconto**.
+2. Clique em **Novo cupom** ou edite um cupom sem utilizações anteriores.
+3. Informe o código que o público vai digitar, por exemplo, `MARIA10`.
+4. No campo **Influenciador (opcional)**, escolha o parceiro. Para criar um cupom comum da loja, deixe o campo vazio.
+5. Configure o desconto oferecido ao comprador: percentual ou valor fixo. **O desconto do cliente é diferente da comissão do influenciador.**
+6. Escolha onde o cupom vale: todos os produtos, categorias selecionadas ou produtos específicos.
+7. Revise subtotal mínimo, desconto máximo, data de início, data final, limite total e permissão de acumular com produtos em promoção.
+8. Marque **Cupom ativo** e salve.
+
+O cadastro de cupons mantém a regra original de **uma utilização/reserva por CPF/CNPJ e por código**. Não é possível transferir um cupom para outro influenciador depois que algum pedido usou ou reservou esse código, para não transferir comissões retroativamente.
+
+## 3. Entenda o cálculo da comissão
+
+A comissão considera apenas o valor dos produtos **após o desconto do cupom**, **sem incluir frete**.
+
+**Exemplo:** cliente compra R$ 300,00 em produtos; usa um cupom com R$ 30,00 de desconto; paga R$ 25,00 de frete. O influenciador tem comissão de 5%.
+
+- Base da comissão: R$ 300,00 − R$ 30,00 = **R$ 270,00**.
+- Comissão prevista: 5% × R$ 270,00 = **R$ 13,50**.
+- Frete de R$ 25,00: **não participa** do cálculo.
+
+O percentual é registrado no pedido. Se você mudar a taxa do influenciador amanhã, **as comissões dos pedidos anteriores não mudam**.
+
+## 4. Acompanhe os estados dos pedidos e das comissões
+
+| Situação | Significado para o parceiro |
+| --- | --- |
+| **Pedido pendente** | O cliente finalizou o carrinho, mas o pagamento ainda não foi confirmado. O valor **não está disponível para repasse**. |
+| **Prevista** | O pagamento foi confirmado e a comissão foi calculada, mas a loja ainda não a aprovou. |
+| **Aprovada** | A equipe autorizada analisou a comissão; o pagamento ao parceiro ainda precisa ser realizado. |
+| **Paga** | Um Administrador registrou no painel que **já fez o repasse**. O sistema não transfere Pix automaticamente. |
+| **Cancelada** | O pedido não concluiu a compra ou a reserva foi liberada antes do pagamento. |
+| **Em revisão** | Houve cancelamento após pagamento ou outro problema financeiro; é necessário conferir se existe reembolso. |
+| **Revertida** | A comissão foi anulada manualmente por Administrador, com justificativa. |
+
+**Nunca aprove nem pague comissões de pedidos pendentes.** Se houver cancelamento depois do pagamento, confira o Asaas e a situação do reembolso antes de decidir sobre a comissão. Cancelar um pedido, por si só, não é comprovante de reembolso financeiro.
+
+## 5. Como aprovar e registrar um repasse
+
+1. Vá em **Vendas → Comissões de influenciadores**.
+2. Localize o parceiro, o número do pedido, a base de cálculo e a situação.
+3. Depois de conferir o pagamento do cliente, utilize **Aprovar** na comissão prevista.
+4. Faça a transferência Pix por sua instituição financeira. Esta operação ocorre **fora do e-commerce**.
+5. **Somente depois que a transferência for concluída**, clique em **Registrar repasse**.
+6. Se precisar anular uma comissão ainda não paga, utilize **Reverter** e informe a justificativa. Se a comissão já foi paga e depois houve reembolso, trate o valor com o parceiro fora do sistema: **não há recuperação Pix automática**.
+
+Ações de aprovar, registrar pagamento e reverter são restritas aos Administradores. Ao registrar o repasse, informe uma **referência do Pix ou comprovante**. Outros operadores autorizados podem consultar os valores, mas só o Administrador cadastra influenciadores e altera a taxa, a senha e os dados financeiros.
+
+## 6. Como o influenciador acessa o próprio painel
+
+1. Envie o endereço da sua loja seguido de `/influencers/login`.
+2. O parceiro entra com o e-mail e a senha cadastrados.
+3. Na **Visão geral**, verá seus cupons, volume de pedidos, vendas confirmadas, comissões previstas, aprovadas e pagas.
+4. Em **Pedidos**, acompanhará as vendas atribuídas, sem visualizar nome, CPF, e-mail, telefone ou endereço dos compradores.
+5. Em **Comissões**, verá o valor calculado por pedido e o status.
+6. Em **Pagamentos**, verá apenas os repasses marcados como pagos pelo administrador, com data e valor.
+7. Em **Meu perfil**, poderá atualizar redes sociais, chave Pix e senha.
+
+O influenciador não acessa o Filament administrativo, outras contas de influenciadores nem dados pessoais dos clientes.
+
+## 7. Como suspender um influenciador ou um cupom
+
+Para suspender o acesso ao portal, abra **Vendas → Influenciadores**, edite a pessoa e desative **Influenciador ativo**. O cadastro e o histórico permanecem intactos.
+
+**A desativação do perfil não cancela cupons automaticamente.** Se quiser impedir novos descontos, abra **Vendas → Cupons de desconto** e desative também os códigos correspondentes. Vendas e comissões anteriores continuam no histórico.
+
+## 8. Perguntas frequentes
+
+**O cupom dá desconto e também paga comissão?** Sim. O desconto reduz o valor pago pelo comprador; a comissão remunera o parceiro conforme a taxa cadastrada.
+
+**Posso ter mais de um cupom por influenciador?** Sim. Todos os cupons vinculados aparecem na conta do parceiro.
+
+**Posso usar um cupom sem influenciador?** Sim, normalmente. Deixe **Influenciador** em branco no cadastro.
+
+**Posso associar um cupom usado anteriormente a um influenciador?** Não. Depois do primeiro pedido atribuído, a associação fica protegida para não alterar a titularidade histórica.
+
+**O influenciador vê o CPF do comprador?** Não. O painel mostra apenas dados de pedidos e comissões pertinentes ao parceiro.
+
+**Existe transferência automática Pix, gamificação, ranking ou fechamento mensal?** **Não nesta primeira versão integrada.** O registro de repasses é manual. A gamificação e os fechamentos do projeto antigo são funcionalidades que poderão ser migradas depois, sem reintroduzir uma segunda base de pedidos.
+
+**Preciso manter o projeto antigo da Nuvemshop funcionando?** Não para usar este novo portal. A integração nativa obtém os pedidos diretamente do e-commerce atual. O projeto antigo foi utilizado como referência de funcionamento e visual, mas seus dados históricos da Nuvemshop não são importados automaticamente.
+
+## Checklist de implantação
+
+- [ ] Cadastrei o influenciador e configurei a taxa de comissão.
+- [ ] Criei um cupom ativo e o vinculei ao parceiro.
+- [ ] Testei o acesso em `/influencers/login` com uma conta de teste.
+- [ ] Confirmei que um pedido pendente aparece sem gerar valor disponível para repasse.
+- [ ] Homologuei o pagamento no Asaas Sandbox e a comissão prevista.
+- [ ] Testei a aprovação e o registro manual de repasse.
+- [ ] Confirmei que o parceiro não consegue consultar pedidos ou comissões de outro influenciador.
+ARTICLE_INFLUENCIADORES_END,
             'acessos-seguranca' => <<<'ARTICLE_ACESSOS_SEGURANCA_END'
 ## Quem pode usar o administrativo?
 
@@ -104,6 +217,10 @@ As permissões de um grupo personalizado controlam o **acesso completo a cada m�
 **Não consigo abrir uma página.** Confirme com um Administrador se o seu grupo inclui aquele módulo. Se a mensagem for **403 — Acesso negado**, não tente alterar a URL manualmente.
 
 **Criei o primeiro usuário pelo terminal e não consigo entrar.** O responsável técnico deve conceder o grupo Administrador usando o comando `php artisan saba:grant-admin usuario@exemplo.com`. Esse comando deve ser executado exclusivamente no servidor por quem possui acesso técnico.
+
+## Permissões do módulo Influenciadores
+
+O novo módulo **Vendas → Influenciadores** e a listagem **Comissões de influenciadores** seguem a permissão **Vendas — Influenciadores e comissões**. O grupo Operacional pode **consultar** as listas e os valores, mas **não pode cadastrar/editar contas de influenciadores, mudar suas taxas, senha ou chave Pix, nem aprovar ou registrar pagamentos**. Essas operações ficam com o Administrador. A regra é verificada pelo servidor, não apenas pela visibilidade de botões. O portal `/influencers` usa uma autenticação própria, sem acesso ao `/admin`.
 ARTICLE_ACESSOS_SEGURANCA_END,
             'acoes-etiquetas' => <<<'ARTICLE_ACOES_ETIQUETAS_END'
 ## Entenda os botões relacionados a uma etiqueta
@@ -348,12 +465,18 @@ ARTICLE_BLOG_END,
 
 ## Cenário 5: o frete exige cotação manual
 
-1. O cliente conclui a solicitação sem frete automático e o pedido fica aguardando proposta.
-2. No detalhe do pedido, clique **Informar cotação de entrega**.
-3. Cadastre transportadora, serviço, valor, prazo e validade; confirme todos os dados com o transportador.
-4. Utilize **Abrir link do cliente** para conferir a proposta publicada.
-5. Aguarde o comprador aceitar a condição e concluir o pagamento antes de preparar a mercadoria.
-6. Após aprovação, siga a etapa de preparação e envio correspondente.
+**Exemplo:** um cliente pede uma máquina de R$ 2.000,00 que precisa ser entregue por transportadora externa.
+
+1. O cliente seleciona **Solicitar cotação de entrega**. O pedido é criado com valor total **A definir**, sem cobrança.
+2. No detalhe do pedido, clique **Informar cotação de entrega** e cadastre a transportadora, o serviço, o frete de R$ 280,00, o prazo e a validade.
+3. Confira o novo total: **R$ 2.280,00**. O número do pedido **não muda**.
+4. Envie a cotação pelo e-mail cadastrado (SMTP configurado) ou abra **Compartilhar pelo WhatsApp** e confirme o envio manual da mensagem.
+5. O cliente abre o link, revisa as condições e clica **Aceitar frete e ir para pagamento**. Ele é direcionado ao checkout do Asaas.
+6. Enquanto o pagamento está pendente, **não prepare a mercadoria** e não crie outra cobrança. Se o cliente fechou a aba, pode continuar o checkout pelo acompanhamento do pedido.
+7. Após o **webhook confirmar** o pagamento, o pedido passa para **Pedido pago**. Clique **Iniciar preparação**.
+8. Como o frete foi contratado diretamente com outra transportadora, use o fluxo de **envio manual**, sem gerar etiqueta do Melhor Envio.
+
+**Se a proposta vencer:** publique outra cotação no mesmo pedido. **Se já houver cobrança pendente:** verifique o Asaas e espere a conclusão antes de alterar o frete.
 
 ## Cenário 6: um artigo foi escrito com IA e não aparece na home
 
@@ -444,6 +567,18 @@ ARTICLE_CATEGORIAS_END,
 - [ ] Compra de teste completa e status conferidos até a etapa esperada.
 - [ ] Políticas comerciais/contato conferidos com os responsáveis pela operação.
 
+## Checklist: cotação de entrega negociada
+
+- [ ] Conferir se o pedido está **Pedido recebido / Aguardando cotação**.
+- [ ] Conferir transportadora, endereço, preço e prazo com o prestador do transporte.
+- [ ] Abrir **Informar cotação de entrega** e preencher todos os campos obrigatórios.
+- [ ] Conferir o **total atualizado** do pedido e a validade da proposta.
+- [ ] Compartilhar o link assinado: **WhatsApp manual**, **Copiar link** ou **Enviar cotação por e-mail** (com SMTP de verdade).
+- [ ] Esperar o **aceite pelo cliente**; não cobrar antes.
+- [ ] Esperar a **aprovação Asaas**; não expedir com pagamento apenas pendente.
+- [ ] Se o checkout ficou inconclusivo, verificar o Asaas e **não repetir cobrança**.
+- [ ] Com o pagamento aprovado, seguir preparação e envio manual.
+
 ## Checklist: cadastrar um novo produto
 
 - [ ] Categoria correta.
@@ -497,6 +632,15 @@ ARTICLE_CATEGORIAS_END,
 ## Regra de segurança
 
 Nunca compartilhe **API Key do Asaas, Groq ou Client Secret do Melhor Envio**, senhas, tokens, dados completos de cartão ou documentos pessoais em grupos. Em situações de cobrança ou etiqueta incerta, consulte o provedor e a equipe técnica antes de repetir uma ação irreversível.
+
+## Checklist opcional — campanha com influenciadores
+
+- [ ] Cadastrei o parceiro em **Vendas → Influenciadores**, defini o percentual e criei acesso ao portal.
+- [ ] Criei um cupom em **Vendas → Cupons de desconto**, vinculei o influenciador e revisei limites e validade.
+- [ ] Testei o acesso privado em `/influencers/login` e a visualização apenas dos próprios pedidos.
+- [ ] Homologuei uma compra e confirmei que a comissão só passou a **prevista** depois do pagamento aprovado.
+- [ ] Conferi e aprovei a comissão, realizei o Pix fora do sistema e registrei o repasse com referência.
+- [ ] Testei cancelamentos e estornos para não aprovar repasses indevidos.
 ARTICLE_CHECKLISTS_END,
             'clientes' => <<<'ARTICLE_CLIENTES_END'
 ## Consulta de clientes
@@ -514,6 +658,12 @@ Acesse **[Vendas → Clientes](/admin/customers)**. A listagem permite localizar
 ## Compra sem cadastro
 
 A loja permite **checkout de visitante**. Ele informa nome, e-mail, telefone, documento e endereço para realizar o pedido. Isso **não cria automaticamente uma conta**. A vinculação de um pedido de visitante a uma conta criada depois segue validações da sessão de origem, e-mail e documento. Não vincule manualmente pedidos apenas porque dois clientes informaram o mesmo e-mail.
+
+## Acompanhar uma compra com frete sob consulta
+
+Na área **Minha conta → Pedidos**, o cliente autenticado vê o pedido aguardando cotação. Quando a loja publica o frete, aparece um link para revisar a proposta e aceitar o valor. Depois de aceitar, encontra a informação do pagamento pendente e, quando seguro, o botão para continuar no Asaas. Ele não precisa refazer o carrinho nem criar outra compra. Se a proposta vencer, deve pedir uma nova cotação à loja.
+
+Pedidos feitos como visitante podem ser acompanhados usando o **link privado assinado** recebido da loja. O link é restrito ao pedido e tem data de validade. Nunca compartilhe esse link com terceiros.
 
 ## Endereços
 
@@ -554,12 +704,16 @@ Abra **[Configurações → Configurações da loja](/admin/store-settings)**. O
 2. Escolha a **cor primária** para destaques, links e elementos importantes.
 3. Escolha a **cor secundária** para faixas e elementos complementares.
 4. Escolha a **cor dos botões**, que será aplicada às principais ações de compra.
-5. **Salve** e abra a loja pública em outra aba para conferir em computador e celular.
-6. Para voltar à cor padrão, deixe o campo de cor vazio. Ao remover o logotipo personalizado, a loja volta ao logo padrão disponível no template.
+5. **Clique em Salvar**. A logo cadastrada passa a aparecer tanto na **loja pública** (cabeçalho e rodapé) quanto no **painel /admin**, inclusive na tela de login. O nome exibido no painel também acompanha o campo **Nome da loja**.
+6. Abra a loja pública e o painel em outras abas para conferir o resultado. Atualize as páginas após salvar.
+7. Para voltar à cor padrão, deixe o campo de cor vazio. Se remover o logotipo, o sistema mostra **o nome da loja como texto**, em vez de uma logo de outra empresa.
+8. Para trocar a imagem, envie a nova logo e salve novamente. A loja e o painel devem passar a exibir a mesma imagem.
+
+> **Dica:** o logotipo deve estar em armazenamento público. Se a imagem não abrir, confira se o administrador técnico executou `php artisan storage:link`, se o arquivo foi salvo e se o diretório de arquivos está acessível. A imagem antiga ainda pode aparecer temporariamente por cache do navegador; atualize a página forçando o recarregamento.
 
 A cor do texto dos botões é selecionada para manter contraste. Em algumas seções, a aparência também depende do template em uso.
 
-> **Importante:** não existe seletor de templates para o lojista. Só a equipe técnica pode executar `php artisan switch:template --template=1` ou `--template=2` na instalação correspondente.
+> **Importante:** a escolha de tema fica em **[Configurações → Temas da loja](/admin/store-templates)** para quem tem permissão de administrar as configurações. O grupo Operacional não pode trocar o tema. A troca do tema não apaga nome, logotipo ou cores cadastrados.
 
 ## Contato, endereço e canais
 
@@ -586,7 +740,7 @@ Desativar o blog não exclui os textos escritos no painel.
 
 1. Clique em **Salvar**.
 2. Abra a loja pública e atualize a página.
-3. Confira nome, logo e botões no desktop e no celular.
+3. Confira nome, logo e botões no desktop e no celular. Abra também o `/admin` e veja se a marca do painel mudou.
 4. Se o WhatsApp abrir número errado, revise DDI/DDD; se o frete falhar, revise principalmente o CEP de origem, peso e dimensões do produto.
 ARTICLE_CONFIGURAR_LOJA_END,
             'criar-asaas' => <<<'ARTICLE_CRIAR_ASAAS_END'
@@ -813,6 +967,10 @@ Uma pessoa pode aplicar o cupom e iniciar um pedido **sem ter pago ainda**. O si
 **O mesmo cliente pode usar a campanha novamente com outro cadastro?** A proteção usa CPF/CNPJ; mudar e-mail não altera a regra.
 
 **Criar cupom altera o preço cadastrado?** Não. O desconto é aplicado ao pedido válido no checkout.
+
+## Cupons para influenciadores
+
+É possível vincular um cupom a um influenciador no próprio formulário de **Cupons de desconto**, usando **Influenciador (opcional)**. O desconto do comprador e a porcentagem de comissão são coisas diferentes. Não será possível mudar o influenciador desse código depois que ele tiver sido usado ou reservado em algum pedido. Para cadastrar parceiros e acompanhar comissões, consulte **[Influenciadores, cupons e comissões](/admin/ajuda?topico=influenciadores)**.
 ARTICLE_CUPONS_END,
             'etiquetas' => <<<'ARTICLE_ETIQUETAS_END'
 ## O que é uma etiqueta de envio?
@@ -880,45 +1038,104 @@ Não clique repetidamente em **Gerar etiqueta** diante de resultado incerto. Vá
 Não é possível pular etapas só porque o comprador tem urgência.
 ARTICLE_ETIQUETAS_END,
             'frete-consulta' => <<<'ARTICLE_FRETE_CONSULTA_END'
-## Quando aparece “Frete sob consulta”?
+## O que significa “Frete sob consulta”?
 
-Quando o sistema não encontra uma forma automática elegível para entregar em um CEP válido, pode permitir que o comprador **solicite uma cotação negociada**. Isso também pode ocorrer quando a loja só oferece retirada local. Não é frete grátis e **não significa que o pedido foi pago**.
+Alguns produtos não possuem frete automático — por exemplo, máquinas grandes, móveis ou entregas feitas por transportadora contratada separadamente. Nesses casos, o cliente pode **solicitar uma cotação** em vez de desistir da compra. O pedido recebe um número, mas **ainda não está pago** e o total fica **A definir** até a loja informar o frete.
 
-## O que o cliente vê
+**Não crie outro pedido para cobrar o frete.** Tudo acontece no pedido original, com o mesmo número, os mesmos produtos e os mesmos dados do cliente.
 
-1. O cliente preenche identidade, endereço e itens do pedido.
-2. Sem entrega automática disponível, seleciona solicitação de **frete sob consulta**.
-3. O pedido é registrado como **Pedido recebido**, com pagamento pendente.
-4. O valor de frete e o total aparecem como **A definir** até sua proposta.
-5. Se houver controle de estoque, pode haver reserva por **24 horas**. Abrir o link novamente não prorroga esse prazo.
+## Etapa 1 — O cliente solicita a cotação
 
-## O que a loja deve fazer
+1. O cliente coloca os produtos no carrinho e preenche os dados do checkout.
+2. Quando não há entrega automática elegível, seleciona **Solicitar cotação de entrega**.
+3. O pedido é registrado em **Vendas → Pedidos**, com a situação **Aguardando cotação do frete**.
+4. O cliente vê **Frete: A definir**, **Total: A definir** e **Pagamento: Aguardando**. Nenhuma cobrança é criada nessa etapa.
+5. Os produtos de pronta entrega ficam reservados inicialmente por **24 horas**. Esse prazo não é o prazo de validade da cotação: são coisas diferentes.
 
-1. Abra **[Vendas → Pedidos](/admin/orders)** e localize pedidos recebidos aguardando cotação.
-2. Abra o detalhe e clique **Informar cotação de entrega**.
-3. Preencha **Transportadora**, **Serviço/descrição**, **Valor do frete**, **Prazo estimado em dias úteis** (se conhecido), **Instruções** e **Válida até**.
-4. Salve a proposta. Ela cria uma revisão; publicar nova cotação substitui a proposta anterior.
-5. Use **Abrir link do cliente** para visualizar o link protegido e enviá-lo ao comprador pelo canal adequado. O sistema não envia WhatsApp automaticamente só porque você publicou.
-6. O cliente abre, revisa valores finais e confirma a cotação. O fluxo de pagamento é iniciado somente quando ele escolhe concluir.
-7. Após confirmação do pagamento pelo meio configurado, prepare o pedido e cuide do envio manual conforme o serviço negociado.
+## Etapa 2 — O administrador informa o valor
 
-## O que não pode mudar durante a cotação
+1. Entre no administrativo e abra **[Vendas → Pedidos](/admin/orders)**.
+2. Localize o pedido (por exemplo, `PED-000017`) e clique para abrir os detalhes.
+3. Selecione **Informar cotação de entrega**.
+4. Preencha **Transportadora** (quem transportará), **Serviço / descrição**, **Valor do frete**, **Prazo estimado** em dias úteis, **Instruções** para o cliente e **Válida até**.
+5. Confira o endereço completo e o valor negociado com a transportadora. Salve.
+6. O e-commerce atualiza automaticamente o valor do frete e o **total do mesmo pedido**. Os produtos, quantidades e preços já negociados permanecem como estavam.
 
-Os itens, quantidades, preços e o endereço do pedido já possuem **snapshot**: não são recalculados com base em cadastros atualizados após a solicitação. O frete e o total só ficam definidos quando a proposta é publicada e confirmada.
+**Exemplo:** produtos R$ 2.000,00 + frete R$ 280,00 = **R$ 2.280,00**. Se houver cupom, o desconto do pedido continua no cálculo.
 
-## Segurança do link
+A situação fica **Frete cotado — aguardando confirmação**. Ainda não existe pagamento aprovado.
 
-- O link contém proteção e validade. Não publique em redes sociais nem repasse a terceiros.
-- Comprador cadastrado deve se autenticar como titular; visitante usa o link protegido.
-- Visualizar a página (GET) **não aceita a cotação nem cobra** automaticamente.
-- Uma proposta vencida ou substituída precisa de nova confirmação; o sistema revalida estoque após expiração da reserva.
+## Etapa 3 — Enviar a cotação ao cliente
 
-## Erros mais frequentes
+Depois de publicar uma proposta válida, o pedido mostra as opções:
 
-- **Valor final continua “A definir”:** cotação ainda não foi publicada/confirmada.
-- **Link expirou:** publique nova proposta, com novo prazo.
-- **Cliente não consegue confirmar:** confira titularidade, validade, revisão e disponibilidade de estoque.
-- **Pedido apareceu sem pagamento:** normal até que o cliente aceite e conclua o pagamento.
+- **Abrir link do cliente:** visualiza a página que o comprador receberá, com o preço final.
+- **Copiar link para o cliente:** copia a URL assinada para enviar por qualquer canal.
+- **Compartilhar pelo WhatsApp:** abre o WhatsApp com uma mensagem pronta. O administrador precisa confirmar o envio; não é um envio automático de mensagens.
+- **Enviar cotação por e-mail:** solicita o envio da proposta para o **e-mail cadastrado no pedido**. O servidor precisa ter **SMTP / MAIL_MAILER** configurado para envio real. Se estiver configurado com o driver `log`, o e-mail será registrado no log, mas não chegará ao comprador. Um envio aceito pelo servidor de e-mail não garante que a mensagem chegou à caixa de entrada.
+
+**Atenção:** o link contém uma assinatura e uma validade. É particular; não publique em redes sociais. Para um cliente com conta, o sistema também exige login da conta titular.
+
+## Etapa 4 — O cliente aceita a proposta
+
+1. O cliente abre o link recebido ou entra em **Minha conta → Meus pedidos**.
+2. A página mostra transportadora, serviço, prazo, validade, observações, produtos, descontos, frete e total.
+3. O cliente clica em **Aceitar frete e ir para pagamento**.
+4. O sistema confere a validade e verifica novamente o estoque, caso a reserva inicial tenha vencido.
+5. O frete muda para **Frete confirmado**, e o sistema prepara a cobrança usando o **mesmo pedido**.
+6. Se o Asaas estiver configurado, o cliente segue para o **checkout hospedado do Asaas**, onde escolhe Pix ou cartão, conforme as opções permitidas pela loja.
+
+O clique no botão **não aprova o pagamento**. A compra só fica paga após confirmação efetiva do Asaas.
+
+## Etapa 5 — Cobrança e aprovação
+
+- **Pagamento pendente:** o checkout existe, mas o Asaas ainda não confirmou. O estoque controlado permanece reservado enquanto a cobrança remota estiver pendente.
+- **Pagamento aprovado:** o webhook ou a conciliação validada pelo Asaas confirma o valor e o pedido passa para **Pedido pago**. O estoque é efetivamente baixado.
+- **Cliente fechou a aba:** pode abrir **Minha conta → Meus pedidos** e continuar a cobrança pendente sem criar outro pedido.
+- **Cobrança recusada ou cancelada pelo Asaas:** depois da confirmação do provedor, o cliente pode tentar uma nova cobrança, sujeito à disponibilidade de estoque e às regras de cupom.
+- **Criação do checkout inconclusiva:** se houve falha de rede ou resposta indefinida, o sistema **não** cria outra cobrança automaticamente. O administrador deve verificar o painel Asaas e resolver a pendência antes de tentar novamente.
+
+**Em ambiente local com Asaas Sandbox:** o provedor precisa de uma **URL de retorno HTTPS pública**. Um `APP_URL=http://localhost:8081` não é suficiente para receber redirecionamento e webhooks reais. Configure um endereço HTTPS de teste, com endpoint de webhook acessível, antes de homologar.
+
+## Etapa 6 — Preparar e enviar o pedido
+
+Depois que constar **Pedido pago**:
+
+1. Abra o pedido em **Vendas → Pedidos** e clique **Iniciar preparação**.
+2. Separe os itens e confira as embalagens.
+3. Para entrega manual/transportadora externa, use o envio manual com transportadora e rastreio, quando disponíveis.
+4. **Não gere etiqueta do Melhor Envio** para um frete contratado diretamente com outra transportadora.
+5. Registre o envio e acompanhe a entrega normalmente.
+
+## O cliente não aceitou a cotação. O que fazer?
+
+Se o cliente não aceitar a proposta, **não inicie uma cobrança**. Se a cotação vencer, publique uma **nova proposta no mesmo pedido**. O link antigo deixa de valer; o histórico de revisões continua guardado.
+
+Se ele já aceitou e existe uma cobrança Asaas pendente, **não altere o preço do frete**, nem cancele o pedido liberando estoque. Primeiro verifique e encerre a cobrança junto ao provedor; aguarde a confirmação oficial.
+
+## Onde o cliente acompanha?
+
+- **Página de confirmação:** mostra frete a definir, cotação disponível, pagamento pendente ou aprovado, conforme a etapa.
+- **Minha conta → Pedidos:** apresenta o frete atualizado, o total e o botão de aceitar cotação ou continuar pagamento, quando aplicável.
+- **Página de pagamento:** informa se a cobrança está pendente, aprovada ou em revisão e oferece o link do Asaas quando seguro.
+
+## Problemas comuns
+
+**A cotação venceu:** abra o pedido e publique outra proposta com prazo novo.
+
+**O cliente perdeu o link:** abra o pedido e copie ou envie novamente o link ainda válido.
+
+**O cliente vê “estoque indisponível”:** a reserva inicial pode ter vencido e outro cliente comprou o produto. Confira o estoque antes de prometer a entrega.
+
+**O e-mail não chegou:** confira `MAIL_MAILER`, SMTP, domínio remetente e logs. Use o link pelo WhatsApp como alternativa.
+
+**O pedido parece parado após um pagamento:** o worker de filas precisa estar em execução. Com `QUEUE_CONNECTION=database`, configure `php artisan queue:work` no servidor (Supervisor ou serviço equivalente) e o cron do Laravel. Não é necessário Redis.
+
+**O cliente pagou mas o pedido não mudou para Pago:** verifique a cobrança correspondente no Asaas, o valor, o ambiente e a recepção dos webhooks. Não marque como pago somente porque o cliente enviou uma captura de tela.
+
+**A cobrança está em análise:** não repita o checkout. Confira o painel Asaas ou solicite apoio técnico para conciliar o pagamento.
+
+**O frete mudou depois do aceite:** não edite a proposta enquanto existe cobrança pendente. Primeiro resolva o pagamento existente, com cuidado para não gerar cobrança duplicada.
 ARTICLE_FRETE_CONSULTA_END,
             'frete' => <<<'ARTICLE_FRETE_END'
 ## Onde configurar
@@ -1136,6 +1353,18 @@ A integração operacional configurável do projeto é o **Asaas**, com **checko
 
 O quadro do administrativo informa a URL exata do webhook, além dos eventos **CHECKOUT_CREATED**, **CHECKOUT_PAID**, **CHECKOUT_CANCELED** e **CHECKOUT_EXPIRED**. Configure **todos os eventos indicados** e o mesmo token nos dois sistemas.
 
+## Frete sob consulta: quando a cobrança começa?
+
+Ao solicitar uma cotação, o cliente **não paga ainda**, e o total não está pronto. O administrador publica o frete, o cliente revisa os valores e clica **Aceitar frete e ir para pagamento**. Só nesse momento o sistema pode preparar o checkout hospedado do Asaas.
+
+O sistema registra uma tentativa de pagamento e reutiliza a mesma tentativa enquanto ela estiver pendente. Não gera uma segunda cobrança por cliques repetidos. O Asaas deve informar o resultado oficial por webhook; voltar do navegador ou clicar em “pagar” não aprova a venda.
+
+**Webhook e fila:** o Asaas envia eventos para a URL pública da loja, mas os eventos são processados pela fila Laravel. Quando `QUEUE_CONNECTION=database`, é necessário manter **`php artisan queue:work`** em execução (por exemplo, via Supervisor) e o agendador **`php artisan schedule:run`** a cada minuto. Se o worker parar, a cobrança pode aparecer como paga no Asaas, mas ainda pendente na loja. Não é necessário Redis.
+
+**Checkout com resultado incerto:** uma falha de rede pode acontecer depois de o Asaas ter recebido o pedido de criação. Nessa situação o sistema mantém a cobrança em revisão e **não repete o POST automaticamente**. O administrador deve conferir a cobrança no painel Asaas e resolver a pendência antes de oferecer nova tentativa. Isso evita cobrança duplicada.
+
+Para ambiente local/Sandbox, configure uma URL HTTPS de teste acessível externamente. O webhook e o retorno do Asaas não funcionam plenamente em `http://localhost` sem túnel HTTPS.
+
 ## Como verificar o pagamento de um pedido
 
 1. Abra **[Pedidos](/admin/orders)** e encontre a compra.
@@ -1213,6 +1442,14 @@ Use **[Vendas → Pedidos](/admin/orders)** para ver detalhes, pagamento, valore
 | **Entregue** | Entrega/retirada concluída. | Encerrar acompanhamento. |
 | **Cancelado** | Venda encerrada dentro das regras de cancelamento. | Conferir separadamente reembolso e etiqueta, se houver. |
 
+## Fluxo especial: frete sob consulta
+
+Um pedido pode aparecer como **Pedido recebido** e com **Frete: A definir**. Isso não é erro e não significa que foi pago. O administrador informa o valor em **Informar cotação de entrega**; o total é atualizado no **mesmo pedido**. Em seguida, compartilha o link com o cliente (cópia, WhatsApp manual ou envio por e-mail com SMTP configurado).
+
+O cliente aceita a proposta e é encaminhado ao checkout hospedado do Asaas. **Somente a confirmação do provedor** transforma o status comercial em **Pedido pago**. Quando a cobrança estiver pendente, **não altere o frete nem cancele comercialmente o pedido liberando estoque**; solicite o cancelamento da cobrança no Asaas e espere o webhook terminal.
+
+Ações e estados detalhados, com exemplos, estão em **Frete sob consulta e negociação** nesta central de Ajuda.
+
 ## Fluxo normal de entrega automática
 
 1. O cliente escolhe produto, endereço, frete e finaliza a compra.
@@ -1267,6 +1504,10 @@ Abra o detalhe e confira: número, data, dados de contato, documento do comprado
 ### Pedido preso em uma etapa
 
 Primeiro abra os detalhes e leia a mensagem de erro/histórico. Depois consulte o tutorial específico de **Pagamentos**, **Etiquetas** ou **Frete sob consulta**. **Nunca mude um status só para esconder uma falha de integração.**
+
+## Pedidos feitos com cupons de influenciadores
+
+Quando um cliente conclui uma compra com um cupom vinculado a um influenciador, o sistema registra a atribuição ao parceiro. Enquanto o pagamento não estiver confirmado, a comissão é **pendente**; depois da confirmação, aparece como **prevista**. A equipe Administradora faz a aprovação e o repasse manual, em **Vendas → Comissões de influenciadores**. O pedido continua seguindo os status operacionais normais. Consulte **[Influenciadores, cupons e comissões](/admin/ajuda?topico=influenciadores)**.
 ARTICLE_PEDIDOS_END,
             'pos-venda' => <<<'ARTICLE_POS_VENDA_END'
 ## O pós-venda começa antes de marcar um pedido como entregue
@@ -1454,94 +1695,278 @@ O administrador **não troca templates**. Ele altera logo e cores em Configuraç
 Guarde número do pedido, data/hora, tela da operação e mensagem de erro **sem expor chaves, senhas, tokens ou documentos completos**.
 ARTICLE_PROBLEMAS_END,
             'produtos' => <<<'ARTICLE_PRODUTOS_END'
-## Cadastro completo — do início ao produto visível
+## Como cadastrar um produto na loja
 
-Acesse **[Catálogo → Produtos](/admin/products)** e clique em **Novo produto**. O formulário possui seções organizadas; preencha uma a uma.
+Este tutorial mostra o cadastro **do começo ao fim**, inclusive as **variações simplificadas**. Não importa o que sua loja vende: equipamentos, cosméticos, alimentos, roupas, peças, ferramentas ou outro tipo de produto. Os nomes das opções são definidos por você.
 
-### 1. Informações
+Para começar, abra **[Catálogo → Produtos](/admin/products)** e clique em **Novo produto**. Você pode voltar a editar depois; o importante é conferir todos os dados antes de disponibilizar a venda.
 
-1. **Nome:** descreva exatamente o que será vendido, por exemplo “Mesa de impressão serigráfica 4 berços”.
-2. **Slug:** deixe vazio ao cadastrar para gerar uma URL amigável. Alterar a URL de produto já divulgado pode quebrar links.
-3. **SKU:** código interno opcional; se informado, deve ser único. Não reutilize o mesmo SKU em produtos diferentes.
-4. **Categoria:** escolha uma das categorias já cadastradas.
-5. **Descrição curta:** resumo para ajudar o comprador na decisão.
-6. **Descrição completa:** explique finalidade, conteúdo da embalagem, modo de uso, compatibilidades e cuidados. O editor permite títulos, listas, negrito, itálico e links.
-7. **SEO:** título e descrição de busca são opcionais; se vazios, a loja usa informações do cadastro.
+## Antes de começar: o que separar
 
-### 2. Mídia
+Tenha em mãos o nome, a categoria, fotos, preço real, disponibilidade, quantidade em estoque (se houver controle), peso e medidas **do pacote pronto para envio**. Se o cliente precisa escolher alguma opção, anote os valores possíveis. Por exemplo: Voltagem 110 V ou 220 V, Volume 500 ml ou 1 L, Modelo A ou B.
 
-1. Clique em **Adicionar fotos** e envie JPG, PNG ou WebP, cada uma com até **5 MB**.
-2. Na edição, confira a foto principal, a ordem da galeria e remova associações indesejadas.
-3. A primeira foto adicionada vira principal; você pode promover outra na edição.
-4. Se existir, informe a URL do **vídeo demonstrativo do YouTube**.
-5. Prefira imagens com produto nítido e fundo adequado; não use fotos que representem acessórios não incluídos na venda sem esclarecer.
+**Dica:** se a categoria ainda não existe, crie primeiro em **[Catálogo → Categorias](/admin/categories)**. O produto precisa estar vinculado a uma categoria.
 
-### 3. Comercial
+## Passo 1 — Informações do produto
 
-- **Preço de custo:** somente administrativo, nunca mostrado ao comprador. Pode ser zero se você não controla custo neste cadastro.
-- **Preço de venda:** obrigatório e maior que zero.
-- **Preço promocional:** opcional, também maior que zero e sempre menor que o preço normal.
-- Os campos monetários usam **digitação por centavos**. Exemplo: `129990` aparece como **R$ 1.299,90**.
+Na seção **Informações**, preencha:
 
-### 4. Disponibilidade e estoque
+1. **Nome:** escreva o que o comprador receberá. Exemplo: “Furadeira de impacto 650 W”. Evite títulos vagos como “Produto novo”.
+2. **Slug:** é a parte do endereço da página do produto. Pode ficar vazio na criação; o sistema gera um endereço a partir do nome. Evite alterar o slug depois de divulgar o link.
+3. **SKU:** código interno de identificação, opcional. Se usado, precisa ser diferente do SKU de outros produtos. Exemplo: `FUR-650-001`.
+4. **Categoria:** selecione uma categoria cadastrada. O campo permite pesquisar pelo nome.
+5. **Descrição curta:** explique em poucas frases o que é o produto e seu principal uso.
+6. **Descrição:** detalhe materiais, medidas do produto, o que acompanha a embalagem, modo de uso, compatibilidade e cuidados. Use os botões do editor para **títulos, negrito, listas e links**.
 
-- **Pronta entrega:** mercadoria disponível para expedição imediata, sujeita ao estoque.
-- **Sob encomenda:** comprável conforme as regras da loja, sem baixa/reserva de estoque imediato da mesma forma que pronta entrega.
-- **Indisponível:** não é ofertado para compra.
-- **Estoque:** quantidade em unidades. Campo vazio representa ausência de controle de estoque, não necessariamente estoque zero.
+**Atenção:** especificações técnicas devem ser verdadeiras. Não diga que um produto é bivolt se o fabricante não informa isso. O editor aceita formatação, mas não scripts nem anexos inseridos no texto.
 
-### 5. Transporte (crítico para frete automático)
+### Exemplo de descrição
 
-Informe **peso embalado em kg** e **altura, largura e comprimento em cm**. Use as medidas de uma unidade vendável já embalada. Por exemplo: peso `1.250` kg? **Não:** para 1 kg e 250 g, informe `1,250` kg conforme o campo numérico. Não confunda gramas com quilos. Confira a prévia antes de salvar.
+**Nome:** Garrafa térmica 1 litro.
 
-Sem medidas válidas, o Melhor Envio pode não retornar cotações. Produtos muito grandes podem exceder os limites de determinadas transportadoras; isso não significa falha do site.
+**Descrição curta:** Garrafa térmica para armazenar bebidas quentes ou frias, com capacidade de 1 litro.
 
-### 6. Publicação
+**Descrição completa:** Material, instruções de limpeza, dimensões do produto, prazo de garantia e conteúdo da embalagem — **somente se essas informações estiverem confirmadas**.
 
-- **Ativo:** controla a visibilidade pública.
-- **Produto em destaque:** candidato à vitrine de destaques da página inicial.
-- **Permitir cotação pelo WhatsApp:** habilita a ação de contato comercial se houver telefone configurado.
+## Passo 2 — SEO (opcional)
 
-Clique em **Salvar**, abra a página pública do produto e teste fotos, preço, variação, carrinho e cálculo de entrega.
+SEO ajuda os buscadores a entenderem sua página.
 
-## Revisão antes da publicação
+- **Título SEO:** título exibido, quando aplicável, nos resultados de busca. Procure ser claro; cerca de 60 caracteres é uma referência, não uma obrigação.
+- **Descrição SEO:** resumo da página para os buscadores. Cerca de 160 caracteres costuma funcionar bem.
 
-- O nome descreve o que de fato será entregue?
-- O preço e a promoção foram conferidos?
-- As fotos mostram o item correto?
-- As variantes, se houver, estão completas?
-- O peso e as três dimensões correspondem à embalagem real?
-- Há estoque disponível ou modalidade sob encomenda adequada?
-- O produto e a categoria estão ativos?
+Se deixar esses campos vazios, o site utiliza informações do próprio cadastro. Não é necessário preencher SEO para concluir o produto.
 
-## Usar IA no cadastro
+## Passo 3 — Fotos e vídeo
 
-No formulário existe **Assistente de IA** para sugerir nome, resumo, descrição e SEO. A IA não define preço, medidas, estoque ou características técnicas sem base. Consulte **Assistente de IA** neste manual para as etapas detalhadas.
+Na seção **Mídia**:
 
-## Exemplo completo: cadastrar uma tinta de serigrafia
+1. Clique em **Adicionar fotos**.
+2. Selecione uma ou mais imagens em **JPG, PNG ou WebP**, com até **5 MB por foto**.
+3. Salve o produto para adicionar as imagens à galeria. A primeira foto enviada vira a principal inicialmente.
+4. Quando estiver **editando** um produto salvo, encontre a **Galeria de fotos** para usar **Definir principal**, **Alterar ordem** ou excluir uma foto da galeria.
+5. Se existir um vídeo demonstrativo, coloque a URL do **YouTube** em **Vídeo demonstrativo do YouTube**. É opcional.
 
-Este exemplo é apenas ilustrativo: **substitua os dados pelos dados reais do produto**.
+Use fotos reais e legíveis. Se mostrar acessórios que não acompanham o produto, deixe isso claro na descrição. Para fotos aparecerem publicamente, o armazenamento público da instalação precisa estar corretamente configurado.
 
-1. Vá até **Produtos → Novo produto**.
-2. Nome: “Tinta para serigrafia preta — 900 ml”. Se você vende outras cores e embalagens, avalie usar **variações** em vez de criar várias páginas iguais.
-3. Selecione a categoria **Tintas**. Se ela não existir, cadastre-a primeiro em Categorias.
-4. Na descrição curta, explique o principal benefício sem prometer resultado que não foi comprovado. Na descrição completa, informe uso, substratos compatíveis, modo de conservação e o que acompanha a compra.
-5. Cadastre o preço real, escolha se há promoção e informe estoque se houver controle.
-6. Adicione fotos reais do produto. Se tiver várias, organize a principal e a galeria.
-7. Pese e meça **a embalagem que você vai enviar** (não apenas a embalagem do fabricante). Preencha o peso em kg e as três medidas em cm.
-8. Marque **Ativo** e salve. Abra o produto na loja pública.
-9. Faça uma simulação de carrinho e frete com CEP válido. Corrija qualquer detalhe antes de divulgar.
+## Passo 4 — Preços e promoção
 
-### Se alguma informação estiver faltando
+Na seção **Comercial**, informe:
 
-Você pode salvar e terminar o cadastro depois. **Não publique um item para venda sem preço correto, identificação clara e condições reais de entrega.** Se não souber o peso ou dimensões, meça antes de habilitar o frete automático. Não invente informação técnica com IA.
+| Campo | O que significa | Exemplo |
+| --- | --- | --- |
+| Preço de custo | Quanto custa à loja; uso interno, não mostrado ao comprador. É obrigatório preencher, podendo ser zero se não há custo controlado. | R$ 70,00 |
+| Preço de venda | Valor normal cobrado do cliente. Deve ser maior que zero. | R$ 120,00 |
+| Preço promocional | Opcional. **Deixe vazio ou 0,00 para não ter promoção.** Se houver oferta, ela deve ser menor que o preço de venda. | R$ 99,90 |
 
-### Alterar um produto já publicado
+Os campos de dinheiro utilizam entrada em **centavos**: ao digitar `9990`, confira se aparece **R$ 99,90**. Antes de salvar, confira a formatação na tela.
 
-1. Abra **Produtos** e pesquise pelo nome ou SKU.
-2. Clique em editar, modifique o campo necessário e salve.
-3. Confira o resultado na loja. Alterar o preço atual **não muda o preço de pedidos já feitos**.
-4. Se quiser tirar o item de venda temporariamente, desative **Ativo** ou mude a disponibilidade conforme o caso, em vez de apagar um histórico importante.
+**Para retirar uma promoção:** apague o valor do campo Preço promocional ou informe `0,00` e clique em Salvar. O produto será vendido pelo preço normal. Isso também funciona no campo promocional próprio de cada combinação.
+
+**Promoção não é cupom:** um preço promocional aparece no anúncio do produto; um cupom é um código aplicado no checkout e tem regras próprias.
+
+## Passo 5 — Variações do produto (quando o cliente precisa escolher)
+
+Este é o fluxo simplificado do cadastro, semelhante à ideia de opções e combinações da Shopee. **Não está limitado a Cor ou Tamanho.** Você define livremente os nomes das características e os valores.
+
+**Quando usar?** Use variações quando o mesmo produto é vendido com escolhas diferentes, como **Voltagem**, **Capacidade**, **Fragrância**, **Material**, **Modelo**, **Acabamento**, **Peso da opção**, **Quantidade por pacote** ou outras.
+
+**Quando não usar?** Se o produto é vendido em uma única configuração — por exemplo, uma furadeira que existe somente em 220 V —, informe essa característica na descrição e deixe a seção de variações vazia.
+
+### Etapa A — Cadastrar as características e os valores
+
+1. Abra **Variações do produto**.
+2. Clique em **Adicionar característica**.
+3. Em **Nome da característica**, digite o que o comprador escolherá: por exemplo, `Voltagem`.
+4. Em **Valores**, digite `110 V` e pressione **Enter**; depois `220 V` e **Enter** novamente.
+5. Se houver outra escolha, clique em **Adicionar característica** de novo. Exemplo: `Capacidade`, com valores `3 L` e `5 L`.
+
+### Como retirar todas as variações e vender como produto simples
+
+1. No produto, abra **Variações do produto**.
+2. Clique em **Remover todas as variações** e confirme. Isso limpa as características e a tabela da tela. Como alternativa, remova a última característica e clique **Gerar / atualizar combinações**.
+3. Confira o **Preço de venda** e o **Estoque** gerais, que passarão a valer para o produto sem opções.
+4. Clique em **Salvar**. Só então as opções antigas deixam de ser oferecidas na loja.
+5. Abra a página pública do produto e confira se aparece **Adicionar ao carrinho** sem pedir seleção.
+
+As combinações antigas são **desativadas**, e o histórico de pedidos permanece disponível. Se existir **reserva ativa em um pedido**, o sistema não permitirá retirar essa combinação; primeiro resolva o pedido ou aguarde a liberação da reserva. Não é necessário excluir o produto inteiro.
+
+### Etapa B — Gerar automaticamente as combinações
+
+Clique em **2. Gerar / atualizar combinações**. No exemplo, o sistema cria quatro linhas:
+
+| Combinação | Preço próprio | Estoque | SKU |
+| --- | --- | --- | --- |
+| 110 V / 3 L | opcional | opcional | opcional |
+| 110 V / 5 L | opcional | opcional | opcional |
+| 220 V / 3 L | opcional | opcional | opcional |
+| 220 V / 5 L | opcional | opcional | opcional |
+
+O botão **Gerar / atualizar combinações** prepara a tabela, **mas ainda não salva o produto**.
+
+### Etapa C — Definir preço, estoque e SKU
+
+Na tabela **3. Preço, estoque e SKU de cada opção**:
+
+- **Combinação:** mostra automaticamente a escolha do comprador; não é necessário escrever uma por uma.
+- **Preço próprio:** deixe vazio para usar o preço geral do produto; preencha se aquela combinação tiver preço diferente.
+- **Estoque:** deixe vazio para usar o estoque geral **compartilhado** do produto; preencha uma quantidade se a combinação tiver estoque próprio. **0 significa sem estoque**, não “sem controle”.
+- **SKU:** código opcional da combinação, útil para separar versões na separação do pedido.
+- **Ativa:** desligue para impedir a venda daquela combinação específica.
+
+**Atenção ao estoque compartilhado:** se o produto tem 10 unidades no estoque geral, duas variações com estoque vazio **compartilham as mesmas 10 unidades**. Não são 10 unidades para cada uma.
+
+### Preencher vários preços ou estoques de uma vez
+
+Se várias linhas terão o mesmo preço ou estoque, clique em **Aplicar preço / estoque a todos**. Informe somente os campos que deseja preencher e confirme.
+
+- Esse comando **preenche todas as combinações** que aparecem na tabela. Revise antes de salvar.
+- Deixe um campo vazio na ação para **não alterar** aquele dado.
+- Ao aplicar um **novo preço próprio a todas**, eventuais promoções próprias anteriores das combinações são removidas; revise descontos depois.
+
+### Promoção e embalagem específicas de uma combinação
+
+Em uma linha, abra o ícone de **ajustes/detalhes**:
+
+- **Preço promocional próprio:** opcional, deve ser menor que o preço válido daquela combinação.
+- **Peso, Altura, Largura e Comprimento:** preencha **os quatro juntos**, apenas se aquela combinação for enviada em uma embalagem diferente. Se não precisar, deixe **todos vazios** para usar as medidas gerais do produto.
+
+Se houver preço próprio, a combinação não herda automaticamente a promoção geral. Confira o preço final mostrado na página pública.
+
+### Exemplo para outros segmentos
+
+| Produto | Características | Resultado |
+| --- | --- | --- |
+| Ferramenta elétrica | Voltagem: 110 V, 220 V; Potência: 500 W, 800 W | 4 combinações |
+| Creme cosmético | Fragrância: Lavanda, Neutra; Volume: 200 ml, 500 ml | 4 combinações |
+| Conector industrial | Material: Aço, Inox; Rosca: 1/4, 1/2 | 4 combinações |
+| Alimento embalado | Peso: 250 g, 500 g, 1 kg | 3 combinações |
+| Camiseta | Tamanho: P, M, G; Cor: Preto, Branco | 6 combinações |
+
+Os exemplos são ilustrativos. **Você pode inventar qualquer nome de característica necessário ao catálogo**, desde que represente uma escolha real de compra.
+
+### Limites e alterações posteriores
+
+O editor aceita até **5 características** e até **150 combinações** por produto. Cada nome/valor pode ter até **120 caracteres**.
+
+Ao editar valores já cadastrados:
+
+1. Altere os valores na parte superior.
+2. Clique novamente em **Gerar / atualizar combinações**.
+3. Confira a tabela antes de salvar. As combinações que continuam iguais preservam seus dados existentes; combinações que saem do conjunto podem ser **desativadas**.
+4. Se houver combinação reservada em um pedido, algumas alterações serão bloqueadas para proteger a compra em andamento.
+5. Clique em **Salvar**.
+
+**Se aparecer um aviso para gerar as combinações:** você mudou características ou valores, mas ainda não atualizou a tabela. Clique no botão **Gerar / atualizar combinações** antes de salvar.
+
+Para mais exemplos e regras, consulte **[Variações, medidas e estoque](/admin/ajuda?topico=variacoes)**.
+
+## Passo 6 — Disponibilidade e estoque geral
+
+Na seção **Disponibilidade**:
+
+- **Disponibilidade imediata:** produto para venda com entrega conforme estoque e frete.
+- **Sob encomenda:** vendido sob essa condição; confirme os prazos e a forma de atendimento com o cliente.
+- **Indisponível:** não permite comprar enquanto estiver nessa condição.
+- **Estoque:** quantidade geral do produto. Se não houver controle de saldo, o campo pode ficar vazio; isso não é o mesmo que informar zero.
+
+**Se você usa variações:** o estoque geral pode ser compartilhado pelas combinações cujo campo Estoque esteja vazio. Não confunda estoque geral com estoque individual de cada combinação.
+
+## Passo 7 — Dados para entrega (frete)
+
+Na seção **Dados para entrega**, preencha o peso e as dimensões da **unidade embalada para envio**:
+
+- **Peso embalado:** em **quilogramas (kg)**. Exemplo: para 1 kg e 250 g, informe `1,250`, conforme o formato aceito pelo campo.
+- **Altura da embalagem:** em **centímetros (cm)**.
+- **Largura da embalagem:** em **centímetros (cm)**.
+- **Comprimento da embalagem:** em **centímetros (cm)**.
+
+Não use apenas as dimensões do produto fora da caixa. O sistema e as transportadoras precisam das **medidas reais do pacote**. Dados ausentes ou incorretos podem impedir a cotação automática ou produzir um frete errado.
+
+**Se uma variação usa embalagem diferente**, preencha os quatro campos dela nos detalhes da combinação; caso contrário, as medidas gerais serão usadas.
+
+## Passo 8 — Publicação
+
+Na seção **Publicação**, confira:
+
+- **Ativo:** habilita a exibição pública do produto. Deixe desligado enquanto o cadastro ainda não estiver pronto.
+- **Produto em destaque:** permite aparecer nas vitrines de destaque da loja.
+- **Permitir cotação pelo WhatsApp:** mostra a opção de contato comercial, conforme as configurações de WhatsApp da loja.
+
+Clique em **Salvar**. Se acabou de criar o produto, a tela abrirá a edição para você poder organizar a galeria e continuar o cadastro.
+
+## Assistente de IA — como melhorar os textos
+
+Nas telas de criação e edição, use o botão **Assistente de IA**, no topo da página.
+
+1. Informe os dados verdadeiros que você já conhece sobre o produto.
+2. Peça, por exemplo: *“Melhore a descrição desta furadeira. Ela tem potência de 650 W e é vendida em 110 V e 220 V. Não invente dados técnicos.”*
+3. Leia as sugestões de **nome, descrição curta, descrição, SEO e categoria**.
+4. Selecione somente os campos que deseja aplicar.
+5. Confira o texto no formulário e **clique em Salvar**. A IA não salva nem publica sozinha.
+
+A IA **não deve definir preço, custo, estoque, SKU, peso, dimensões ou especificações não fornecidas**. O administrador configura a integração com Groq; o operador autorizado apenas utiliza a ferramenta. Saiba mais em **[Inteligência Artificial](/admin/ajuda?topico=inteligencia-artificial)**.
+
+## Exemplos de cadastro completo
+
+### Exemplo A — Produto sem variações
+
+Uma **espátula de aço de 20 cm**, vendida somente nesse tamanho:
+
+1. Cadastre nome, categoria, fotos e descrição.
+2. Informe custo, preço de venda, disponibilidade, estoque e medidas da embalagem.
+3. **Deixe Variações do produto vazia**: o comprador não precisa escolher outra versão.
+4. Confira Ativo e salve.
+
+### Exemplo B — Produto com variações
+
+Uma **máquina** disponível em 110 V e 220 V:
+
+1. Cadastre o produto principal e o preço geral.
+2. Em **Variações do produto**, adicione **Voltagem** com `110 V` e `220 V`.
+3. Clique em **Gerar / atualizar combinações**.
+4. Se a versão 220 V custa mais, informe o **Preço próprio** apenas nessa linha.
+5. Se as versões possuem estoques separados, preencha o estoque de cada uma. Se compartilham o estoque, use o estoque geral.
+6. Informe peso e dimensões gerais ou, se forem diferentes, os quatro dados em **Detalhes** de cada linha.
+7. Salve e teste a seleção de voltagem na página pública.
+
+## Como editar um produto existente
+
+1. Acesse **[Produtos](/admin/products)** e encontre o produto pelo nome ou SKU.
+2. Clique no botão de editar.
+3. Altere apenas o que for necessário. Para mudar opções de compra, **regenere as combinações e confira a tabela**.
+4. Salve e abra a página pública para confirmar o resultado.
+5. Para pausar a venda, desative **Ativo** ou escolha **Indisponível**, conforme a necessidade. Evite excluir produtos com histórico de pedidos.
+
+Alterar o preço atual do produto **não altera os valores já registrados em pedidos anteriores**.
+
+## Problemas comuns e como resolver
+
+| O que aconteceu? | O que verificar? |
+| --- | --- |
+| O produto não aparece na loja | **Ativo** ligado, categoria ativa, disponibilidade e endereço correto. |
+| Não consigo salvar | Veja os avisos de validação: categoria, preço, SKU duplicado, promoção inválida ou variações sem regenerar. |
+| A IA sugeriu informação incorreta | Não aplique; revise manualmente e use apenas dados confirmados. |
+| Uma opção não aparece para comprar | Confira se a combinação foi gerada, está **Ativa** e tem disponibilidade. |
+| O estoque de duas opções parece igual | Estoque vazio na variação significa **compartilhar estoque geral**. |
+| O frete não aparece | Confira peso e as três dimensões da **embalagem** e as configurações de entrega. |
+| A foto não aparece | Confira se o upload foi salvo, qual foto está principal e se o armazenamento público funciona. |
+| Retirei a última característica, mas a linha continua aparecendo | Clique em **Gerar / atualizar combinações**, ou use **Remover todas as variações**. Depois salve o produto. |
+| Não consigo excluir/alterar uma variação | Pode haver reserva ativa em pedido. Não force a operação; revise o pedido. |
+| Preço promocional 0,00 gerou erro anteriormente | A partir desta versão, o campo vazio ou 0,00 significa sem promoção. Salve novamente. |
+
+## Checklist final antes de divulgar
+
+- [ ] Nome, categoria e descrição estão corretos.
+- [ ] Fotos principais e galeria mostram o produto real.
+- [ ] Custo, preço e eventuais descontos foram conferidos.
+- [ ] As variações, **se existirem**, foram geradas, revisadas e salvas.
+- [ ] Preços e estoques por combinação estão corretos; não há confusão entre estoque próprio e compartilhado.
+- [ ] Disponibilidade, peso e medidas da **embalagem** estão corretos.
+- [ ] Produto e categoria estão ativos.
+- [ ] A página pública foi aberta e, se necessário, testada com uma seleção de variação, carrinho e CEP.
+
+**Regra de ouro:** você só precisa preencher as opções que fazem sentido para o produto, mas preço, disponibilidade e condições reais de entrega precisam estar corretos antes de colocar a loja para vender.
 ARTICLE_PRODUTOS_END,
             'promocoes' => <<<'ARTICLE_PROMOCOES_END'
 ## O que é uma promoção de produto?
@@ -1634,17 +2059,49 @@ ARTICLE_SEO_DIVULGACAO_END,
             'variacoes' => <<<'ARTICLE_VARIACOES_END'
 ## Quando criar variações?
 
-Cadastre variações quando o comprador precisa escolher uma **combinação vendável**. Exemplos: camiseta `Cor=Preto + Tamanho=M`, tinta `Cor=Azul + Embalagem=900 ml`, tecido `Gramatura=120 + Largura=1,20 m`. Um produto que só existe numa configuração **não precisa** de variações.
+Cadastre variações quando o comprador precisa escolher uma **opção de compra**. Isso serve para qualquer segmento: equipamento `Voltagem=220 V + Capacidade=5 L`, cosmético `Fragrância=Lavanda + Volume=200 ml`, ferramenta `Material=Inox + Comprimento=30 cm` ou camiseta `Cor=Preto + Tamanho=M`. Se só existe uma configuração, **não é necessário** criar variações.
 
-## Como cadastrar
+## Como cadastrar — novo formulário simples
 
-1. Abra **[Produtos](/admin/products)** e edite o item.
-2. Encontre **Opções e variações** e clique em **Adicionar variação**.
-3. No campo de características, descreva a combinação completa daquela unidade vendável: não crie uma linha só “Preto” se para vender também é obrigatório escolher tamanho.
-4. Marque **Disponível para venda** quando aquela combinação puder ser adquirida.
-5. Se possuir, informe **SKU próprio** para diferenciar a variação.
-6. Expanda **Ajustes próprios desta combinação** apenas quando ela tiver preço, promoção, estoque ou embalagem diferentes.
-7. Salve o produto e confira no site se o seletor exige a combinação correta.
+O cadastro agora funciona em **três etapas**, parecido com o cadastro de opções da Shopee. Não é preciso escrever a mesma combinação diversas vezes.
+
+1. Acesse **[Catálogo → Produtos](/admin/products)** e crie ou edite um produto.
+2. Abra **Variações do produto**. Clique em **Adicionar característica** e informe **qualquer nome que faça sentido para o item**, por exemplo **Voltagem**. O campo é livre: não existe um catálogo fixo de nomes.
+3. Em **Valores**, digite `110 V` e pressione **Enter**. Depois `220 V`. Se também houver capacidades diferentes, clique em **Adicionar característica**, informe **Capacidade** e cadastre `3 L` e `5 L`.
+4. Clique em **Gerar / atualizar combinações**. O sistema cria uma tabela com 4 linhas: 110 V/3 L, 110 V/5 L, 220 V/3 L, 220 V/5 L.
+5. Na tabela, informe **Preço próprio**, **Estoque**, **SKU (opcional)** e **Ativa** conforme cada combinação. Se o preço for igual ao geral do produto, deixe o campo vazio. Se as variações usarem estoque compartilhado, deixe o estoque delas vazio.
+6. Se todas tiverem o mesmo preço ou estoque, clique em **Aplicar preço / estoque a todos** e preencha o que desejar. Esse botão não salva: apenas preenche a tabela. Atenção: definir um novo preço próprio para todas remove descontos promocionais próprios anteriores das combinações, para evitar preços inválidos.
+7. Para informar promoção própria ou embalagem especial em uma combinação, clique no ícone de **ajustes/detalhes** da linha. Esse passo é opcional.
+8. Clique em **Salvar** e confira o resultado na loja pública. **Gerar combinações, sozinho, não salva o produto.**
+
+### Exemplos
+
+- **Equipamento elétrico:** Voltagem 110 V/220 V × Capacidade 3 L/5 L = 4 combinações.
+- **Produto de limpeza:** Fragrância Lavanda/Cítrico × Volume 500 ml/1 L = 4 combinações.
+- **Alimento:** Peso 250 g/500 g/1 kg = 3 opções.
+- **Peça automotiva:** Modelo A/B × Lado Esquerdo/Direito = 4 combinações.
+- **Ferramenta:** Material Aço/Inox × Comprimento 30 cm/50 cm = 4 combinações.
+- **Camiseta:** Tamanho P/M/G × Cor Preto/Branco = 6 combinações.
+
+### Como alterar depois
+
+Ao editar o produto, os tipos, valores e combinações já existentes aparecem preenchidos. Os preços, estoques, SKUs, medidas e IDs das combinações que permanecerem iguais serão preservados quando você clicar em **Gerar / atualizar combinações**.
+
+Se acrescentar ou retirar um valor de qualquer característica, clique **Gerar / atualizar combinações** antes de salvar. Se esquecer, o sistema avisará. Combinações retiradas são **desativadas ao salvar**, e não apagadas do histórico; variações com reserva ativa não podem ser retiradas dessa forma. As variações antigas desativadas ficam arquivadas no banco para preservar pedidos e **não aparecem na tabela principal**; se precisar voltar a oferecer a mesma combinação, cadastre seus valores e clique em Gerar / atualizar combinações.
+
+São aceitas até **5 características diferentes** e **150 combinações** por produto para preservar a velocidade do formulário. Os nomes e os valores são livres, respeitando o limite de 120 caracteres por campo.
+
+## Como remover todas as variações de um produto
+
+1. Abra **Catálogo → Produtos** e edite o produto desejado.
+2. Vá até **Variações do produto** e clique em **Remover todas as variações**. Confirme a ação. Alternativamente, retire a última característica e clique em **Gerar / atualizar combinações**.
+3. Confira o **Preço de venda** e **Estoque** gerais, que serão usados quando não houver mais opções.
+4. Clique em **Salvar**. A tabela fica vazia e o comprador deixa de precisar escolher uma variação.
+5. Teste a compra na loja pública.
+
+As combinações anteriores são desativadas, não apagadas do histórico. **Não será possível removê-las enquanto houver reservas de estoque ativas em pedidos.** Nesse caso, resolva a pendência do pedido antes de tentar novamente.
+
+**Preço promocional (produto ou combinação):** campo vazio ou `0,00` significa **sem promoção**; um desconto real precisa ser maior que zero e menor que o preço de venda.
 
 ## Como funciona a herança
 
@@ -1669,6 +2126,12 @@ O sistema considera as reservas válidas ao verificar disponibilidade. Reserva *
 - Não cadastre preço/medidas diferentes sem confirmar o custo de expedição.
 
 **Problema comum:** o cliente não consegue adicionar ao carrinho → confira se a combinação escolhida existe, está ativa, o produto está ativo e há disponibilidade.
+
+## Característica de compra x especificação técnica
+
+Use **Variações** apenas quando o comprador precisa **escolher entre opções vendidas** (por exemplo, 110 V ou 220 V). Se o equipamento possui somente 220 V, essa informação é uma **especificação do produto** e pode ficar na descrição. Não é necessário criar uma variação. Para peso e dimensões de transporte, use os campos de **Dados para entrega**.
+
+O formulário não está limitado a roupas: os exemplos são sugestões, não opções fixas. Você pode criar características como `Tipo de rosca`, `Sabor`, `Gramatura`, `Espessura`, `Quantidade por pacote`, `Acabamento`, `Comprimento` ou qualquer outra relevante ao seu catálogo.
 ARTICLE_VARIACOES_END,
         ];
     }

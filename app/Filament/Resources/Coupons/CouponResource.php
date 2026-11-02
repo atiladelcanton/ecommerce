@@ -51,6 +51,10 @@ final class CouponResource extends Resource
             Section::make('Informações do cupom')->columns(['default' => 1, 'lg' => 2])->schema([
                 TextInput::make('code')->label('Código')->required()->maxLength(64),
                 TextInput::make('description')->label('Descrição interna')->maxLength(255),
+                Select::make('influencer_id')->label('Influenciador (opcional)')
+                    ->options(fn (): array => \App\Domain\Influencer\Models\Influencer::query()->orderBy('name')->pluck('name', 'id')->all())
+                    ->searchable()->preload()->placeholder('Cupom comum, sem comissão')
+                    ->helperText('Vincule para atribuir vendas e comissões. Não pode ser alterado após o primeiro uso.'),
                 Select::make('discount_type')->label('Tipo de desconto')
                     ->options(['percentage' => 'Percentual', 'fixed' => 'Valor fixo'])
                     ->required()->live()->default('percentage'),
@@ -87,6 +91,7 @@ final class CouponResource extends Resource
     {
         return $table->columns([
             TextColumn::make('code')->label('Código')->searchable()->sortable()->weight('bold'),
+            TextColumn::make('influencer.name')->label('Influenciador')->placeholder('Cupom comum')->searchable(),
             TextColumn::make('discount_type')->label('Tipo')->formatStateUsing(fn (string $state): string => $state === 'percentage' ? 'Percentual' : 'Valor fixo'),
             TextColumn::make('value')->label('Desconto')->formatStateUsing(fn ($state, Coupon $record): string => $record->discount_type === 'percentage' ? $record->value.'%' : BrazilianMoney::display($record->value)),
             TextColumn::make('scope')->label('Aplicação')->formatStateUsing(fn (string $state): string => match ($state) { 'categories' => 'Categorias', 'products' => 'Produtos', default => 'Toda a loja' }),

@@ -19,7 +19,7 @@
                 <div class="saba-blog-article-meta">
                     <time datetime="{{ $post->published_at?->toDateString() }}">{{ $post->published_at?->format('d/m/Y') }}</time>
                     <span aria-hidden="true">·</span>
-                    <span>{{ $post->author?->name ?: 'Equipe SABA' }}</span>
+                    <span>{{ $post->author?->name ?: 'Equipe de '.\App\Support\Storefront\StoreBrand::currentName() }}</span>
                 </div>
             </header>
             @if($post->cover_image)

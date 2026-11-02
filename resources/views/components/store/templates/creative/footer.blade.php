@@ -2,7 +2,7 @@
 <footer class="ct-footer">
     <div class="store-container ct-footer-grid">
         <div class="ct-footer-brand">
-            <a href="{{ route('home') }}"><img src="{{ $logoUrl ?: asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="165" height="60"></a>
+            <a href="{{ route('home') }}">@if($logoUrl)<img src="{{ $logoUrl }}" alt="{{ $storeName }}" width="160" height="56">@else<span class="store-brand-text store-brand-text--footer">{{ $storeName }}</span>@endif</a>
             <p>Encontre o que você procura. Um catálogo completo, uma compra simples.</p>
         </div>
         <div><h2>Explore</h2><nav aria-label="Menu institucional"><a href="{{ route('home') }}">Início</a><a href="{{ route('store.products') }}">Produtos</a><a href="{{ route('store.about') }}">Quem Somos</a>@if($settings?->blog_enabled)<a href="{{ route('store.blog.index') }}">Blog</a>@endif</nav></div>

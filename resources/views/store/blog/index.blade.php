@@ -1,10 +1,10 @@
-<x-store.layout title="Blog" description="Dicas, novidades e conteúdos sobre serigrafia e equipamentos." :canonical="route('store.blog.index')">
+<x-store.layout title="Blog" description="Novidades, dicas e conteúdos publicados no blog da loja." :canonical="route('store.blog.index')">
     <div class="store-container saba-blog-page">
         <nav class="saba-blog-breadcrumb" aria-label="Você está aqui"><a href="{{ route('home') }}">Início</a><span aria-hidden="true">/</span><span>Blog</span></nav>
         <header class="saba-blog-page-header">
             <p class="store-eyebrow">Novidades, conhecimento e inspiração</p>
             <h1>Blog</h1>
-            <p>Acompanhe conteúdos, novidades e dicas da SABA.</p>
+            <p>Acompanhe conteúdos, novidades e dicas de {{ \App\Support\Storefront\StoreBrand::currentName() }}.</p>
         </header>
         @if($posts->isNotEmpty())
             <div class="saba-blog-grid saba-blog-grid-index">

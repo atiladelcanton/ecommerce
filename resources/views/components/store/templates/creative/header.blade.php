@@ -1,7 +1,7 @@
 @props(['template', 'categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false, 'logoUrl' => null])
 <div class="ct-announcement">
     <div class="store-container ct-announcement-inner">
-        <span>{{ $template === 5 ? 'NOVIDADES, PRODUTOS E ATITUDE' : ($template === 4 ? 'Uma experiência de compra feita para você' : 'Bem-vindo à '.$storeName) }}</span>
+        <span>{{ $template === 5 ? 'NOVIDADES, PRODUTOS E ATITUDE' : ($template === 4 ? 'Uma experiência de compra feita para você' : 'Conheça '.$storeName) }}</span>
         <a href="{{ route('store.contact') }}">Atendimento <span aria-hidden="true">↗</span></a>
     </div>
 </div>
@@ -14,7 +14,7 @@
             </nav>
         @endif
         <a class="ct-logo" href="{{ route('home') }}" aria-label="{{ $storeName }} — Início">
-            <img src="{{ $logoUrl ?: asset('images/saba-logo.jpeg') }}" alt="{{ $storeName }}" width="185" height="65">
+            @if($logoUrl)<img src="{{ $logoUrl }}" alt="{{ $storeName }}" width="160" height="56">@else<span class="store-brand-text">{{ $storeName }}</span>@endif
         </a>
         <div class="ct-header-search" id="ct-search" x-show="desktop || searchOpen" x-cloak>
             <livewire:store.search-autocomplete />

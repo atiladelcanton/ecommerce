@@ -31,7 +31,7 @@ final class GetProductDetailAction
             'product' => $product,
             'related' => $this->products->query()->where('category_id', $product->category_id)->whereKeyNot($product->id)->latest()->limit(4)->get(),
             'youtubeEmbed' => Links::youtube($product->youtube_url),
-            'quoteUrl' => $product->whatsapp_quote_enabled && $product->variants->isEmpty()
+            'quoteUrl' => $product->whatsapp_quote_enabled && $product->variants->where('is_active', true)->isEmpty()
                 ? Links::whatsapp($settings?->whatsapp, $quoteMessage()) : null,
             'variantQuoteUrls' => $variantQuoteUrls,
             'structuredData' => ProductMetadata::make($product, $url),

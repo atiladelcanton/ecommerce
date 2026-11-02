@@ -63,7 +63,7 @@ final class StoreSettings extends Page
                         ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                         ->disk('public')->directory('store/branding')->visibility('public')->maxSize(5120)
                         ->preventFilePathTampering(allowFilePathUsing: static fn (string $file): bool => StoreSetting::query()->whereKey(StoreSetting::MAIN_ID)->where('logo_path', $file)->exists())
-                        ->helperText('JPG, PNG ou WebP, até 5 MB. Preferencialmente imagem horizontal com fundo transparente. Remova para restaurar a logo padrão.')
+                        ->helperText('JPG, PNG ou WebP, até 5 MB. Preferencialmente imagem horizontal com fundo transparente. Ao remover, o nome da loja aparece no lugar da imagem, tanto no site quanto no painel administrativo.')
                         ->columnSpanFull(),
                     ColorPicker::make('color_primary')->label('Cor primária')
                         ->helperText('Destaques, links, ícones e promoções. Deixe vazio para usar a cor original do template.'),

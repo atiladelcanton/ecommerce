@@ -14,6 +14,12 @@ Acesse **[Vendas → Clientes](/admin/customers)**. A listagem permite localizar
 
 A loja permite **checkout de visitante**. Ele informa nome, e-mail, telefone, documento e endereço para realizar o pedido. Isso **não cria automaticamente uma conta**. A vinculação de um pedido de visitante a uma conta criada depois segue validações da sessão de origem, e-mail e documento. Não vincule manualmente pedidos apenas porque dois clientes informaram o mesmo e-mail.
 
+## Acompanhar uma compra com frete sob consulta
+
+Na área **Minha conta → Pedidos**, o cliente autenticado vê o pedido aguardando cotação. Quando a loja publica o frete, aparece um link para revisar a proposta e aceitar o valor. Depois de aceitar, encontra a informação do pagamento pendente e, quando seguro, o botão para continuar no Asaas. Ele não precisa refazer o carrinho nem criar outra compra. Se a proposta vencer, deve pedir uma nova cotação à loja.
+
+Pedidos feitos como visitante podem ser acompanhados usando o **link privado assinado** recebido da loja. O link é restrito ao pedido e tem data de validade. Nunca compartilhe esse link com terceiros.
+
 ## Endereços
 
 - O primeiro endereço salvo vira o principal.

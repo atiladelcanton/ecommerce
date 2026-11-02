@@ -117,7 +117,7 @@ final class GetProductPurchaseDataAction
         })->sortBy(fn (array $choice): int => $choice['available'] ? 0 : 1)->values()->all();
 
         $canPurchase = $product->availability !== ProductAvailability::UNAVAILABLE
-            && ($product->variants->isEmpty() || $selected !== null)
+            && ($variants->isEmpty() || $selected !== null)
             && ($available === null || $available > 0);
 
         return [

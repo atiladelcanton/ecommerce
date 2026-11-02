@@ -11,6 +11,20 @@ use InvalidArgumentException;
 
 final class BrazilianMoneyInput extends TextInput
 {
+    /** Only promotional prices treat 0,00 as "no promotion". Regular prices are unchanged. */
+    public function optionalPromotion(): static
+    {
+        return $this
+            ->formatStateUsing(static fn (mixed $state): mixed => is_int($state)
+                ? ($state === 0 ? null : BrazilianMoney::format($state))
+                : $state)
+            ->dehydrateStateUsing(static function (?string $state): ?int {
+                $cents = BrazilianMoney::parse($state);
+
+                return $cents === 0 ? null : $cents;
+            });
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

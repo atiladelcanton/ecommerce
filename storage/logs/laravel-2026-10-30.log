@@ -1,0 +1,2 @@
+[2026-10-30 13:36:13] local.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"missing_measurements"} 
+[2026-10-30 13:36:18] local.WARNING: Shipping quote provider failed. {"provider":"melhor_envio","exception_type":"App\\Domain\\Shipping\\Exceptions\\ShippingQuoteUnavailable","reason":"missing_measurements"} 

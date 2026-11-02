@@ -5,7 +5,7 @@
             @if($post->cover_image)
                 <img src="{{ Storage::disk('public')->url($post->cover_image) }}" alt="{{ $post->cover_alt ?: $post->title }}" loading="lazy" width="800" height="500">
             @else
-                <div class="saba-blog-no-cover" aria-hidden="true"><span>Blog SABA</span></div>
+                <div class="saba-blog-no-cover" aria-hidden="true"><span>Blog</span></div>
             @endif
         </div>
         <div class="saba-blog-card-text">

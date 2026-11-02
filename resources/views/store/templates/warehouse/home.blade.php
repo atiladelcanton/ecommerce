@@ -17,7 +17,7 @@
                 <x-store.hero-carousel :banners="$banners" />
             @else
                 <section class="wh-home-intro">
-                    <span class="wh-overline">Bem-vindo à {{ $storeName }}</span>
+                    <span class="wh-overline">Conheça {{ $storeName }}</span>
                     <h1>Seu próximo projeto começa aqui.</h1>
                     <p>Encontre equipamentos, insumos e acessórios em um catálogo organizado para facilitar sua compra.</p>
                     <a class="store-button" href="{{ route('store.products') }}">Explorar produtos <x-heroicon-o-arrow-right class="size-4" /></a>

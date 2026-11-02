@@ -63,7 +63,7 @@ final class StoreAppearanceTest extends TestCase
         $this->assertStringContainsString('--color-store-red-dark:#B91C1C', Appearance::forTemplate(null, 1)['css']);
         $this->assertStringContainsString('--color-store-red:#156583', Appearance::forTemplate(null, 2)['css']);
         $this->assertStringContainsString('--color-store-red-dark:#104D67', Appearance::forTemplate(null, 2)['css']);
-        $this->assertSame(asset('images/saba-logo.jpeg'), Appearance::logoUrl(null));
+        $this->assertNull(Appearance::logoUrl(null));
     }
 
     public function test_invalid_hex_or_logo_paths_are_rejected_and_do_not_change_settings(): void

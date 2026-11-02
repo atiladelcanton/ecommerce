@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
+use App\Support\Storefront\Appearance;
+use App\Support\Storefront\StoreBrand;
 use App\Http\Middleware\SetAdminLocale;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -32,10 +34,10 @@ final class AdminPanelProvider extends PanelProvider
             ->authGuard('web')
             ->path('admin')
             ->login()
-            ->brandName(config('app.name', 'Saba Equipamentos'))
-            ->brandLogo(asset('images/saba-logo.jpeg'))
+            ->brandName(fn (): string => StoreBrand::currentName())
+            ->brandLogo(fn (): ?string => Appearance::customLogoUrl(StoreBrand::settings()))
             ->brandLogoHeight('2.75rem')
-            ->favicon(asset('images/saba-logo.jpeg'))
+            ->favicon(fn (): ?string => Appearance::customLogoUrl(StoreBrand::settings()))
             ->maxContentWidth(Width::Full)
             ->simplePageMaxContentWidth(Width::Medium)
             ->sidebarWidth('15.5rem')

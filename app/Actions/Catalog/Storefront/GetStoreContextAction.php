@@ -6,6 +6,7 @@ namespace App\Actions\Catalog\Storefront;
 
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Settings\Models\StoreSetting;
+use App\Support\Storefront\StoreBrand;
 use App\Support\Storefront\Links;
 
 final class GetStoreContextAction
@@ -16,7 +17,7 @@ final class GetStoreContextAction
 
         return [
             'settings' => $settings,
-            'storeName' => $settings?->store_name ?: config('app.name', 'Saba Equipamentos'),
+            'storeName' => StoreBrand::name($settings),
             'whatsappUrl' => Links::whatsapp($settings?->whatsapp),
             'navigationCategories' => Category::active()->ordered()->get(['id', 'name', 'slug']),
         ];

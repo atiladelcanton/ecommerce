@@ -17,6 +17,7 @@ final class AdminPermissions
     public const SALES_CUSTOMERS = 'customers';
     public const SALES_ORDERS = 'orders';
     public const SALES_FINANCE = 'finance';
+    public const SALES_INFLUENCERS = 'influencers';
     public const SETTINGS_STORE = 'settings_store';
     public const SETTINGS_PAYMENTS = 'settings_payments';
     public const SETTINGS_SHIPPING = 'settings_shipping';
@@ -34,6 +35,7 @@ final class AdminPermissions
             self::SALES_CUSTOMERS => 'Vendas — Clientes',
             self::SALES_ORDERS => 'Vendas — Pedidos, Kanban e etiquetas',
             self::SALES_FINANCE => 'Financeiro — Fluxo de caixa',
+            self::SALES_INFLUENCERS => 'Vendas — Influenciadores e comissões',
             self::SETTINGS_STORE => 'Configurações — Loja e identidade visual',
             self::SETTINGS_PAYMENTS => 'Configurações — Meios de pagamento (Asaas)',
             self::SETTINGS_SHIPPING => 'Configurações — Meios de entrega (Melhor Envio)',
@@ -48,7 +50,7 @@ final class AdminPermissions
             self::CATALOG_CATEGORIES, self::CATALOG_PRODUCTS,
             self::CONTENT_BANNERS, self::CONTENT_BLOG,
             self::SALES_COUPONS, self::SALES_CUSTOMERS,
-            self::SALES_ORDERS, self::SALES_FINANCE,
+            self::SALES_ORDERS, self::SALES_FINANCE, self::SALES_INFLUENCERS,
         ];
     }
 

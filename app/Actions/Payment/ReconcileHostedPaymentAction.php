@@ -79,6 +79,7 @@ final class ReconcileHostedPaymentAction
                     'needs_review' => true, 'review_reason' => 'Reembolso informado pelo gateway. Verifique o pedido e o estoque.']);
                 if ($status === 'refunded') {
                     $order->update(['payment_status' => PaymentStatus::REFUNDED]);
+                    app(\App\Domain\Influencer\Services\SyncInfluencerCommission::class)->execute($order, 'refunded');
                 }
                 // Refund is not an automatic return of goods to physical inventory.
                 return;

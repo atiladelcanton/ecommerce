@@ -17,9 +17,10 @@ final class ValidateCartProduct
             throw ValidationException::withMessages(['product' => 'Este produto não está disponível para compra.']);
         }
 
-        $label = $product->variants->isNotEmpty() && $product->variants->every(fn ($variant): bool => array_keys($variant->characteristics()) === ['Cor']) ? 'cor' : 'variação';
+        $activeVariants = $product->variants->where('is_active', true);
+        $label = $activeVariants->isNotEmpty() && $activeVariants->every(fn ($variant): bool => array_keys($variant->characteristics()) === ['Cor']) ? 'cor' : 'variação';
         if ($variantId === null) {
-            if ($product->variants->isNotEmpty()) {
+            if ($activeVariants->isNotEmpty()) {
                 throw ValidationException::withMessages(['productVariantId' => 'Selecione uma '.$label.' antes de adicionar ao carrinho.']);
             }
 

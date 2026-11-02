@@ -1,14 +1,14 @@
 @props(['categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false, 'logoUrl' => null])
 <div class="store-announcement">
     <div class="store-container flex items-center justify-between gap-4 py-2">
-        <span>Equipamentos, insumos e acessórios para serigrafia</span>
+        <span>Conheça nossos produtos, ofertas e novidades</span>
         @if($whatsappUrl)<a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="hidden sm:inline">Fale conosco pelo WhatsApp ↗</a>@endif
     </div>
 </div>
 <header class="store-header" x-data="storeHeader" @keydown.escape="closeCategories()">
     <div class="store-container store-header-main">
         <a href="{{ route('home') }}" aria-label="{{ $storeName }} — Início" class="store-header-logo">
-            <img src="{{ ($logoUrl ?: asset('images/saba-logo.jpeg')) }}" alt="{{ $storeName }}" width="192" height="56">
+            @if($logoUrl)<img src="{{ $logoUrl }}" alt="{{ $storeName }}" width="160" height="56">@else<span class="store-brand-text">{{ $storeName }}</span>@endif
         </a>
         <div id="header-search" class="store-header-search" x-show="desktop || searchOpen" x-cloak>
             <livewire:store.search-autocomplete />

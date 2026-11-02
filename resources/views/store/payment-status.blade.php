@@ -10,10 +10,28 @@
             @else
                 <p class="mt-3 text-sm">A cobrança foi encerrada. Se necessário, entre em contato com a loja.</p>
             @endif
+            @if($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE)
+                <p class="mt-4 text-sm">O frete ainda está em cotação. Nenhuma cobrança foi iniciada.</p>
+            @elseif($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::QUOTED)
+                <p class="mt-4 text-sm">A loja já informou o frete. Entre em Minha conta para revisar e aceitar a proposta antes de pagar.</p>
+            @endif
+            @php($currentPayment = $order->payments->sortByDesc('id')->first())
+            @if($order->shipping_pricing_status !== \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE
+                && $order->shipping_pricing_status !== \App\Domain\Shipping\Enums\ShippingPricingStatus::QUOTED
+                && $order->payment_status !== \App\Domain\Payment\Enums\PaymentStatus::APPROVED
+                && $currentPayment?->gateway === 'asaas'
+                && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($currentPayment->checkout_url, $currentPayment->environment))
+                <a class="store-button mt-5 inline-flex" href="{{ $currentPayment->checkout_url }}" rel="noopener noreferrer">Ir para pagamento no Asaas</a>
+            @endif
+            @if($errors->any())
+                <p class="mt-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">{{ $errors->first() }}</p>
+            @endif
             @if(session('payment_notice'))
                 <p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">{{ session('payment_notice') }}</p>
             @endif
-            @if(in_array($order->payment_status, [\App\Domain\Payment\Enums\PaymentStatus::FAILED, \App\Domain\Payment\Enums\PaymentStatus::CANCELLED], true) && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
+            @if((! $currentPayment || in_array($currentPayment->status, [\App\Domain\Payment\Enums\PaymentStatus::FAILED, \App\Domain\Payment\Enums\PaymentStatus::CANCELLED], true))
+                && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED
+                && ($order->shipping_pricing_status === null || $order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::CONFIRMED))
                 <form method="POST" action="{{ route('store.order.payment-retry', $order->number) }}" class="mt-5">
                     @csrf
                     <button type="submit" class="store-button">Tentar pagar novamente</button>

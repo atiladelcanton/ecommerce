@@ -47,10 +47,6 @@ final class SyncProductVariantsAction
                 }
                 $row = $validator->validated();
                 $row['stock'] = isset($row['stock']) ? (int) $row['stock'] : null;
-                $variant = isset($row['id']) ? $existing->get($row['id']) : new ProductVariant;
-                if (! $variant || ($variant->exists && in_array($variant->id, $kept, true))) {
-                    throw ValidationException::withMessages([$path => 'Variação inválida para este produto.']);
-                }
                 $attributes = [];
                 $canonical = [];
                 foreach ($row['attributes'] as $name => $value) {
@@ -75,6 +71,14 @@ final class SyncProductVariantsAction
                     throw ValidationException::withMessages([$path.'.attributes' => 'Esta combinação de características já foi cadastrada.']);
                 }
                 $seen[$key] = true;
+                // Restore an archived matching row rather than violate its unique key.
+                // Its ID stays available for historical order references.
+                $variant = isset($row['id'])
+                    ? $existing->get($row['id'])
+                    : ($existing->first(fn (ProductVariant $item): bool => $item->combination_key === $key) ?? new ProductVariant);
+                if (! $variant || ($variant->exists && in_array($variant->id, $kept, true))) {
+                    throw ValidationException::withMessages([$path => 'Variação inválida para este produto.']);
+                }
                 $name = implode(' / ', array_keys($attributes));
                 $value = implode(' / ', array_values($attributes));
                 if (mb_strlen($name) > 255 || mb_strlen($value) > 255) {

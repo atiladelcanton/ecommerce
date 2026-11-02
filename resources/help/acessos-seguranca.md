@@ -84,3 +84,7 @@ As permissões de um grupo personalizado controlam o **acesso completo a cada m�
 **Não consigo abrir uma página.** Confirme com um Administrador se o seu grupo inclui aquele módulo. Se a mensagem for **403 — Acesso negado**, não tente alterar a URL manualmente.
 
 **Criei o primeiro usuário pelo terminal e não consigo entrar.** O responsável técnico deve conceder o grupo Administrador usando o comando `php artisan saba:grant-admin usuario@exemplo.com`. Esse comando deve ser executado exclusivamente no servidor por quem possui acesso técnico.
+
+## Permissões do módulo Influenciadores
+
+O novo módulo **Vendas → Influenciadores** e a listagem **Comissões de influenciadores** seguem a permissão **Vendas — Influenciadores e comissões**. O grupo Operacional pode **consultar** as listas e os valores, mas **não pode cadastrar/editar contas de influenciadores, mudar suas taxas, senha ou chave Pix, nem aprovar ou registrar pagamentos**. Essas operações ficam com o Administrador. A regra é verificada pelo servidor, não apenas pela visibilidade de botões. O portal `/influencers` usa uma autenticação própria, sem acesso ao `/admin`.

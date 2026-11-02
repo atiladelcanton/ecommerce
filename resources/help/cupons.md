@@ -71,3 +71,7 @@ Uma pessoa pode aplicar o cupom e iniciar um pedido **sem ter pago ainda**. O si
 **O mesmo cliente pode usar a campanha novamente com outro cadastro?** A proteção usa CPF/CNPJ; mudar e-mail não altera a regra.
 
 **Criar cupom altera o preço cadastrado?** Não. O desconto é aplicado ao pedido válido no checkout.
+
+## Cupons para influenciadores
+
+É possível vincular um cupom a um influenciador no próprio formulário de **Cupons de desconto**, usando **Influenciador (opcional)**. O desconto do comprador e a porcentagem de comissão são coisas diferentes. Não será possível mudar o influenciador desse código depois que ele tiver sido usado ou reservado em algum pedido. Para cadastrar parceiros e acompanhar comissões, consulte **[Influenciadores, cupons e comissões](/admin/ajuda?topico=influenciadores)**.

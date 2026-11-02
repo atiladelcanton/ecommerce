@@ -159,10 +159,6 @@ final class CreateInitialOrderAction
                         // order transaction, including assisted-shipping requests.
                         app(ManageCouponUsageAction::class)->reserve($order, $coupon['coupon'], $discount);
                     }
-                    if (! $requestFreight) {
-                        $order = app(PayOrderAction::class)->execute($order);
-                    }
-
                     return $order;
                 }, 3);
             });
@@ -174,6 +170,10 @@ final class CreateInitialOrderAction
             }
         } catch (LockTimeoutException) {
             throw ValidationException::withMessages(['checkout' => 'Seu pedido está sendo processado. Aguarde e tente novamente.']);
+        }
+
+        if (! $requestFreight && $order->payments()->doesntExist()) {
+            $order = app(PayOrderAction::class)->execute($order);
         }
 
         // Keep a server-side session capability for a guest order so a customer who

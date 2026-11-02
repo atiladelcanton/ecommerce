@@ -9,6 +9,7 @@ use App\Filament\Resources\Products\ProductResource;
 use App\Filament\Support\CatalogForm;
 use App\Filament\Support\HandlesProductAiAssistant;
 use App\Filament\Support\HandlesProductForm;
+use App\Filament\Support\ProductVariationMatrix;
 use App\Support\Catalog\ProductDescription;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +27,9 @@ final class EditProduct extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['variants'] = $this->getRecord()->variants->map(fn ($variant) => array_merge($variant->toArray(), ['attributes' => $variant->characteristics()]))->all();
+        $rows = $this->getRecord()->variants()->where('is_active', true)->get()->map(fn ($variant) => array_merge($variant->toArray(), ['attributes' => $variant->characteristics()]))->all();
+        $data['variants'] = ProductVariationMatrix::displayRows($rows);
+        $data['variation_axes'] = ProductVariationMatrix::axesFromRows($rows);
         $data['cost_price'] = $this->getRecord()->cost_price;
         $data['description'] = ProductDescription::html($data['description'] ?? null);
 
@@ -51,11 +54,13 @@ final class EditProduct extends EditRecord
 
         if ($hasVariantWithoutId) {
             $preservedState = $currentState;
-            unset($preservedState['variants'], $preservedState['new_images']);
+            unset($preservedState['variants'], $preservedState['variation_axes'], $preservedState['new_images']);
 
             $this->getRecord()->unsetRelation('variants');
             $this->fillForm();
 
+            // Preserve axis edits made just before saving, not just the DB-derived axes.
+            $this->data['variation_axes'] = $currentState['variation_axes'] ?? [];
             foreach ($preservedState as $field => $value) {
                 $this->data[$field] = $value;
             }

@@ -47,12 +47,18 @@
 
 ## Cenário 5: o frete exige cotação manual
 
-1. O cliente conclui a solicitação sem frete automático e o pedido fica aguardando proposta.
-2. No detalhe do pedido, clique **Informar cotação de entrega**.
-3. Cadastre transportadora, serviço, valor, prazo e validade; confirme todos os dados com o transportador.
-4. Utilize **Abrir link do cliente** para conferir a proposta publicada.
-5. Aguarde o comprador aceitar a condição e concluir o pagamento antes de preparar a mercadoria.
-6. Após aprovação, siga a etapa de preparação e envio correspondente.
+**Exemplo:** um cliente pede uma máquina de R$ 2.000,00 que precisa ser entregue por transportadora externa.
+
+1. O cliente seleciona **Solicitar cotação de entrega**. O pedido é criado com valor total **A definir**, sem cobrança.
+2. No detalhe do pedido, clique **Informar cotação de entrega** e cadastre a transportadora, o serviço, o frete de R$ 280,00, o prazo e a validade.
+3. Confira o novo total: **R$ 2.280,00**. O número do pedido **não muda**.
+4. Envie a cotação pelo e-mail cadastrado (SMTP configurado) ou abra **Compartilhar pelo WhatsApp** e confirme o envio manual da mensagem.
+5. O cliente abre o link, revisa as condições e clica **Aceitar frete e ir para pagamento**. Ele é direcionado ao checkout do Asaas.
+6. Enquanto o pagamento está pendente, **não prepare a mercadoria** e não crie outra cobrança. Se o cliente fechou a aba, pode continuar o checkout pelo acompanhamento do pedido.
+7. Após o **webhook confirmar** o pagamento, o pedido passa para **Pedido pago**. Clique **Iniciar preparação**.
+8. Como o frete foi contratado diretamente com outra transportadora, use o fluxo de **envio manual**, sem gerar etiqueta do Melhor Envio.
+
+**Se a proposta vencer:** publique outra cotação no mesmo pedido. **Se já houver cobrança pendente:** verifique o Asaas e espere a conclusão antes de alterar o frete.
 
 ## Cenário 6: um artigo foi escrito com IA e não aparece na home
 

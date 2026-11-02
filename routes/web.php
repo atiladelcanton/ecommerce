@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Payment\AsaasWebhookController;
+use App\Http\Controllers\Payment\PaymentReturnController;
+use App\Http\Controllers\Payment\PaymentStatusController;
+use App\Http\Controllers\Payment\PaymentRetryController;
 use App\Http\Controllers\Shipping\MelhorEnvioOAuthController;
 use App\Http\Controllers\Shipping\MelhorEnvioWebhookController;
 use App\Http\Controllers\Shipping\ShipmentLabelController;
@@ -15,6 +18,7 @@ use App\Http\Controllers\Store\OrderConfirmationController;
 use App\Http\Controllers\Store\ProductController;
 use App\Http\Controllers\Store\ShippingQuoteCheckoutController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Influencer\InfluencerPortalController;
 
 Route::get('/', HomeController::class)->name('home');
 Route::view('/produtos', 'store.products')->name('store.products');
@@ -70,3 +74,23 @@ Route::get('/admin/shipping/labels/{shipment}/file/{format}', ShipmentLabelFileC
 
 Route::get('/pedido/{number}/entrega/{revision}', ShippingQuoteCheckoutController::class)
     ->whereNumber('revision')->middleware(['signed', 'throttle:60,1'])->name('store.order.shipping-quote');
+
+// Buyer access is checked in each controller (authenticated customer or private session).
+Route::get('/pedido/{number}/pagamento/retorno', PaymentReturnController::class)->name('store.order.payment-return');
+Route::get('/pedido/{number}/pagamento', PaymentStatusController::class)->name('store.order.payment-status');
+Route::post('/pedido/{number}/pagamento/tentar-novamente', PaymentRetryController::class)->middleware('throttle:6,1')->name('store.order.payment-retry');
+
+// Portal independente do Filament administrativo, com guard específico.
+Route::prefix('influencers')->name('influencers.')->group(function (): void {
+    Route::get('/login', [InfluencerPortalController::class, 'loginForm'])->name('login');
+    Route::post('/login', [InfluencerPortalController::class, 'login'])->middleware('throttle:5,1')->name('login.post');
+    Route::middleware('auth:influencer')->group(function (): void {
+        Route::get('/', [InfluencerPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/orders', [InfluencerPortalController::class, 'orders'])->name('orders');
+        Route::get('/commissions', [InfluencerPortalController::class, 'commissions'])->name('commissions');
+        Route::get('/payments', [InfluencerPortalController::class, 'payments'])->name('payments');
+        Route::get('/profile', [InfluencerPortalController::class, 'profile'])->name('profile');
+        Route::put('/profile', [InfluencerPortalController::class, 'updateProfile'])->name('profile.update');
+        Route::post('/logout', [InfluencerPortalController::class, 'logout'])->name('logout');
+    });
+});

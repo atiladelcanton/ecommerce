@@ -39,6 +39,7 @@ final class ManageCouponUsageAction
             throw ValidationException::withMessages(['coupon' => 'O cupom do pedido não pode ser substituído.']);
         }
         if ($existing && $existing->status === 'reserved') {
+            app(\App\Domain\Influencer\Services\SyncInfluencerCommission::class)->execute($order, 'reserved');
             return;
         }
         if ($lockedCoupon->claims()->where('document_hash', $hash)->exists()) {
@@ -59,6 +60,7 @@ final class ManageCouponUsageAction
         }
         try {
             CouponClaim::query()->create(['coupon_id' => $lockedCoupon->id, 'coupon_usage_id' => $usage->id, 'document_hash' => $hash]);
+            app(\App\Domain\Influencer\Services\SyncInfluencerCommission::class)->execute($order, 'reserved');
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['coupon' => 'Este CPF/CNPJ já utilizou este cupom.']);
         }
@@ -90,6 +92,7 @@ final class ManageCouponUsageAction
             ]);
         }
         $usage->update(['status' => 'consumed', 'consumed_at' => now(), 'released_at' => null]);
+        app(\App\Domain\Influencer\Services\SyncInfluencerCommission::class)->execute($order, 'consumed');
         // Consumed claim is permanent even if the commercial order is later canceled/refunded.
     }
 
@@ -99,6 +102,7 @@ final class ManageCouponUsageAction
         if ($usage && $usage->status === 'reserved') {
             CouponClaim::query()->where('coupon_usage_id', $usage->id)->delete();
             $usage->update(['status' => 'released', 'released_at' => now()]);
+            app(\App\Domain\Influencer\Services\SyncInfluencerCommission::class)->execute($order, 'released');
         }
     }
 }

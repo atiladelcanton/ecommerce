@@ -14,13 +14,18 @@ use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\RelationManagers\ImagesRelationManager;
 use App\Filament\Support\CatalogForm;
+use App\Filament\Support\ProductVariationMatrix;
 use App\Support\BrazilianMoney;
 use App\Support\Catalog\ProductDescription;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Forms\Components\TagsInput;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -43,7 +48,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use InvalidArgumentException;
+use Illuminate\Support\Str;
 use Livewire\Component;
+use Filament\Schemas\Components\Utilities\Set;
 
 final class ProductResource extends Resource
 {
@@ -123,7 +130,7 @@ final class ProductResource extends Resource
             Section::make('Comercial')->columns(['default' => 1, 'lg' => 3])->schema([
                 BrazilianMoneyInput::make('cost_price')->label('Preço de custo')->required()->live(onBlur: true),
                 BrazilianMoneyInput::make('price')->label('Preço de venda')->required()->live(onBlur: true),
-                BrazilianMoneyInput::make('promotional_price')->label('Preço promocional')->live(onBlur: true),
+                BrazilianMoneyInput::make('promotional_price')->label('Preço promocional')->optionalPromotion()->helperText('Opcional. Deixe vazio ou 0,00 para vender sem promoção.')->live(onBlur: true),
                 Text::make(function (Get $get): string {
                     try {
                         $price = BrazilianMoney::parse($get('price'));
@@ -138,43 +145,162 @@ final class ProductResource extends Resource
                     }
                 })->color('success')->columnSpanFull(),
             ]),
-            Section::make('Opções e variações')
-                ->description('Opcional. Use quando o cliente precisar escolher combinações. Ex.: Nylon: Cor = Amarelo + Fios = 77; Camiseta: Cor = Preto + Tamanho = M. Cada combinação pode herdar preço, estoque e frete do produto ou ter valores próprios.')
-                ->collapsible()
-                ->collapsed()
-                ->schema([
-                    Repeater::make('variants')->label('Opções de venda')->defaultItems(0)->addActionLabel('Adicionar variação')
-                        ->itemLabel(fn (array $state): string => implode(' / ', array_values($state['attributes'] ?? [])) ?: 'Nova variação')
-                        ->collapsible()->columns(2)->schema([
-                            Hidden::make('id'),
-                            KeyValue::make('attributes')->label('Características da variação')
-                                ->keyLabel('Ex.: Cor, Fios, Tamanho, Metragem')
-                                ->valueLabel('Valor')
-                                ->addActionLabel('Adicionar característica')
-                                ->helperText('Cada linha representa uma combinação vendável. Ex.: Cor = Amarelo + Fios = 77, ou Cor = Preto + Tamanho = M. Não é necessário preencher preço próprio quando a combinação usa o preço geral do produto.')
-                                ->required()->columnSpanFull(),
-                            Toggle::make('is_active')->label('Disponível para venda')->default(true),
-                            TextInput::make('sku')->label('SKU próprio (opcional)')->maxLength(255),
-                            Section::make('Ajustes próprios desta combinação')
-                                ->description('Opcional. Preencha somente o que muda nesta combinação. Campos vazios herdam preço, promoção, estoque e medidas do produto principal.')
-                                ->collapsible()->collapsed()->columns(2)->columnSpanFull()->schema([
-                                    BrazilianMoneyInput::make('price')->label('Preço próprio')->helperText('Vazio: herda o preço do produto.'),
-                                    BrazilianMoneyInput::make('promotional_price')->label('Preço promocional próprio'),
-                                    TextInput::make('stock')->label('Estoque próprio')->integer()->minValue(0)->helperText('Vazio: compartilha o estoque geral do produto.'),
-                                    Text::make('Use medidas próprias somente quando a embalagem física desta combinação mudar. Ex.: pacote com metragem diferente ou embalagem de outro volume.')->columnSpanFull(),
-                                    TextInput::make('weight')->label('Peso embalado')->suffix('kg')->numeric()->minValue(0)->step('0.001'),
-                                    TextInput::make('height')->label('Altura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                                    TextInput::make('width')->label('Largura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                                    TextInput::make('length')->label('Comprimento da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),
-                                ]),
+            Section::make('Variações do produto')
+                ->description('Para qualquer tipo de produto: cadastre as características que o comprador precisa escolher, gere as combinações e informe os preços e estoques. Exemplos: voltagem, capacidade, material, modelo, acabamento ou tamanho. Se não houver escolhas, deixe esta seção vazia.')
+                ->collapsible()->schema([
+                    Repeater::make('variation_axes')
+                        ->label('1. Características que o comprador pode escolher')
+                        ->addActionLabel('Adicionar característica')
+                        ->defaultItems(0)->maxItems(ProductVariationMatrix::MAX_AXES)
+                        ->reorderable(false)->collapsible()->columns(['default' => 1, 'md' => 2])
+                        ->itemLabel(fn (array $state): string => trim((string) ($state['name'] ?? '')) ?: 'Nova característica')
+                        ->saved(false)
+                        ->schema([
+                            TextInput::make('name')->label('Nome da característica')->required()->maxLength(120)
+                                ->placeholder('Ex.: Voltagem, Capacidade, Modelo, Material')
+                                ->helperText('Escreva o nome que quiser. Não existe uma lista fixa de características.'),
+                            TagsInput::make('values')->label('Valores')->required()
+                                ->placeholder('Digite um valor e pressione Enter')
+                                ->helperText('Digite um valor por vez e pressione Enter. Ex.: 110 V e 220 V; 500 ml e 1 L; Alumínio e Inox.'),
                         ]),
+                    Actions::make([
+                        Action::make('generateProductCombinations')
+                            ->label('2. Gerar / atualizar combinações')
+                            ->icon('heroicon-o-squares-plus')->color('primary')
+                            ->action(function (Get $schemaGet, Set $schemaSet): void {
+                                // Removing the final characteristic must also clear the old table.
+                                if (($schemaGet('variation_axes') ?? []) === []) {
+                                    $schemaSet('variants', []);
+                                    Notification::make()->success()->title('Produto sem variações')
+                                        ->body('As opções foram retiradas da tabela. Salve o produto para desativá-las na loja.')->send();
+
+                                    return;
+                                }
+                                try {
+                                    $rows = ProductVariationMatrix::generate(
+                                        $schemaGet('variation_axes') ?? [],
+                                        $schemaGet('variants') ?? [],
+                                    );
+                                } catch (InvalidArgumentException $exception) {
+                                    Notification::make()->danger()->title('Revise as opções')->body($exception->getMessage())->send();
+
+                                    return;
+                                }
+                                $state = [];
+                                foreach ($rows as $row) {
+                                    $state[(string) Str::uuid()] = $row;
+                                }
+                                $schemaSet('variants', $state);
+                                Notification::make()->success()->title(count($rows).' combinações prontas')
+                                    ->body('Confira os preços e o estoque. As alterações só valem depois de salvar o produto.')->send();
+                            }),
+                        Action::make('clearAllProductVariations')
+                            ->label('Remover todas as variações')
+                            ->visible(fn (Get $get): bool => ($get('variation_axes') ?? []) !== [] || ($get('variants') ?? []) !== [])
+                            ->icon('heroicon-o-trash')->color('danger')
+                            ->requiresConfirmation()
+                            ->modalHeading('Vender este produto sem variações?')
+                            ->modalDescription('Isso remove as opções desta tela. Ao salvar o produto, as combinações serão desativadas na loja. Pedidos anteriores são preservados; reservas ativas podem impedir a alteração.')
+                            ->action(function (Set $schemaSet): void {
+                                $schemaSet('variation_axes', []);
+                                $schemaSet('variants', []);
+                                Notification::make()->success()->title('Variações retiradas da tabela')
+                                    ->body('Clique em Salvar para confirmar a alteração.')->send();
+                            }),
+                        Action::make('applyPriceStockToVariations')
+                            ->label('Aplicar preço / estoque a todos')
+                            ->icon('heroicon-o-arrow-down-on-square-stack')->color('gray')
+                            ->schema([
+                                BrazilianMoneyInput::make('price')->label('Preço próprio para todas')->helperText('Em branco: não altera os preços individuais.'),
+                                TextInput::make('stock')->label('Estoque de cada combinação')->integer()->minValue(0)
+                                    ->helperText('Em branco: não altera os estoques. Use 0 para marcar sem estoque.'),
+                            ])
+                            ->action(function (array $data, Get $schemaGet, Set $schemaSet): void {
+                                $rows = $schemaGet('variants') ?? [];
+                                if ($rows === []) {
+                                    Notification::make()->warning()->title('Gere as combinações primeiro.')->send();
+
+                                    return;
+                                }
+                                foreach ($rows as &$row) {
+                                    if (($data['price'] ?? null) !== null) {
+                                        $row['price'] = BrazilianMoney::format((int) $data['price']);
+                                        // An old promotion might be higher than the new price.
+                                        $row['promotional_price'] = null;
+                                    }
+                                    if (($data['stock'] ?? null) !== null && ($data['stock'] ?? '') !== '') {
+                                        $row['stock'] = (int) $data['stock'];
+                                    }
+                                }
+                                unset($row);
+                                $schemaSet('variants', $rows);
+                                Notification::make()->success()->title('Valores aplicados às combinações')->send();
+                            }),
+                    ]),
+                    Repeater::make('variants')
+                        ->label('3. Preço, estoque e SKU de cada opção')
+                        ->helperText('Preço ou estoque em branco: usa o valor geral do produto. Use os ajustes (ícone de controles) para promoção, peso e medidas específicas.')
+                        ->defaultItems(0)->maxItems(ProductVariationMatrix::MAX_ROWS)
+                        ->addable(false)->reorderable(false)->deletable(false)
+                        ->table([
+                            TableColumn::make('Combinação')->width('200px'),
+                            TableColumn::make('Preço próprio')->width('150px'),
+                            TableColumn::make('Estoque')->width('110px'),
+                            TableColumn::make('SKU (opcional)')->width('160px'),
+                            TableColumn::make('Ativa')->width('80px'),
+                        ])
+                        ->compact()
+                        ->schema([
+                            Hidden::make('id'),
+                            Hidden::make('attributes'),
+                            Hidden::make('promotional_price'),
+                            Hidden::make('weight'), Hidden::make('height'),
+                            Hidden::make('width'), Hidden::make('length'),
+                            TextInput::make('combination_display')->label('Combinação')->disabled()->saved(false),
+                            BrazilianMoneyInput::make('price')->label('Preço próprio')->placeholder('Usar preço geral'),
+                            TextInput::make('stock')->label('Estoque')->integer()->minValue(0)->placeholder('Geral'),
+                            TextInput::make('sku')->label('SKU')->maxLength(255)->placeholder('Opcional'),
+                            Toggle::make('is_active')->label('Ativa')->default(true),
+                        ])
+                        ->extraItemActions([
+                            Action::make('configureVariationDetails')->label('Detalhes')
+                                ->icon('heroicon-o-adjustments-horizontal')
+                                ->modalHeading('Detalhes da combinação')
+                                ->schema([
+                                    BrazilianMoneyInput::make('promotional_price')->label('Preço promocional próprio')->optionalPromotion()
+                                        ->helperText('Opcional. Deve ser menor que o preço de venda da combinação.'),
+                                    Text::make('Se esta variação tem embalagem diferente, informe todas as quatro medidas. Caso contrário, deixe-as vazias para usar as do produto.'),
+                                    TextInput::make('weight')->label('Peso (kg)')->numeric()->minValue(0)->step('0.001'),
+                                    TextInput::make('height')->label('Altura (cm)')->numeric()->minValue(0)->step('0.01'),
+                                    TextInput::make('width')->label('Largura (cm)')->numeric()->minValue(0)->step('0.01'),
+                                    TextInput::make('length')->label('Comprimento (cm)')->numeric()->minValue(0)->step('0.01'),
+                                ])
+                                ->fillForm(function (array $arguments, Repeater $component): array {
+                                    return array_intersect_key(
+                                        $component->getRawItemState($arguments['item']) ?? [],
+                                        array_flip(['promotional_price', 'weight', 'height', 'width', 'length']),
+                                    );
+                                })
+                                ->action(function (array $data, array $arguments, Repeater $component): void {
+                                    $rows = $component->getState();
+                                    $key = $arguments['item'];
+                                    if (! array_key_exists($key, $rows)) {
+                                        return;
+                                    }
+                                    foreach (['promotional_price', 'weight', 'height', 'width', 'length'] as $name) {
+                                        $rows[$key][$name] = $data[$name] ?? null;
+                                    }
+                                    $component->state($rows);
+                                }),
+                        ]),
+                    Text::make('Para retirar um valor, exclua-o da característica e clique em Gerar / atualizar combinações. Para deixar o produto sem opções, use Remover todas as variações (ou retire a última característica e gere novamente). Depois clique em Salvar. Pedidos anteriores são preservados e reservas ativas podem impedir a exclusão.'),
                 ]),
             Section::make('Disponibilidade')->columns(['default' => 1, 'lg' => 2])->schema([
                 Select::make('availability')->label('Disponibilidade')->options(self::availabilityOptions())->required()->default(ProductAvailability::IMMEDIATE->value),
                 TextInput::make('stock')->label('Estoque')->integer()->minValue(0),
             ]),
             Section::make('Dados para entrega')
-                ->description('Informe a embalagem de uma unidade vendável para calcular o frete automático. Estes dados servem para qualquer produto físico, de roupas e insumos a equipamentos.')
+                ->description('Informe peso e dimensões da unidade embalada para o cálculo do frete. Use os dados reais do produto, independentemente do segmento.')
                 ->columns(['default' => 1, 'lg' => 4])->schema([
                     TextInput::make('weight')->label('Peso embalado')->suffix('kg')->numeric()->minValue(0)->step('0.001'),
                     TextInput::make('height')->label('Altura da embalagem')->suffix('cm')->numeric()->minValue(0)->step('0.01'),

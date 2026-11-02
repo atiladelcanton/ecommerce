@@ -13,7 +13,7 @@ final class GetOrderConfirmationAction
 
     public function execute(string $number): Order
     {
-        return Order::query()->with(['items', 'address', 'payments', 'statusHistories'])
+        return Order::query()->with(['items', 'address', 'payments', 'statusHistories', 'latestShippingQuote'])
             ->where('number', $number)->where('checkout_session_hash', hash('sha256', $this->session->getId()))->firstOrFail();
     }
 }

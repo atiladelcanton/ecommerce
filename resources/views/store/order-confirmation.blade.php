@@ -2,7 +2,7 @@
     <div class="store-container py-10 pb-20">
         <div class="mb-8 flex items-start gap-4">
             <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-green-50 text-store-green"><x-heroicon-o-check class="size-6" aria-hidden="true" /></span>
-            <div><h1 class="store-title">{{ $order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE ? 'Solicitação de entrega recebida' : 'Pedido realizado com sucesso' }}</h1><p class="mt-3 text-store-muted">Número do pedido: <strong class="text-store-ink">{{ $order->number }}</strong></p></div>
+            <div><h1 class="store-title">{{ $order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED ? 'Pedido cancelado' : ($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE ? 'Solicitação de entrega recebida' : ($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::QUOTED ? 'Sua cotação está pronta' : ($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::APPROVED ? 'Pedido confirmado' : 'Pedido recebido — aguardando pagamento'))) }}</h1><p class="mt-3 text-store-muted">Número do pedido: <strong class="text-store-ink">{{ $order->number }}</strong></p></div>
         </div>
         @if(app()->environment(['local', 'development']) && $order->payments->contains('is_demo', true))
             <p class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-store-amber" role="status">Este pedido utilizou pagamento simulado.</p>
@@ -54,10 +54,30 @@
                 <section class="rounded-xl border border-store-border bg-store-soft p-5 sm:p-6" aria-labelledby="confirmation-payment-heading">
                     <h2 id="confirmation-payment-heading" class="mb-3 font-semibold">Pagamento</h2>
                     @if($order->payment_status === \App\Domain\Payment\Enums\PaymentStatus::APPROVED)
-                        <p class="text-sm text-store-green">Aprovado — ambiente de demonstração</p>
-                    @else
+                        <p class="text-sm text-store-green">Pagamento aprovado. Sua compra seguirá para preparação.</p>
+                    @elseif($order->status === \App\Domain\Order\Enums\OrderStatus::CANCELLED)
+                        <p class="text-sm text-store-muted">Este pedido foi cancelado. Entre em contato com a loja caso tenha dúvidas sobre o pagamento.</p>
+                    @elseif($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE)
                         <p class="text-sm text-store-muted">Aguardando cotação do frete. Nenhum pagamento foi realizado.</p>
-                        <p class="mt-3 text-sm">Seus itens de pronta entrega ficam reservados por 24 horas. A SABA informará o frete e enviará o link para concluir a compra.</p>
+                        <p class="mt-3 text-sm">Os itens com estoque controlado ficam reservados inicialmente por 24 horas. A loja informará o valor do frete; depois você poderá aceitar a proposta e pagar.</p>
+                    @elseif($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::QUOTED)
+                        <p class="text-sm text-store-muted">Frete cotado. Revise o prazo e o valor, aceite a proposta e prossiga para o pagamento.</p>
+                        @if($order->latestShippingQuote && $order->latestShippingQuote->expires_at->isFuture() && ! $order->latestShippingQuote->superseded_at)
+                            <a class="store-button mt-4 inline-flex" href="{{ app(\App\Actions\Shipping\GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote) }}">Revisar cotação e pagar</a>
+                        @else
+                            <p class="mt-3 text-sm text-store-red">A cotação venceu. Solicite uma nova proposta à loja.</p>
+                        @endif
+                    @else
+                        <p class="text-sm text-store-muted">O valor final foi definido. O pedido ainda não está pago.</p>
+                        @php($latestPayment = $order->payments->sortByDesc('id')->first())
+                        @if($latestPayment?->gateway === 'asaas' && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($latestPayment->checkout_url, $latestPayment->environment))
+                            <a class="store-button mt-4 inline-flex" href="{{ $latestPayment->checkout_url }}" rel="noopener noreferrer">Ir para pagamento no Asaas</a>
+                        @elseif(! $latestPayment || in_array($latestPayment->status, [\App\Domain\Payment\Enums\PaymentStatus::FAILED, \App\Domain\Payment\Enums\PaymentStatus::CANCELLED], true))
+                            <form class="mt-4" method="POST" action="{{ route('store.order.payment-retry', $order->number) }}">@csrf <button class="store-button" type="submit">Tentar pagamento</button></form>
+                        @else
+                            <p class="mt-3 text-sm">Sua cobrança está em preparação ou análise. Verifique a situação antes de tentar novamente.</p>
+                        @endif
+                        <a class="store-text-link mt-3 inline-block" href="{{ route('store.order.payment-status', $order->number) }}">Acompanhar pagamento</a>
                     @endif
                 </section>
             </div>

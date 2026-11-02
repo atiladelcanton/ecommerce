@@ -21,7 +21,7 @@ final class ConfirmQuotedOrderAction
     {
         $authorized = app(GetQuotedOrderAction::class)->execute($number, $revision, $signedUrl);
 
-        return DB::transaction(function () use ($authorized, $number, $revision, $signedUrl): Order {
+        $confirmed = DB::transaction(function () use ($authorized, $number, $revision, $signedUrl): Order {
             $order = Order::query()->lockForUpdate()->findOrFail($authorized->id);
             // Recheck revision and expiry after acquiring the order lock.
             app(GetQuotedOrderAction::class)->execute($number, $revision, $signedUrl);
@@ -31,8 +31,14 @@ final class ConfirmQuotedOrderAction
             if ($order->payment_status === PaymentStatus::APPROVED) {
                 return $order;
             }
-            if ($order->status !== OrderStatus::RECEIVED || $order->shipping_pricing_status !== ShippingPricingStatus::QUOTED) {
+            if ($order->status !== OrderStatus::RECEIVED || ! in_array($order->shipping_pricing_status, [ShippingPricingStatus::QUOTED, ShippingPricingStatus::CONFIRMED], true)) {
                 throw ValidationException::withMessages(['payment' => 'Este pedido não está disponível para confirmação.']);
+            }
+            if ($order->shipping_pricing_status === ShippingPricingStatus::CONFIRMED) {
+                return $order; // A second click must resume, not create a second payment.
+            }
+            if ($order->payments()->where('status', PaymentStatus::PENDING->value)->exists()) {
+                throw ValidationException::withMessages(['payment' => 'Existe uma cobrança pendente. Aguarde a confirmação antes de alterar o frete.']);
             }
             $items = $order->items()->orderBy('product_id')->get();
             $products = Product::query()->whereIn('id', $items->pluck('product_id'))->orderBy('id')->lockForUpdate()->get()->keyBy('id');
@@ -40,7 +46,7 @@ final class ConfirmQuotedOrderAction
             foreach ($items as $item) {
                 $product = $products->get($item->product_id);
                 $variant = $variants->get($item->product_variant_id);
-                if (! $product || ! $product->is_active || $product->availability === ProductAvailability::UNAVAILABLE || ($item->product_variant_id === null && $product->variants()->exists()) || ($item->variant_value !== null && (! $variant || ! $variant->is_active || $variant->characteristics() != $item->variant_attributes_snapshot))) {
+                if (! $product || ! $product->is_active || $product->availability === ProductAvailability::UNAVAILABLE || ($item->product_variant_id === null && $product->variants()->where('is_active', true)->exists()) || ($item->variant_value !== null && (! $variant || ! $variant->is_active || $variant->characteristics() != $item->variant_attributes_snapshot))) {
                     throw ValidationException::withMessages(['stock' => 'Um dos itens não está mais disponível nessa configuração. Entre em contato com a loja.']);
                 }
             }
@@ -48,7 +54,12 @@ final class ConfirmQuotedOrderAction
             $order->update(['shipping_pricing_status' => ShippingPricingStatus::CONFIRMED]);
             $order->latestShippingQuote()->firstOrFail()->update(['accepted_at' => now()]);
 
-            return app(PayOrderAction::class)->execute($order);
+            $order->statusHistories()->create(['from_status' => $order->status, 'to_status' => $order->status, 'description' => 'Cliente aceitou a cotação de frete (revisão '.$revision.').']);
+            return $order;
         }, 3);
+
+        // Network IO must run after committing acceptance and the stock reservation.
+        // A rejected/uncertain checkout cannot erase the accepted quote.
+        return app(PayOrderAction::class)->execute($confirmed);
     }
 }

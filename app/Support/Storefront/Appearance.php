@@ -7,10 +7,11 @@ namespace App\Support\Storefront;
 use App\Domain\Settings\Models\StoreSetting;
 use Illuminate\Support\Facades\Storage;
 
-/** Visual configuration scoped to the public storefront, never to Filament. */
+/** Validated branding shared with the public storefront and administrative panel. */
 final class Appearance
 {
-    public static function logoUrl(?StoreSetting $settings): string
+    /** Returns the merchant-uploaded logo, when available. */
+    public static function customLogoUrl(?StoreSetting $settings): ?string
     {
         $path = $settings?->logo_path;
 
@@ -18,7 +19,12 @@ final class Appearance
             return Storage::disk('public')->url($path);
         }
 
-        return asset('images/saba-logo.jpeg');
+        return null;
+    }
+
+    public static function logoUrl(?StoreSetting $settings): ?string
+    {
+        return self::customLogoUrl($settings);
     }
 
     /** @return array{primary: string, secondary: string, button: string, button_text: string, css: string} */

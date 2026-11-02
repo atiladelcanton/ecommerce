@@ -1,7 +1,7 @@
 @props(['categories', 'whatsappUrl', 'storeName', 'blogEnabled' => false, 'logoUrl' => null])
 <div class="wh-promo-bar">
     <div class="store-container wh-promo-inner">
-        <span>Bem-vindo à {{ $storeName }}</span>
+        <span>Conheça {{ $storeName }}</span>
         <span>Atendimento e produtos selecionados para você</span>
         <a href="{{ route('store.contact') }}">Central de atendimento</a>
     </div>
@@ -9,7 +9,7 @@
 <header class="wh-header store-header" x-data="storeHeader" @keydown.escape="closeCategories()">
     <div class="store-container wh-mainbar">
         <a href="{{ route('home') }}" class="wh-logo" aria-label="{{ $storeName }} — início">
-            <img src="{{ ($logoUrl ?: asset('images/saba-logo.jpeg')) }}" alt="{{ $storeName }}" width="180" height="66">
+            @if($logoUrl)<img src="{{ $logoUrl }}" alt="{{ $storeName }}" width="160" height="56">@else<span class="store-brand-text">{{ $storeName }}</span>@endif
         </a>
         <div id="wh-header-search" class="wh-search" x-show="desktop || searchOpen" x-cloak>
             <livewire:store.search-autocomplete />

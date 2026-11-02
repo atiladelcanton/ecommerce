@@ -3,8 +3,27 @@
         <section class="mb-5 rounded-xl border border-store-border bg-white p-5">
             <h2 class="font-semibold">{{ $order->shipping_pricing_status->label() }}</h2>
             <p class="mt-2 text-sm text-store-muted">A reserva inicial de estoque dura 24 horas. Depois disso, a disponibilidade será conferida novamente ao concluir a compra.</p>
-            @if($order->latestShippingQuote && $order->latestShippingQuote->expires_at->isFuture() && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
-                <a class="store-button mt-4" href="{{ app(\App\Actions\Shipping\GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote) }}">Revisar frete e concluir pedido</a>
+            @if($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::AWAITING_QUOTE)
+                <p class="mt-3 text-sm">A loja está preparando uma proposta para seu endereço. Não há cobrança a pagar ainda.</p>
+            @elseif($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::QUOTED
+                && $order->latestShippingQuote && $order->latestShippingQuote->expires_at->isFuture() && ! $order->latestShippingQuote->superseded_at
+                && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED)
+                <p class="mt-3 text-sm">Frete: {{ \App\Support\BrazilianMoney::display($order->shipping_cents) }} · Total: {{ $order->formattedTotal() }}. Cotação válida até {{ $order->latestShippingQuote->expires_at->format('d/m/Y H:i') }}.</p>
+                <a class="store-button mt-4" href="{{ app(\App\Actions\Shipping\GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote) }}">Revisar e aceitar cotação</a>
+            @elseif($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::CONFIRMED
+                && $order->status === \App\Domain\Order\Enums\OrderStatus::RECEIVED
+                && $order->payment_status !== \App\Domain\Payment\Enums\PaymentStatus::APPROVED)
+                <p class="mt-3 text-sm">Você aceitou o frete. Falta confirmar o pagamento pelo provedor.</p>
+                @php($payment = $order->payments->sortByDesc('id')->first())
+                @if($payment?->gateway === 'asaas' && \App\Infrastructure\Payments\AsaasGateway::isCheckoutUrl($payment->checkout_url, $payment->environment))
+                    <a class="store-button mt-4" href="{{ $payment->checkout_url }}" rel="noopener noreferrer">Continuar pagamento no Asaas</a>
+                @elseif(! $payment || in_array($payment->status, [\App\Domain\Payment\Enums\PaymentStatus::FAILED, \App\Domain\Payment\Enums\PaymentStatus::CANCELLED], true))
+                    <form class="mt-4" method="POST" action="{{ route('store.order.payment-retry', $order->number) }}">@csrf <button class="store-button" type="submit">Iniciar pagamento</button></form>
+                @else
+                    <p class="mt-2 text-sm text-store-muted">Aguardando confirmação ou revisão financeira. Entre em contato com a loja se necessário.</p>
+                @endif
+            @elseif($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::QUOTED && $order->latestShippingQuote?->expires_at?->isPast())
+                <p class="mt-3 text-sm text-store-red">Esta cotação venceu. Solicite uma nova proposta à loja.</p>
             @endif
         </section>
     @endif
@@ -89,7 +108,7 @@
                 <p class="mt-3 text-sm font-medium">{{ $order->shipping_name }}</p>
                 <p class="mt-1 text-xs leading-5 text-store-muted">{{ $order->shipping_description }}</p>
                 @if($order->status === \App\Domain\Order\Enums\OrderStatus::READY_FOR_PICKUP)
-                    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Seu pedido está pronto para retirada. Entre em contato com a SABA se precisar combinar o horário.</div>
+                    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Seu pedido está pronto para retirada. Entre em contato com {{ \App\Support\Storefront\StoreBrand::currentName() }} se precisar combinar o horário.</div>
                 @endif
                 @if($order->status === \App\Domain\Order\Enums\OrderStatus::READY_FOR_SHIPPING)
                     <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">Seu pedido está embalado, com etiqueta gerada e aguardando a postagem na transportadora.</div>

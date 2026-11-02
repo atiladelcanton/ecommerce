@@ -13,6 +13,18 @@
 - [ ] Compra de teste completa e status conferidos até a etapa esperada.
 - [ ] Políticas comerciais/contato conferidos com os responsáveis pela operação.
 
+## Checklist: cotação de entrega negociada
+
+- [ ] Conferir se o pedido está **Pedido recebido / Aguardando cotação**.
+- [ ] Conferir transportadora, endereço, preço e prazo com o prestador do transporte.
+- [ ] Abrir **Informar cotação de entrega** e preencher todos os campos obrigatórios.
+- [ ] Conferir o **total atualizado** do pedido e a validade da proposta.
+- [ ] Compartilhar o link assinado: **WhatsApp manual**, **Copiar link** ou **Enviar cotação por e-mail** (com SMTP de verdade).
+- [ ] Esperar o **aceite pelo cliente**; não cobrar antes.
+- [ ] Esperar a **aprovação Asaas**; não expedir com pagamento apenas pendente.
+- [ ] Se o checkout ficou inconclusivo, verificar o Asaas e **não repetir cobrança**.
+- [ ] Com o pagamento aprovado, seguir preparação e envio manual.
+
 ## Checklist: cadastrar um novo produto
 
 - [ ] Categoria correta.
@@ -66,3 +78,12 @@
 ## Regra de segurança
 
 Nunca compartilhe **API Key do Asaas, Groq ou Client Secret do Melhor Envio**, senhas, tokens, dados completos de cartão ou documentos pessoais em grupos. Em situações de cobrança ou etiqueta incerta, consulte o provedor e a equipe técnica antes de repetir uma ação irreversível.
+
+## Checklist opcional — campanha com influenciadores
+
+- [ ] Cadastrei o parceiro em **Vendas → Influenciadores**, defini o percentual e criei acesso ao portal.
+- [ ] Criei um cupom em **Vendas → Cupons de desconto**, vinculei o influenciador e revisei limites e validade.
+- [ ] Testei o acesso privado em `/influencers/login` e a visualização apenas dos próprios pedidos.
+- [ ] Homologuei uma compra e confirmei que a comissão só passou a **prevista** depois do pagamento aprovado.
+- [ ] Conferi e aprovei a comissão, realizei o Pix fora do sistema e registrei o repasse com referência.
+- [ ] Testei cancelamentos e estornos para não aprovar repasses indevidos.

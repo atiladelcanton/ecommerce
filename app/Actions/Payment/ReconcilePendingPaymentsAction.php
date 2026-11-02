@@ -30,8 +30,10 @@ final class ReconcilePendingPaymentsAction
                         }
                         $payment->update(['last_checked_at' => now()]);
                     } elseif (! str_starts_with($payment->external_id, 'ORD')) {
-                        // An uncertain create is repeated only with its ORIGINAL idempotency key.
-                        app(\App\Actions\Order\PayOrderAction::class)->resumePending($payment);
+                        // Legacy provider records require review; never replay an ambiguous create from cron.
+                        $payment->update(['needs_review' => true,
+                            'review_reason' => 'Criação de cobrança sem identificador remoto: conciliação manual necessária.',
+                            'last_checked_at' => now()]);
                     } else {
                         app(ReconcileHostedPaymentAction::class)->execute($payment);
                     }

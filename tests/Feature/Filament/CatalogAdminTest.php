@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Filament;
 
 use App\Actions\Catalog\AddProductImageAction;
+use App\Actions\Catalog\SyncProductVariantsAction;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Filament\Resources\Categories\Pages\CreateCategory;
@@ -51,6 +52,43 @@ final class CatalogAdminTest extends TestCase
             'is_featured' => true,
             'whatsapp_quote_enabled' => true,
         ], $overrides);
+    }
+
+    public function test_optional_promotional_price_accepts_zero_and_empty_to_disable_sale(): void
+    {
+        Livewire::test(CreateProduct::class)
+            ->fillForm($this->productData(['promotional_price' => '0,00']))
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $product = Product::query()->sole();
+        $this->assertNull($product->promotional_price);
+
+        $product->update(['promotional_price' => 10000]);
+        Livewire::test(EditProduct::class, ['record' => $product->id])
+            ->fillForm(['promotional_price' => '0,00'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+        $this->assertNull($product->fresh()->promotional_price);
+    }
+
+    public function test_product_editor_can_remove_the_final_option_and_save_as_simple_product(): void
+    {
+        $product = Product::factory()->create(['price' => 45000, 'stock' => 5]);
+        app(SyncProductVariantsAction::class)->execute($product, [[
+            'attributes' => ['Modelo' => 'Corvin'], 'is_active' => true,
+        ]]);
+        $variantId = $product->variants()->sole()->id;
+
+        Livewire::test(EditProduct::class, ['record' => $product->id])
+            ->fillForm(['variation_axes' => [], 'variants' => [], 'promotional_price' => '0,00'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('product_variants', ['id' => $variantId, 'is_active' => false]);
+        $this->assertNull($product->fresh()->promotional_price);
+        Livewire::test(EditProduct::class, ['record' => $product->id])
+            ->assertFormSet(['variation_axes' => [], 'variants' => []]);
     }
 
     public function test_admin_can_create_category_with_generated_slug(): void

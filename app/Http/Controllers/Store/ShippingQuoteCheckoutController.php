@@ -17,7 +17,10 @@ final class ShippingQuoteCheckoutController
         if ($customerId && ! auth('customer')->check()) {
             return redirect()->guest(route('customer.login'));
         }
-        $action->execute($number, $revision, $request->fullUrl());
+        $order = $action->execute($number, $revision, $request->fullUrl());
+        // A valid private quotation link also grants this browser access to payment
+        // status and retry; it does not grant access to any other order.
+        session()->put('payment.return.orders.'.$order->id, hash('sha256', $order->checkout_token));
 
         return response()->view('store.shipping-quote-checkout', ['number' => $number, 'revision' => $revision, 'signedUrl' => $request->fullUrl()])
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer')->header('X-Robots-Tag', 'noindex, nofollow');

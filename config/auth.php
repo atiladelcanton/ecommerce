@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Influencer\Models\Influencer;
 use App\Models\User;
 
 return [
@@ -13,6 +14,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'influencer' => [
+            'driver' => 'session',
+            'provider' => 'influencers',
+        ],
         'customer' => [
             'driver' => 'session',
             'provider' => 'customers',
@@ -22,6 +27,10 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+        'influencers' => [
+            'driver' => 'eloquent',
+            'model' => Influencer::class,
         ],
         'customers' => [
             'driver' => 'eloquent',

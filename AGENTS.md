@@ -269,3 +269,24 @@ Do not introduce independent visual styles per module.
 ## Approved increment — coupons (2026-10-27)
 
 The previously excluded coupon feature is now explicitly approved and implemented. See `docs/coupons.md`. Keep monetary calculations in integer cents, usage accounting transaction-safe, and checkout coupon state on the server. This approval does not authorize a broader promotions or affiliate platform.
+
+
+## 14. Documentação para operadores (obrigatório)
+
+Toda criação, alteração ou correção de módulo administrativo que mude o uso da loja pelo operador deve ser acompanhada, **na mesma entrega**, pela atualização do módulo Ajuda em português simples e com passo a passo. Não é suficiente informar a alteração apenas na resposta ao desenvolvedor.
+
+- Leia primeiro o formulário/ações efetivamente implementados e documente apenas comportamentos confirmados no código.
+- Atualize `resources/help/<topico>.md` (ou crie um novo artigo e registre-o em `config/admin_help.php`).
+- Inclua instruções de acesso, campos, exemplos de diferentes segmentos quando pertinente, salvar/publicar, erros comuns e avisos importantes.
+- Execute `php scripts/sync-help-articles.php` para sincronizar `app/Filament/Support/BundledHelpArticles.php`. O painel **lê primeiro o texto incorporado nesse PHP**, portanto editar só o Markdown não atualiza o artigo visível.
+- Execute a verificação `php scripts/sync-help-articles.php --check` e, quando possível, testes da Ajuda.
+- Inclua o artigo atualizado **nos ZIPs incremental e completo** e mencione a mudança na entrega.
+- Mudanças estritamente internas, sem efeito sobre a operação dos usuários, não exigem alteração de tutorial.
+
+## Influenciadores (atualização de 2026-11-01)
+
+- Painel privado /influencers com guard 'influencer', identidade visual independente e relatórios escopados pela conta autenticada.
+- O cupom permanece a fonte de atribuição; não duplicar pedido, cupom, checkout ou webhook.
+- Guardar comissão em centavos e taxa em pontos-base (bps). Base = subtotal dos produtos após desconto, excluindo frete.
+- Pagamento confirmado cria previsão, sem aprovar nem transferir Pix automaticamente; o repasse é manual e auditável.
+- Atualizar resources/help/influenciadores.md e a cópia BundledHelpArticles ao mudar regras visíveis.

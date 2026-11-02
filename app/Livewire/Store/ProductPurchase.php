@@ -48,7 +48,7 @@ final class ProductPurchase extends Component
                 type: $variantError ? 'warning' : 'error',
                 title: $variantError ? 'Selecione uma opção' : 'Não foi possível adicionar',
                 message: $variantError && $this->productVariantId === null
-                    ? (str_contains($exception->validator->errors()->first(), 'uma cor') ? 'Escolha a cor antes de adicionar o produto ao carrinho.' : 'Escolha a variação antes de adicionar o produto ao carrinho.')
+                    ? 'Escolha uma das opções disponíveis para este produto antes de adicioná-lo ao carrinho.'
                     : $exception->validator->errors()->first(),
             );
 

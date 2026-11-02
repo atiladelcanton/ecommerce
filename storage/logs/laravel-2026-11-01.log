@@ -1,0 +1,25 @@
+[2026-11-01 11:41:11] local.DEBUG: From: SABA =?utf-8?Q?M=C3=A1quinas?= <contato@sabamaquinas.local>
+To: atilarampazo@gmail.com
+Subject: =?utf-8?Q?Cota=C3=A7=C3=A3o?= da entrega do pedido SABA-000017
+MIME-Version: 1.0
+Date: Sun, 01 Nov 2026 11:41:11 -0300
+Message-ID: <077fcb644a3383b247dc8aa8f6562511@sabamaquinas.local>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Olá, Atila Delcanton Rampazo!
+
+A cotação da entrega do pedido SABA-000017 está pronta.
+
+Transportadora: Propria
+Serviço: Entrega combinada
+Frete: R$ 250,00
+Total do pedido: R$ 2.250,00
+Prazo estimado: 15 dias úteis
+Válida até: 08/11/2026 11:40
+
+Para revisar, aceitar e pagar de forma segura, acesse:
+http://localhost:8081/pedido/SABA-000017/entrega/1?expires=1794148800&signature=34be9602a5a5abb3b92180130a598c57dc7a23bb4763176a2304a150e703945d
+
+O pagamento só será considerado confirmado após a aprovação pelo provedor.
+  

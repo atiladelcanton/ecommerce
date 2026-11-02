@@ -21,6 +21,28 @@ final class ProductCombinationsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_archiving_all_variants_restores_simple_product_purchase_and_can_reactivate_same_id(): void
+    {
+        $product = Product::factory()->create(['price' => 25000, 'stock' => 10, 'promotional_price' => null]);
+        $input = $this->row(['Modelo' => 'Corvin'], 25000, 5, 'MOD-CORVIN');
+        app(SyncProductVariantsAction::class)->execute($product, [$input]);
+        $oldId = $product->variants()->sole()->id;
+
+        // Removing every option archives existing rows, without losing order history.
+        app(SyncProductVariantsAction::class)->execute($product, []);
+        $this->assertDatabaseHas('product_variants', ['id' => $oldId, 'is_active' => false]);
+        $data = app(GetProductPurchaseDataAction::class)->execute($product->fresh()->load('variants'));
+        $this->assertSame([], $data['fields']);
+        $this->assertTrue($data['canPurchase']);
+        app(AddCartItemAction::class)->execute($product->id, null, 1);
+        $this->assertArrayHasKey($product->id.':none', app(GetCartAction::class)->execute()['items']);
+
+        // Restoring the archived choice must not create a duplicate combination.
+        app(SyncProductVariantsAction::class)->execute($product, [$input]);
+        $this->assertSame($oldId, $product->variants()->where('is_active', true)->sole()->id);
+        $this->assertSame(1, $product->variants()->count());
+    }
+
     public function test_combinations_have_independent_prices_stock_sku_and_cart_lines(): void
     {
         $product = Product::factory()->create(['price' => 10000]);

@@ -18,6 +18,18 @@ A integração operacional configurável do projeto é o **Asaas**, com **checko
 
 O quadro do administrativo informa a URL exata do webhook, além dos eventos **CHECKOUT_CREATED**, **CHECKOUT_PAID**, **CHECKOUT_CANCELED** e **CHECKOUT_EXPIRED**. Configure **todos os eventos indicados** e o mesmo token nos dois sistemas.
 
+## Frete sob consulta: quando a cobrança começa?
+
+Ao solicitar uma cotação, o cliente **não paga ainda**, e o total não está pronto. O administrador publica o frete, o cliente revisa os valores e clica **Aceitar frete e ir para pagamento**. Só nesse momento o sistema pode preparar o checkout hospedado do Asaas.
+
+O sistema registra uma tentativa de pagamento e reutiliza a mesma tentativa enquanto ela estiver pendente. Não gera uma segunda cobrança por cliques repetidos. O Asaas deve informar o resultado oficial por webhook; voltar do navegador ou clicar em “pagar” não aprova a venda.
+
+**Webhook e fila:** o Asaas envia eventos para a URL pública da loja, mas os eventos são processados pela fila Laravel. Quando `QUEUE_CONNECTION=database`, é necessário manter **`php artisan queue:work`** em execução (por exemplo, via Supervisor) e o agendador **`php artisan schedule:run`** a cada minuto. Se o worker parar, a cobrança pode aparecer como paga no Asaas, mas ainda pendente na loja. Não é necessário Redis.
+
+**Checkout com resultado incerto:** uma falha de rede pode acontecer depois de o Asaas ter recebido o pedido de criação. Nessa situação o sistema mantém a cobrança em revisão e **não repete o POST automaticamente**. O administrador deve conferir a cobrança no painel Asaas e resolver a pendência antes de oferecer nova tentativa. Isso evita cobrança duplicada.
+
+Para ambiente local/Sandbox, configure uma URL HTTPS de teste acessível externamente. O webhook e o retorno do Asaas não funcionam plenamente em `http://localhost` sem túnel HTTPS.
+
 ## Como verificar o pagamento de um pedido
 
 1. Abra **[Pedidos](/admin/orders)** e encontre a compra.

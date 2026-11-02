@@ -11,6 +11,7 @@ use App\Actions\Shipping\GenerateShipmentLabelAction;
 use App\Actions\Shipping\GetOrderShippingQuoteLinkAction;
 use App\Actions\Shipping\PrepareReplacementShipmentAction;
 use App\Actions\Shipping\PublishOrderShippingQuoteAction;
+use App\Actions\Shipping\SendOrderShippingQuoteEmailAction;
 use App\Actions\Shipping\RefreshShipmentTrackingAction;
 use App\Actions\Shipping\VerifyShipmentAction;
 use App\Domain\Order\Enums\OrderStatus;
@@ -80,6 +81,12 @@ final class ViewOrder extends ViewRecord
         }
         if ($order->latestShippingQuote && $order->latestShippingQuote->expires_at->isFuture() && ! $order->latestShippingQuote->superseded_at && $status === OrderStatus::RECEIVED) {
             $actions[] = Action::make('reviewShippingQuote')->label('Abrir link do cliente')->url(app(GetOrderShippingQuoteLinkAction::class)->execute($order->latestShippingQuote))->openUrlInNewTab();
+            if ($order->shipping_pricing_status === \App\Domain\Shipping\Enums\ShippingPricingStatus::QUOTED) {
+                $actions[] = Action::make('sendShippingQuoteEmail')->label('Enviar cotação por e-mail')
+                    ->icon('heroicon-o-envelope')->requiresConfirmation()
+                    ->modalDescription('Enviar o link privado para '. $order->customer_email .'? Configure um servidor SMTP real para o envio chegar ao cliente.')
+                    ->action(fn () => $this->perform(fn () => app(SendOrderShippingQuoteEmailAction::class)->execute($order, (int) auth()->id()), 'Envio solicitado ao serviço de e-mail'));
+            }
         }
         if ($status === OrderStatus::PAID) {
             $actions[] = $this->statusAction('processing', 'Iniciar preparação', OrderStatus::PROCESSING);

@@ -15,6 +15,14 @@ Use **[Vendas → Pedidos](/admin/orders)** para ver detalhes, pagamento, valore
 | **Entregue** | Entrega/retirada concluída. | Encerrar acompanhamento. |
 | **Cancelado** | Venda encerrada dentro das regras de cancelamento. | Conferir separadamente reembolso e etiqueta, se houver. |
 
+## Fluxo especial: frete sob consulta
+
+Um pedido pode aparecer como **Pedido recebido** e com **Frete: A definir**. Isso não é erro e não significa que foi pago. O administrador informa o valor em **Informar cotação de entrega**; o total é atualizado no **mesmo pedido**. Em seguida, compartilha o link com o cliente (cópia, WhatsApp manual ou envio por e-mail com SMTP configurado).
+
+O cliente aceita a proposta e é encaminhado ao checkout hospedado do Asaas. **Somente a confirmação do provedor** transforma o status comercial em **Pedido pago**. Quando a cobrança estiver pendente, **não altere o frete nem cancele comercialmente o pedido liberando estoque**; solicite o cancelamento da cobrança no Asaas e espere o webhook terminal.
+
+Ações e estados detalhados, com exemplos, estão em **Frete sob consulta e negociação** nesta central de Ajuda.
+
 ## Fluxo normal de entrega automática
 
 1. O cliente escolhe produto, endereço, frete e finaliza a compra.
@@ -69,3 +77,7 @@ Abra o detalhe e confira: número, data, dados de contato, documento do comprado
 ### Pedido preso em uma etapa
 
 Primeiro abra os detalhes e leia a mensagem de erro/histórico. Depois consulte o tutorial específico de **Pagamentos**, **Etiquetas** ou **Frete sob consulta**. **Nunca mude um status só para esconder uma falha de integração.**
+
+## Pedidos feitos com cupons de influenciadores
+
+Quando um cliente conclui uma compra com um cupom vinculado a um influenciador, o sistema registra a atribuição ao parceiro. Enquanto o pagamento não estiver confirmado, a comissão é **pendente**; depois da confirmação, aparece como **prevista**. A equipe Administradora faz a aprovação e o repasse manual, em **Vendas → Comissões de influenciadores**. O pedido continua seguindo os status operacionais normais. Consulte **[Influenciadores, cupons e comissões](/admin/ajuda?topico=influenciadores)**.

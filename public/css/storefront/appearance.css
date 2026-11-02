@@ -1,4 +1,4 @@
-/* SABA: tenant-managed identity, applies after Vite and per-template styles.
+/* Merchant-managed identity, applies after Vite and per-template styles.
    Values come from server-validated #RRGGBB in Storefront\Appearance. */
 .store-body .store-announcement {
     background: var(--color-store-secondary);
@@ -39,3 +39,16 @@
 .store-template-3 .ct-product-card .ct-product-view,.store-template-4 .ct-product-card .ct-product-view,.store-template-5 .ct-product-card .ct-product-view{color:var(--color-store-red)}
 .store-template-3 .store-button,.store-template-4 .store-button,.store-template-5 .store-button{background:var(--color-store-button);color:var(--color-store-button-text)}
 .store-template-3 .store-button:hover,.store-template-4 .store-button:hover,.store-template-5 .store-button:hover{background:var(--color-store-button-hover);color:var(--color-store-button-hover-text)}
+
+/* Display the configured store name when no logo has been uploaded. */
+.store-body .store-brand-text {
+    display: inline-block;
+    max-width: 100%;
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -.02em;
+    overflow-wrap: anywhere;
+    color: inherit;
+}
+.store-body .store-brand-text--footer {font-size: 1.22rem;}

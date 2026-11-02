@@ -1,8 +1,8 @@
-<x-store.layout title="Quem Somos" description="Conheça a SABA e nossos produtos e soluções para serigrafia." :canonical="route('store.about')">
+<x-store.layout title="Quem Somos" :description="'Conheça '.\App\Support\Storefront\StoreBrand::currentName().' e os produtos disponíveis na loja.'" :canonical="route('store.about')">
     <div class="store-container store-institutional-page">
         <x-store.breadcrumb :items="[['label' => 'Quem Somos']]" />
         <section class="store-institutional-intro">
-            <p class="store-eyebrow">SABA · Equipamentos serigráficos</p>
+            <p class="store-eyebrow">{{ \App\Support\Storefront\StoreBrand::currentName() }}</p>
             <h1>{{ $content['title'] }}</h1>
             <p>{{ $content['introduction'] }}</p>
         </section>
@@ -16,7 +16,7 @@
         </div>
         <div class="store-institutional-actions">
             <a class="store-button" href="{{ route('store.products') }}">Conhecer o catálogo <x-heroicon-o-arrow-right class="size-4" /></a>
-            <a class="store-text-link" href="{{ route('store.contact') }}">Fale com a SABA →</a>
+            <a class="store-text-link" href="{{ route('store.contact') }}">Fale com {{ \App\Support\Storefront\StoreBrand::currentName() }} →</a>
         </div>
     </div>
 </x-store.layout>
